@@ -66,7 +66,7 @@ const Registration = () => {
     <div
       className="min-h-screen bg-gradient-to-b from-violet-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8"
       style={{
-        backgroundImage: "url('/Cyber.webp')",
+        backgroundImage: "url('/Cyber.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
