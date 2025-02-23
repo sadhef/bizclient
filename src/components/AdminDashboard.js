@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiTrash2, FiRefreshCcw, FiLogOut, FiClock } from 'react-icons/fi';
@@ -12,55 +12,40 @@ const AdminDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const history = useHistory();
-  const isMounted = useRef(true);
-  const abortController = useRef(null);
 
   const fetchData = useCallback(async (showToast = false) => {
-    if (abortController.current) {
-      abortController.current.abort();
-    }
-    abortController.current = new AbortController();
-
     try {
       setRefreshing(true);
       setError(null);
       const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-      const [registrationsResponse, progressResponse] = await Promise.all([
-        fetch(`${apiBaseUrl}/get-registrations`, {
-          signal: abortController.current.signal,
-          headers: { 'Content-Type': 'application/json' }
-        }),
-        fetch(`${apiBaseUrl}/get-progress`, {
-          signal: abortController.current.signal,
-          headers: { 'Content-Type': 'application/json' }
-        })
+      const [regsResponse, progressResponse] = await Promise.all([
+        fetch(`${apiBaseUrl}/get-registrations`),
+        fetch(`${apiBaseUrl}/get-progress`)
       ]);
 
-      if (!registrationsResponse.ok || !progressResponse.ok) {
+      if (!regsResponse.ok || !progressResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
       const [registrationsData, progressData] = await Promise.all([
-        registrationsResponse.json(),
+        regsResponse.json(),
         progressResponse.json()
       ]);
 
-      if (isMounted.current) {
-        setUsers(registrationsData);
-        setCtfProgress(progressData);
-        if (showToast) toast.success('Data refreshed successfully');
+      setUsers(registrationsData);
+      setCtfProgress(progressData);
+      
+      if (showToast) {
+        toast.success('Data refreshed successfully');
       }
     } catch (err) {
-      if (err.name === 'AbortError') return;
       console.error("Error fetching data:", err);
       setError('Failed to load data. Please try again.');
       toast.error('Failed to load data');
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-        setRefreshing(false);
-      }
+      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -73,13 +58,6 @@ const AdminDashboard = () => {
     }
 
     fetchData();
-
-    return () => {
-      isMounted.current = false;
-      if (abortController.current) {
-        abortController.current.abort();
-      }
-    };
   }, [fetchData, history]);
 
   const handleLogout = () => {
@@ -91,16 +69,15 @@ const AdminDashboard = () => {
   const handleDelete = async (email) => {
     if (deleteConfirm !== email) {
       setDeleteConfirm(email);
-      setTimeout(() => setDeleteConfirm(null), 3000); // Reset after 3 seconds
+      setTimeout(() => setDeleteConfirm(null), 3000);
       return;
     }
 
     try {
       setLoading(true);
       const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiBaseUrl}/delete-user/${email}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch(`${apiBaseUrl}/delete-user/${encodeURIComponent(email)}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {
@@ -128,10 +105,7 @@ const AdminDashboard = () => {
 
   const getProgressStatus = useCallback((email) => {
     const progress = ctfProgress.find(p => p.userEmail === email);
-    if (!progress) return {
-      status: Array(4).fill('Not Started'),
-      timeRemaining: null
-    };
+    if (!progress) return { status: Array(4).fill('Not Started'), timeRemaining: null };
 
     return {
       status: [1, 2, 3, 4].map(level => {
@@ -183,7 +157,7 @@ const AdminDashboard = () => {
               <FiLogOut className="mr-2" /> Logout
             </button>
           </div>
-          </div>
+        </div>
 
         {error && (
           <div className="rounded-md bg-red-50 p-4 mb-6">
@@ -224,9 +198,6 @@ const AdminDashboard = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Institution
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Registration Time
-                  </th>
                   <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Level 1
                   </th>
@@ -250,68 +221,62 @@ const AdminDashboard = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => {
                   const { status, timeRemaining } = getProgressStatus(user.email);
-                  return (
-                    <tr key={user.email} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                  return (<tr key={user.email} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{user.institution}</div>
+                    </td>
+                    {status.map((levelStatus, index) => (
+                      <td key={index} className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`text-sm ${getStatusColor(levelStatus)}`}>
+                          {levelStatus}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{user.institution}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {new Date(user.registrationTime).toLocaleString()}
-                        </div>
-                      </td>
-                      {status.map((levelStatus, index) => (
-                        <td key={index} className="px-6 py-4 whitespace-nowrap text-center">
-                          <span className={`text-sm ${getStatusColor(levelStatus)}`}>
-                            {levelStatus}
-                          </span>
-                        </td>
-                      ))}
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center">
-                          <FiClock className="mr-1 text-gray-500" />
-                          <span className={`text-sm ${timeRemaining < 300 ? 'text-red-600' : 'text-gray-500'}`}>
-                            {formatTime(timeRemaining)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button
-                          onClick={() => handleDelete(user.email)}
-                          disabled={loading}
-                          className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
-                            deleteConfirm === user.email
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'text-red-600 hover:text-red-900'
-                          }`}
-                        >
-                          <FiTrash2 className="mr-1" />
-                          {deleteConfirm === user.email ? 'Confirm' : 'Delete'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {users.length === 0 && (
-                  <tr>
-                    <td colSpan="10" className="px-6 py-4 text-center text-gray-500">
-                      No participants registered yet
+                    ))}
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center">
+                        <FiClock className="mr-1 text-gray-500" />
+                        <span className={`text-sm ${timeRemaining < 300 ? 'text-red-600' : 'text-gray-500'}`}>
+                          {formatTime(timeRemaining)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleDelete(user.email)}
+                        disabled={loading}
+                        className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
+                          deleteConfirm === user.email
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            : 'text-red-600 hover:text-red-900'
+                        }`}
+                      >
+                        <FiTrash2 className="mr-1" />
+                        {deleteConfirm === user.email ? 'Confirm' : 'Delete'}
+                      </button>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan="10" className="px-6 py-4 text-center text-gray-500">
+                    No participants registered yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default AdminDashboard;

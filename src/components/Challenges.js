@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiClock, FiCheckCircle, FiLock, FiUnlock } from 'react-icons/fi';
@@ -32,10 +32,93 @@ const Challenges = () => {
   const [flagAttempts, setFlagAttempts] = useState({});
   const [attemptCounts, setAttemptCounts] = useState({ 1: 0, 2: 0, 3: 0, 4: 0 });
   const [hintUsed, setHintUsed] = useState({ 1: false, 2: false, 3: false, 4: false });
+  const [levelStatus, setLevelStatus] = useState({ 1: false, 2: false, 3: false, 4: false });
+  const [intervalId, setIntervalId] = useState(null);
 
   const history = useHistory();
-  const timerRef = useRef(null);
   const userEmail = localStorage.getItem('userEmail');
+
+  const saveProgressToServer = useCallback(async (progressData = {}) => {
+    if (!userEmail) return;
+
+    try {
+      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+      const dataToSend = {
+        userEmail,
+        currentLevel,
+        timeRemaining: timeLeft,
+        flagsEntered: {
+          ...flagAttempts,
+          ...(progressData.flagsEntered || {})
+        },
+        attemptCounts: {
+          ...attemptCounts,
+          ...(progressData.attemptCounts || {})
+        },
+        hintUsed: {
+          ...hintUsed,
+          ...(progressData.hintUsed || {})
+        },
+        levelStatus: {
+          ...levelStatus,
+          ...(progressData.levelStatus || {})
+        },
+        completed: progressData.completed || false
+      };
+
+      const response = await fetch(`${apiBaseUrl}/save-progress`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save progress');
+      }
+
+      const result = await response.json();
+      
+      if (result.progress) {
+        if (result.progress.levelStatus) {
+          setLevelStatus(result.progress.levelStatus);
+        }
+        if (result.progress.completed && progressData.completed) {
+          history.push('/thank-you');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast.error(error.message || 'Failed to save progress');
+    }
+  }, [userEmail, currentLevel, timeLeft, flagAttempts, attemptCounts, hintUsed, levelStatus, history]);
+
+  const cleanupTimer = useCallback(() => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
+  }, [intervalId]);
+
+  const initializeTimer = useCallback((initialTime) => {
+    cleanupTimer();
+    
+    const newIntervalId = setInterval(() => {
+      setTimeLeft((prev) => {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
+          cleanupTimer();
+          saveProgressToServer({ completed: true });
+          return 0;
+        }
+        return newTime;
+      });
+    }, 1000);
+
+    setIntervalId(newIntervalId);
+  }, [cleanupTimer, saveProgressToServer]);
 
   const fetchTimeRemaining = useCallback(async () => {
     if (!userEmail) {
@@ -63,111 +146,105 @@ const Challenges = () => {
     }
   }, [userEmail, history]);
 
-  const saveProgressToServer = useCallback(async (isCompleted = false) => {
-    if (!userEmail) return;
-
-    try {
-      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
-      const progressData = {
-        userEmail,
-        currentLevel,
-        timeRemaining: timeLeft,
-        flagsEntered: flagAttempts,
-        attemptCounts,
-        hintUsed,
-        completed: isCompleted,
-        levelStatus: Object.fromEntries(
-          Object.entries(flagAttempts).map(([level, flag]) => [
-            level,
-            flag?.toLowerCase() === correctFlags[level].toLowerCase()
-          ])
-        )
-      };
-
-      const response = await fetch(`${apiBaseUrl}/save-progress`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(progressData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save progress');
-      }
-
-      if (isCompleted) {
-        history.push('/thank-you');
-      }
-    } catch (error) {
-      console.error('Error saving progress:', error);
-      toast.error('Failed to save progress');
-    }
-  }, [userEmail, currentLevel, timeLeft, flagAttempts, attemptCounts, hintUsed, history]);
-
   useEffect(() => {
+    let mounted = true;
+
+    const initializeChallenge = async () => {
+      try {
+        const remainingTime = await fetchTimeRemaining();
+        
+        if (!mounted) return;
+
+        if (remainingTime === 0) {
+          toast.info('Time has expired!');
+          history.push('/thank-you');
+          return;
+        }
+
+        if (remainingTime) {
+          setTimeLeft(remainingTime);
+          initializeTimer(remainingTime);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing challenge:', error);
+        if (mounted) {
+          toast.error('Failed to initialize challenge');
+          setLoading(false);
+        }
+      }
+    };
+
     if (!userEmail) {
       toast.error('Please register first');
       history.push('/');
-      return;
+    } else {
+      initializeChallenge();
     }
 
-    const initializeChallenge = async () => {
-      const remainingTime = await fetchTimeRemaining();
-      if (remainingTime === 0) {
-        toast.info('Time has expired!');
-        history.push('/thank-you');
-        return;
-      }
-
-      if (remainingTime) {
-        setTimeLeft(remainingTime);
-        setLoading(false);
-
-        timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            const newTime = prev - 1;
-            if (newTime <= 0) {
-              clearInterval(timerRef.current);
-              saveProgressToServer(true);
-              return 0;
-            }
-            return newTime;
-          });
-        }, 1000);
-      }
-    };
-
-    initializeChallenge();
-
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      mounted = false;
+      cleanupTimer();
     };
-  }, [userEmail, history, fetchTimeRemaining, saveProgressToServer]);
+  }, [userEmail, history, fetchTimeRemaining, initializeTimer, cleanupTimer]);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const saveInterval = setInterval(() => {
+      saveProgressToServer();
+    }, 30000); // Save every 30 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [timeLeft, saveProgressToServer]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (timeLeft <= 0) {
+      toast.error("Time's up! You can't submit answers anymore.");
+      return;
+    }
+
     setAttemptCounts(prev => ({
       ...prev,
       [currentLevel]: (prev[currentLevel] || 0) + 1
     }));
 
-    setFlagAttempts(prev => ({
-      ...prev,
+    const newFlagAttempts = {
+      ...flagAttempts,
       [currentLevel]: userFlag
-    }));
+    };
+    setFlagAttempts(newFlagAttempts);
 
     if (userFlag.toLowerCase() === correctFlags[currentLevel].toLowerCase()) {
-      toast.success(`Correct flag! ${currentLevel < 4 ? 'Advancing to next level!' : 'Congratulations!'}`);
+      const isFinalLevel = currentLevel === 4;
+      const newLevelStatus = {
+        ...levelStatus,
+        [currentLevel]: true
+      };
+      setLevelStatus(newLevelStatus);
       
-      if (currentLevel < 4) {
+      toast.success(
+        isFinalLevel 
+          ? 'Congratulations! You have completed all levels!' 
+          : 'Correct flag! Advancing to next level!'
+      );
+
+      await saveProgressToServer({
+        flagsEntered: newFlagAttempts,
+        currentLevel,
+        completed: isFinalLevel,
+        levelStatus: newLevelStatus
+      });
+
+      if (isFinalLevel) {
+        cleanupTimer();
+        history.push('/thank-you');
+      } else {
         setCurrentLevel(prev => prev + 1);
         setUserFlag('');
         setShowHint(false);
-        await saveProgressToServer();
-      } else {
-        await saveProgressToServer(true);
       }
     } else {
       toast.error("Incorrect flag. Try again!");
@@ -175,6 +252,12 @@ const Challenges = () => {
       if (attemptCounts[currentLevel] >= 2 && !hintUsed[currentLevel]) {
         toast.info("Having trouble? Consider using a hint!");
       }
+
+      await saveProgressToServer({
+        flagsEntered: newFlagAttempts,
+        currentLevel,
+        completed: false
+      });
     }
   };
 

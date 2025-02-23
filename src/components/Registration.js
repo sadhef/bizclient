@@ -50,7 +50,6 @@ const Registration = () => {
 
       localStorage.setItem('userEmail', formData.email);
       localStorage.setItem('userName', formData.name);
-      localStorage.setItem('startTime', new Date().toISOString());
       
       toast.success('Registration successful! Starting challenge...');
       history.push('/challenges');
