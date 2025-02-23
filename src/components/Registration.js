@@ -74,6 +74,12 @@ const Registration = () => {
     >
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
+          {/* Added logo */}
+          <img
+            src="/biztras.png"
+            alt="Biztras Logo"
+            className="mx-auto h-20 w-auto mb-4"
+          />
           <h2 className="text-3xl font-extrabold text-gray-900">BIZTRAS CTF Challenge</h2>
           <p className="mt-2 text-sm text-gray-600">Complete all levels within 1 hour</p>
         </div>

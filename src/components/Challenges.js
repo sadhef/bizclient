@@ -10,17 +10,17 @@ const formatTimeRemaining = (seconds) => {
 };
 
 const hints = {
-  1: "The flag is hidden in plain sight, try looking at the source",
-  2: "A famous footballer's name might help",
-  3: "The creator's name holds the key",
-  4: "Three letters that mean a lot"
+  1: "What is Messi's international team ",
+  2: " Inspect the webpage and capture the flag from https://biztrasflag2.bizdemo.online",
+  3: "Do your magic to get yourself authorized as admin here https://biztrasflag3.bizdemo.online",
+  4: " Same process but read the code given in https://biztrasflag4.bizdemo.online"
 };
 
 const correctFlags = {
-  1: "sadhef",
-  2: "messi",
-  3: "faheem",
-  4: "tly"
+  1: "argentina",
+  2: "biztrasflag{SecureWithBiztrasCyberSecurity}",
+  3: "biztrasflag{GetReadyCybeerSecurity}",
+  4: "biztrasflag{YouRAProHacker}"
 };
 
 const Challenges = () => {
