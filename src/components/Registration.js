@@ -63,7 +63,15 @@ const Registration = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-violet-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div
+      className="min-h-screen bg-gradient-to-b from-violet-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage: "url('/Cyber.webp')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-gray-900">BIZTRAS CTF Challenge</h2>
