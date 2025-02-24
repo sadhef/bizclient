@@ -10,14 +10,14 @@ const formatTimeRemaining = (seconds) => {
 };
 
 const hints = {
-  1: "What is Messi's international team ",
+  1: "Find the flag located in the website https://bizdemo.online",
   2: " Inspect the webpage and capture the flag from https://biztrasflag2.bizdemo.online",
   3: "Do your magic to get yourself authorized as admin here https://biztrasflag3.bizdemo.online",
   4: " Same process but read the code given in https://biztrasflag4.bizdemo.online"
 };
 
 const correctFlags = {
-  1: "argentina",
+  1: "biztrasflag{join_biztras_cyber_team}",
   2: "biztrasflag{SecureWithBiztrasCyberSecurity}",
   3: "biztrasflag{GetReadyCybeerSecurity}",
   4: "biztrasflag{YouRAProHacker}"
