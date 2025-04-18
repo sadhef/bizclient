@@ -36,14 +36,14 @@ export const AuthProvider = ({ children }) => {
         // Fetch current user
         const response = await api.get('/auth/me');
         
-        // Validate admin status
-        if (response.user && response.user.isAdmin) {
+        // Set user data correctly without requiring admin status
+        if (response.user) {
           setCurrentUser(response.user);
-          setIsAdmin(true);
-          localStorage.setItem('isAdmin', 'true');
+          // Set admin status based on user data
+          setIsAdmin(response.user.isAdmin === true);
+          localStorage.setItem('isAdmin', response.user.isAdmin === true ? 'true' : 'false');
         } else {
-          // Clear admin-related data if not an admin
-          throw new Error('Admin access required');
+          throw new Error('User not found');
         }
       } catch (err) {
         console.error('Error fetching current user:', err);
