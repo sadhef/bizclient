@@ -7,38 +7,47 @@ import { useAuth } from '../../context/AuthContext';
 const AdminLogin = () => {
   const history = useHistory();
   const { adminLogin, currentUser, isAdmin, loading } = useAuth();
-
+  
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Redirect if already logged in as admin
   useEffect(() => {
+    // More robust check for admin authentication
     if (currentUser && isAdmin) {
-      setTimeout(() => {
-        history.push('/admin-dashboard');
-      }, 0);
+      // Redirect immediately to admin dashboard
+      history.replace('/admin-dashboard');
     }
   }, [currentUser, isAdmin, history]);
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
-    setError('');
+    setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
       setFormLoading(true);
       setError('');
+      
+      // Perform admin login
       const user = await adminLogin(credentials.email, credentials.password);
+      
+      // Show success toast
       toast.success('Admin login successful!');
-      localStorage.setItem('isAdmin', 'true');
-      setTimeout(() => {
-        window.location.href = '/admin-dashboard';
-      }, 100);
+      
+      // Redirect to admin dashboard
+      history.replace('/admin-dashboard');
     } catch (err) {
-      setError(err.message || 'Invalid admin credentials');
-      toast.error(err.message || 'Invalid admin credentials');
+      console.error('Admin login error:', err);
+      
+      // Set and display error
+      const errorMessage = err.message || 'Invalid admin credentials';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setFormLoading(false);
     }

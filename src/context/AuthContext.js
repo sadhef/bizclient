@@ -35,15 +35,25 @@ export const AuthProvider = ({ children }) => {
         
         // Fetch current user
         const response = await api.get('/auth/me');
-        setCurrentUser(response.user);
-        setIsAdmin(response.user?.isAdmin || false);
+        
+        // Validate admin status
+        if (response.user && response.user.isAdmin) {
+          setCurrentUser(response.user);
+          setIsAdmin(true);
+          localStorage.setItem('isAdmin', 'true');
+        } else {
+          // Clear admin-related data if not an admin
+          throw new Error('Admin access required');
+        }
       } catch (err) {
         console.error('Error fetching current user:', err);
         setError(err.message || 'Failed to authenticate');
-        // Clear invalid token
+        
+        // Clear invalid token and admin status
         localStorage.removeItem('token');
         localStorage.removeItem('isAdmin');
         setToken(null);
+        setCurrentUser(null);
         setIsAdmin(false);
       } finally {
         setLoading(false);
@@ -53,7 +63,47 @@ export const AuthProvider = ({ children }) => {
     fetchCurrentUser();
   }, [token]);
 
-  // Register function
+  // Admin login function with enhanced validation
+  const adminLogin = async (email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await api.post('/auth/admin/login', { email, password });
+      
+      const { token: newToken, user } = response;
+      
+      // Strict admin validation
+      if (!user || !user.isAdmin) {
+        throw new Error('Admin access required');
+      }
+      
+      // Store token and set user
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('isAdmin', 'true');
+      setToken(newToken);
+      setCurrentUser(user);
+      setIsAdmin(true);
+      
+      return user;
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Invalid admin credentials';
+      setError(errorMsg);
+      
+      // Clear any lingering admin-related data
+      localStorage.removeItem('token');
+      localStorage.removeItem('isAdmin');
+      setToken(null);
+      setCurrentUser(null);
+      setIsAdmin(false);
+      
+      throw new Error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Other methods remain the same as in the previous implementation
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -61,8 +111,6 @@ export const AuthProvider = ({ children }) => {
       
       const response = await api.post('/auth/register', userData);
       
-      // We don't automatically log in after registration anymore
-      // Instead, we return the user data and redirect to login page
       return response.user;
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Registration failed';
@@ -73,7 +121,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -97,33 +144,6 @@ export const AuthProvider = ({ children }) => {
       return user;
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Invalid email or password';
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Admin login function
-  const adminLogin = async (email, password) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await api.post('/auth/admin/login', { email, password });
-      
-      const { token: newToken, user } = response;
-      
-      // Store token and set user
-      localStorage.setItem('token', newToken);
-      localStorage.setItem('isAdmin', 'true');
-      setToken(newToken);
-      setCurrentUser(user);
-      setIsAdmin(true);
-      
-      return user;
-    } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Invalid admin credentials';
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
