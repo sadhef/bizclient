@@ -11,10 +11,10 @@ import AdminLogin from './components/Admin/AdminLogin';
 // Challenge components
 import Challenges from './components/Challenge/Challenges';
 import ThankYouPage from './components/Common/ThankYouPage';
-
 // Admin components
 import AdminDashboard from './components/Admin/AdminDashboard';
 import LevelManager from './components/Admin/LevelManager';
+import UserProgressManager from './components/Admin/UserProgressManager';
 import Navbar from './components/Common/Navbar';
 
 // Context provider
@@ -46,6 +46,7 @@ function App() {
             <Route path="/admin-dashboard" component={AdminDashboard} />
             <Route path="/admin/challenges/new" component={LevelManager} />
             <Route path="/admin/challenges/edit/:id" component={LevelManager} />
+            <Route path="/admin/progress/:userId" component={UserProgressManager} />
             
             {/* Fallback route - redirect to login */}
             <Route path="*">

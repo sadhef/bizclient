@@ -13,11 +13,12 @@ import {
   FiClock,
   FiEye,
   FiToggleLeft,
-  FiToggleRight
+  FiToggleRight,
+  FiSettings
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../utils/api';
-import { formatTimeRemaining } from '../../utils/timer';
+import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -28,6 +29,9 @@ const AdminDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ type: null, id: null });
+  const [showTimeSetting, setShowTimeSetting] = useState(false);
+  const [defaultTimeLimit, setDefaultTimeLimit] = useState(3600); // Default 1 hour in seconds
+  const [newTimeLimit, setNewTimeLimit] = useState(3600);
 
   const history = useHistory();
   const { currentUser, isAdmin, logout } = useAuth();
@@ -52,6 +56,18 @@ const AdminDashboard = () => {
       if (activeTab === 'challenges') {
         const challengesResponse = await api.get('/challenges');
         setChallenges(challengesResponse.challenges);
+      }
+      
+      // Fetch the system settings
+      try {
+        const settingsResponse = await api.get('/settings');
+        if (settingsResponse && settingsResponse.settings) {
+          setDefaultTimeLimit(settingsResponse.settings.defaultTimeLimit || 3600);
+          setNewTimeLimit(settingsResponse.settings.defaultTimeLimit || 3600);
+        }
+      } catch (settingsError) {
+        console.warn('Could not load settings:', settingsError);
+        // Don't fail the whole fetch operation if settings can't be loaded
       }
       
       if (showToast) {
@@ -164,10 +180,67 @@ const AdminDashboard = () => {
     }
   };
 
+  // Handle updating the default time limit
+  const handleUpdateTimeLimit = async () => {
+    try {
+      setLoading(true);
+      
+      // Get time in seconds from hours and minutes
+      const hours = parseInt(document.getElementById('hours').value) || 0;
+      const minutes = parseInt(document.getElementById('minutes').value) || 0;
+      const totalSeconds = (hours * 3600) + (minutes * 60);
+      
+      console.log("Raw input values - Hours:", hours, "Minutes:", minutes);
+      console.log("Calculated total seconds:", totalSeconds);
+      
+      // Ensure newTimeLimit is a valid number between 5 minutes and 24 hours
+      if (totalSeconds < 300) {
+        toast.error('Time limit must be at least 5 minutes (300 seconds)');
+        setLoading(false);
+        return;
+      }
+      
+      if (totalSeconds > 86400) {
+        toast.error('Time limit cannot exceed 24 hours (86400 seconds)');
+        setLoading(false);
+        return;
+      }
+      
+      console.log("About to send time limit update request with totalSeconds:", totalSeconds);
+      
+      // Make the API call with the calculated total seconds
+      const response = await api.post('/settings/update', {
+        defaultTimeLimit: totalSeconds
+      });
+      
+      console.log("API response:", response);
+      
+      // Update the UI with the new time limit
+      setDefaultTimeLimit(totalSeconds);
+      setNewTimeLimit(totalSeconds);
+      setShowTimeSetting(false);
+      
+      toast.success('Default time limit updated successfully');
+      
+      // Refresh progress data to see updated time limits
+      if (activeTab === 'progress') {
+        fetchData(false);
+      }
+    } catch (error) {
+      console.error('Error updating time limit:', error);
+      if (error.response && error.response.data) {
+        console.error('Server response:', error.response.data);
+      }
+      toast.error('Failed to update time limit: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get user's progress status
   const getUserProgressStatus = (userId) => {
     const progress = userProgress.find(p => p.userId === userId);
-    if (!progress) return { completed: false, currentLevel: 1, timeRemaining: 3600 };
+    if (!progress) return { completed: false, currentLevel: 1, timeRemaining: defaultTimeLimit };
     
     return {
       completed: progress.completed,
@@ -180,14 +253,107 @@ const AdminDashboard = () => {
     };
   };
 
-  // Get status color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed': return 'text-green-600 font-medium';
-      case 'In Progress': return 'text-yellow-600';
-      case 'Not Started': return 'text-gray-500';
-      default: return 'text-gray-500';
-    }
+  // Format time input for display
+  const formatTimeForInput = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    return {
+      hours,
+      minutes
+    };
+  };
+
+  // Parse time input to seconds
+  const parseTimeToSeconds = (hours, minutes) => {
+    return (parseInt(hours) * 3600) + (parseInt(minutes) * 60);
+  };
+
+  // Time limit input component
+  const TimeLimitSetting = () => {
+    const [hoursValue, setHoursValue] = useState(Math.floor(defaultTimeLimit / 3600));
+    const [minutesValue, setMinutesValue] = useState(Math.floor((defaultTimeLimit % 3600) / 60));
+    
+    const handleSave = () => {
+      // This doesn't do the actual saving - it just validates and calls handleUpdateTimeLimit
+      // which will read the values directly from the inputs
+      const hours = parseInt(hoursValue) || 0;
+      const minutes = parseInt(minutesValue) || 0;
+      const totalSeconds = (hours * 3600) + (minutes * 60);
+      
+      // Validate the time limit
+      if (totalSeconds < 300) {
+        toast.error('Time limit must be at least 5 minutes (300 seconds)');
+        return;
+      }
+      
+      if (totalSeconds > 86400) {
+        toast.error('Time limit cannot exceed 24 hours (86400 seconds)');
+        return;
+      }
+      
+      // Call the handler that will make the API request
+      handleUpdateTimeLimit();
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Set Default Challenge Time Limit</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Set the default time limit for all new challenge attempts. This will not affect users who have already started challenges.
+          </p>
+          
+          <div className="flex items-center space-x-4 mb-6">
+            <div>
+              <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+              <input
+                type="number"
+                id="hours"
+                min="0"
+                max="24"
+                value={hoursValue}
+                onChange={(e) => setHoursValue(e.target.value)}
+                className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+              <input
+                type="number"
+                id="minutes"
+                min="0"
+                max="59"
+                value={minutesValue}
+                onChange={(e) => setMinutesValue(e.target.value)}
+                className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="mt-7">
+              <span className="text-gray-500">
+                = {formatTimeDetailed((parseInt(hoursValue) || 0) * 3600 + (parseInt(minutesValue) || 0) * 60)}
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowTimeSetting(false)}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Loading state
@@ -206,20 +372,29 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap justify-between items-center mb-8">
+          <div className="flex items-center mb-4 md:mb-0">
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          </div>
+          <div className="flex flex-wrap items-center space-x-2 md:space-x-4">
+            <button
+              onClick={() => setShowTimeSetting(true)}
+              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <FiSettings className="mr-2" />
+              Time Limit: {formatTimeRemaining(defaultTimeLimit)}
+            </button>
             <button
               onClick={() => fetchData(true)}
               disabled={refreshing}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               <FiRefreshCw className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
               <FiLogOut className="mr-2" /> Logout
             </button>
@@ -573,6 +748,9 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Time Setting Modal */}
+      {showTimeSetting && <TimeLimitSetting />}
     </div>
   );
 };
