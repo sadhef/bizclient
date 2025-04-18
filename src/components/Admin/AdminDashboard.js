@@ -97,11 +97,11 @@ const AdminDashboard = () => {
 
     try {
       setLoading(true);
+      
+      // Delete the user first - the backend should handle deleting progress
       await api.delete(`/users/${userId}`);
       
-      // Also delete user progress
-      await api.delete(`/progress/${userId}`);
-      
+      // Update UI state to remove the deleted user
       setUsers(prev => prev.filter(user => user._id !== userId));
       setUserProgress(prev => prev.filter(progress => progress.userId !== userId));
       

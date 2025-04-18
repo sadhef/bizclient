@@ -95,8 +95,10 @@ const UserManager = () => {
     try {
       setLoading(true);
       
+      // Delete the user first
       await api.delete(`/users/${userId}`);
       
+      // Update the local state after successful deletion
       setUsers(prev => prev.filter(user => user._id !== userId));
       
       if (selectedUser === userId) {
