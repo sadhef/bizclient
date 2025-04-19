@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FiClock, FiCheckCircle, FiLock, FiUnlock, FiHelpCircle, FiFlag, FiLogOut } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiLock, FiUnlock, FiHelpCircle, FiFlag, FiLogOut, FiWifiOff } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../utils/api';
 import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 
 const Challenges = () => {
   const [challenge, setChallenge] = useState(null);
@@ -22,9 +23,11 @@ const Challenges = () => {
   const [error, setError] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [offlineData, setOfflineData] = useState(null);
 
   const history = useHistory();
   const { currentUser, logout } = useAuth();
+  const isOnline = useOnlineStatus();
 
   // Fetch current challenge
   const fetchCurrentChallenge = useCallback(async () => {
@@ -58,6 +61,17 @@ const Challenges = () => {
       setProgress(response.progress);
       setTimeLeft(response.challenge.timeRemaining);
       
+      // Save to offline cache for use when offline
+      setOfflineData(response);
+      try {
+        localStorage.setItem('offlineChallenge', JSON.stringify({
+          data: response,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('Failed to cache challenge data offline', e);
+      }
+      
       // Set total time limit from the response
       if (response.challenge.totalTimeLimit) {
         setTotalTimeLimit(response.challenge.totalTimeLimit);
@@ -71,12 +85,40 @@ const Challenges = () => {
       }
     } catch (err) {
       console.error('Error fetching challenge:', err);
-      setError('Failed to load challenge. Please try again.');
-      toast.error('Failed to load challenge');
+      
+      // Check if we can use offline data
+      if (!isOnline) {
+        try {
+          const cachedData = localStorage.getItem('offlineChallenge');
+          if (cachedData) {
+            const parsed = JSON.parse(cachedData);
+            setOfflineData(parsed.data);
+            setChallenge(parsed.data.challenge);
+            setProgress(parsed.data.progress);
+            setTimeLeft(parsed.data.challenge.timeRemaining);
+            
+            // Check if hint was used
+            if (parsed.data.challenge.hintUsed) {
+              setShowHint(true);
+            }
+            
+            toast.info('You are offline. Using cached challenge data.');
+          } else {
+            setError('Unable to load challenge data while offline.');
+            toast.error('Failed to load challenge in offline mode');
+          }
+        } catch (e) {
+          console.error('Error loading cached challenge data', e);
+          setError('Failed to load challenge. Please try again when online.');
+        }
+      } else {
+        setError('Failed to load challenge. Please try again.');
+        toast.error('Failed to load challenge');
+      }
     } finally {
       setLoading(false);
     }
-  }, [history, currentUser]);
+  }, [history, currentUser, isOnline]);
 
   // Initialize timer
   const initializeTimer = useCallback(() => {
@@ -139,6 +181,12 @@ const Challenges = () => {
       return;
     }
     
+    // Prevent submission while offline
+    if (!isOnline) {
+      toast.warning('Cannot submit flags while offline. Please reconnect to the internet.');
+      return;
+    }
+    
     try {
       setSubmitting(true);
       
@@ -174,6 +222,12 @@ const Challenges = () => {
 
   // Request hint
   const useHintForLevel = async () => {
+    // Prevent using hint while offline
+    if (!isOnline) {
+      toast.warning('Cannot request hints while offline. Please reconnect to the internet.');
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -188,6 +242,29 @@ const Challenges = () => {
         hint: response.hint,
         hintUsed: true
       }));
+      
+      // Update offline data with hint
+      if (offlineData) {
+        const updatedOfflineData = {
+          ...offlineData,
+          challenge: {
+            ...offlineData.challenge,
+            hint: response.hint,
+            hintUsed: true
+          }
+        };
+        setOfflineData(updatedOfflineData);
+        
+        // Update offline cache
+        try {
+          localStorage.setItem('offlineChallenge', JSON.stringify({
+            data: updatedOfflineData,
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          console.error('Failed to update cached challenge data', e);
+        }
+      }
     } catch (err) {
       console.error('Error requesting hint:', err);
       toast.error('Failed to get hint');
@@ -208,6 +285,21 @@ const Challenges = () => {
     if (totalTimeLimit === 0) return 0;
     return (timeLeft / totalTimeLimit) * 100;
   };
+
+  // Offline banner component
+  const OfflineBanner = () => (
+    <div className="bg-red-500/10 border border-red-500/20 p-4 mb-6 rounded-lg">
+      <div className="flex items-center">
+        <FiWifiOff className="text-red-400 mr-2" size={20} />
+        <div>
+          <h3 className="text-lg font-medium text-red-500">You're Offline</h3>
+          <p className="text-red-400 text-sm">
+            You can continue with the current challenge, but you won't be able to submit flags or request hints until you're back online.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   // Loading state
   if (loading && !challenge) {
@@ -271,6 +363,9 @@ const Challenges = () => {
           )}
         </div>
 
+        {/* Show offline banner when not online */}
+        {!isOnline && <OfflineBanner />}
+
         {/* Timer and Logout Bar */}
         <div className="backdrop-blur-lg bg-violet-50/10 rounded-lg shadow-lg p-4 mb-6 border border-violet-200/20">
           <div className="flex justify-between items-center">
@@ -311,7 +406,7 @@ const Challenges = () => {
           {/* Progress Bar */}
           <div className="border-b border-violet-300/20">
             <div className="flex">
-              {progress.completedLevels.map(level => (
+              {progress.completedLevels && progress.completedLevels.map(level => (
                 <div 
                   key={level}
                   className="flex-1 text-center py-3 bg-green-500/20 text-green-200"
@@ -330,7 +425,7 @@ const Challenges = () => {
               {/* Future levels are locked */}
               {Array.from({ length: Math.max(0, challenge?.totalLevels - challenge?.levelNumber || 0) }).map((_, idx) => {
                 const futureLevel = (challenge?.levelNumber || 0) + idx + 1;
-                if (!progress.completedLevels.includes(futureLevel)) {
+                if (!progress.completedLevels?.includes?.(futureLevel)) {
                   return (
                     <div 
                       key={futureLevel}
@@ -390,7 +485,7 @@ const Challenges = () => {
               <div className="flex flex-wrap gap-4">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || !isOnline}
                   className="flex-grow py-3 px-6 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white rounded-lg transition shadow-lg disabled:opacity-50 relative overflow-hidden group"
                 >
                   <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-violet-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -399,6 +494,11 @@ const Challenges = () => {
                       <>
                         <div className="w-5 h-5 border-t-2 border-b-2 border-violet-50 rounded-full animate-spin mr-2" />
                         Submitting...
+                      </>
+                    ) : !isOnline ? (
+                      <>
+                        <FiWifiOff className="mr-2" />
+                        Submit (Offline)
                       </>
                     ) : (
                       <>
@@ -412,11 +512,11 @@ const Challenges = () => {
                   <button
                     type="button"
                     onClick={useHintForLevel}
-                    disabled={loading}
+                    disabled={loading || !isOnline}
                     className="flex-grow flex items-center justify-center px-6 py-3 bg-violet-50/10 border border-violet-400/20 text-violet-200 rounded-lg hover:bg-violet-50/20 transition shadow-sm disabled:opacity-50"
                   >
                     <FiHelpCircle className="mr-2" />
-                    Use Hint
+                    {!isOnline ? 'Hint (Offline)' : 'Use Hint'}
                   </button>
                 )}
               </div>
@@ -439,6 +539,22 @@ const Challenges = () => {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-red-300">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Offline Sync Status */}
+        {!isOnline && localStorage.getItem('offlineQueue') && (
+          <div className="mt-6 bg-violet-500/10 border-l-4 border-violet-500 p-4 rounded-r">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiClock className="h-5 w-5 text-violet-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-violet-300">
+                  You have pending actions that will sync when you're back online.
+                </p>
               </div>
             </div>
           </div>

@@ -16,6 +16,9 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 import LevelManager from './components/Admin/LevelManager';
 import UserProgressManager from './components/Admin/UserProgressManager';
 import Navbar from './components/Common/Navbar';
+import OfflineNotification from './components/Common/OfflineNotification';
+import InstallPrompt from './components/Common/InstallPrompt';
+import OfflinePage from './components/Common/OfflinePage';
 
 // Context provider
 import { AuthProvider } from './context/AuthContext';
@@ -38,6 +41,7 @@ function App() {
             <Route path="/register" component={Registration} />
             <Route path="/admin-login" component={AdminLogin} />
             <Route path="/thank-you" component={ThankYouPage} />
+            <Route path="/offline" component={OfflinePage} />
             
             {/* User routes - authentication check is inside the component */}
             <Route path="/challenges" component={Challenges} />
@@ -53,6 +57,9 @@ function App() {
               <Redirect to="/login" />
             </Route>
           </Switch>
+          
+          <OfflineNotification />
+          <InstallPrompt />
           
           <ToastContainer
             position="top-right"

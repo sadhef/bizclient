@@ -1,0 +1,17 @@
+{
+    "short_name": "BizTras",
+    "name": "BizTras CTF",
+    "icons": [
+      {
+        "src": "biztras.png",
+        "sizes": "64x64 96x96 128x128 192x192 256x256 512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#4c1d95",
+    "background_color": "#4c1d95",
+    "orientation": "portrait"
+  }
