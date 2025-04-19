@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gray-50;
+    @apply bg-light-primary dark:bg-dark-primary text-light-primary dark:text-dark-primary transition-colors duration-200;
   }
 }
 
@@ -14,18 +14,23 @@
   }
 
   .btn-primary {
-    @apply btn bg-violet-600 text-black hover:bg-violet-700;
+    @apply btn bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-800;
   }
 
   .btn-secondary {
-    @apply btn bg-black text-violet-600 border border-violet-600 hover:bg-violet-50;
+    @apply btn bg-white dark:bg-gray-800 text-violet-600 dark:text-violet-400 border border-violet-600 dark:border-violet-500 hover:bg-violet-50 dark:hover:bg-gray-700;
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent;
+    @apply w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent;
   }
 
   .card {
-    @apply bg-black rounded-lg shadow p-6;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-100 dark:border-gray-700 transition-colors duration-200;
+  }
+
+  /* Theme transition utilities */
+  .theme-transition {
+    @apply transition-colors duration-200;
   }
 }

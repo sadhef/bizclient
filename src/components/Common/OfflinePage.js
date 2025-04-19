@@ -1,16 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiWifiOff, FiRefreshCw, FiHome } from 'react-icons/fi';
+import { useTheme } from '../../context/ThemeContext';
 
 const OfflinePage = () => {
+  const { isDark } = useTheme();
+  
   const handleRefresh = () => {
     window.location.reload();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 flex flex-col justify-center items-center p-4">
-      <div className="backdrop-blur-lg bg-violet-50/10 rounded-2xl shadow-2xl p-8 border border-violet-200/20 text-center max-w-md">
-        <div className="bg-violet-700/50 p-4 rounded-full inline-flex mb-6 text-violet-200">
+    <div className={`min-h-screen flex flex-col justify-center items-center p-4 ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+    }`}>
+      <div className={`backdrop-blur-lg ${
+        isDark 
+          ? 'bg-gray-800/40 border-gray-700/30' 
+          : 'bg-violet-50/10 border-violet-200/20'
+      } rounded-2xl shadow-2xl p-8 border text-center max-w-md`}>
+        <div className={`${
+          isDark ? 'bg-gray-700/50' : 'bg-violet-700/50'
+        } p-4 rounded-full inline-flex mb-6 text-violet-200`}>
           <FiWifiOff size={48} />
         </div>
         
@@ -23,7 +36,11 @@ const OfflinePage = () => {
         <div className="space-y-4">
           <button
             onClick={handleRefresh}
-            className="w-full flex items-center justify-center py-3 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition"
+            className={`w-full flex items-center justify-center py-3 px-4 ${
+              isDark
+                ? 'bg-violet-700 hover:bg-violet-600'
+                : 'bg-violet-600 hover:bg-violet-700'
+            } text-white rounded-lg transition`}
           >
             <FiRefreshCw className="mr-2" />
             Refresh Page
@@ -31,7 +48,11 @@ const OfflinePage = () => {
           
           <Link 
             to="/" 
-            className="w-full flex items-center justify-center py-3 px-4 bg-transparent border border-violet-500 text-violet-300 rounded-lg hover:bg-violet-50/10 transition"
+            className={`w-full flex items-center justify-center py-3 px-4 bg-transparent ${
+              isDark
+                ? 'border-violet-700 text-violet-400 hover:bg-violet-900/50'
+                : 'border-violet-500 text-violet-300 hover:bg-violet-800/50'
+            } border rounded-lg transition`}
           >
             <FiHome className="mr-2" />
             Return to Home

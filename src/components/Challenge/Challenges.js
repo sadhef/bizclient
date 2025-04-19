@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../utils/api';
 import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
+import { useTheme } from '../../context/ThemeContext';
 
 const Challenges = () => {
   const [challenge, setChallenge] = useState(null);
@@ -28,6 +29,7 @@ const Challenges = () => {
   const history = useHistory();
   const { currentUser, logout } = useAuth();
   const isOnline = useOnlineStatus();
+  const { isDark } = useTheme();
 
   // Fetch current challenge
   const fetchCurrentChallenge = useCallback(async () => {
@@ -288,12 +290,14 @@ const Challenges = () => {
 
   // Offline banner component
   const OfflineBanner = () => (
-    <div className="bg-red-500/10 border border-red-500/20 p-4 mb-6 rounded-lg">
+    <div className={`${
+      isDark ? 'bg-red-900/30 border-red-800/30' : 'bg-red-500/10 border-red-500/20'
+    } border p-4 mb-6 rounded-lg`}>
       <div className="flex items-center">
-        <FiWifiOff className="text-red-400 mr-2" size={20} />
+        <FiWifiOff className={`${isDark ? 'text-red-400' : 'text-red-400'} mr-2`} size={20} />
         <div>
-          <h3 className="text-lg font-medium text-red-500">You're Offline</h3>
-          <p className="text-red-400 text-sm">
+          <h3 className={`text-lg font-medium ${isDark ? 'text-red-400' : 'text-red-500'}`}>You're Offline</h3>
+          <p className={`${isDark ? 'text-red-300' : 'text-red-400'} text-sm`}>
             You can continue with the current challenge, but you won't be able to submit flags or request hints until you're back online.
           </p>
         </div>
@@ -304,7 +308,11 @@ const Challenges = () => {
   // Loading state
   if (loading && !challenge) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 flex justify-center items-center">
+      <div className={`min-h-screen ${
+        isDark 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+          : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+      } flex justify-center items-center`}>
         <div className="w-16 h-16 border-4 border-violet-100 border-t-violet-400 rounded-full animate-spin"></div>
       </div>
     );
@@ -318,8 +326,16 @@ const Challenges = () => {
   // Time expired state
   if (timeLeft <= 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 flex justify-center items-center">
-        <div className="backdrop-blur-lg bg-violet-50/10 rounded-2xl shadow-2xl p-8 border border-violet-200/20 text-center">
+      <div className={`min-h-screen ${
+        isDark 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+          : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+      } flex justify-center items-center`}>
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-2xl shadow-2xl p-8 border text-center`}>
           <h2 className="text-3xl font-bold text-violet-50 mb-4">Time's Up!</h2>
           <p className="text-violet-200 mb-6">Your challenge session has ended.</p>
           <button
@@ -334,7 +350,11 @@ const Challenges = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className={`min-h-screen ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+    } py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden`}>
       {/* Decorative Background Elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute transform -rotate-45 bg-violet-50 w-96 h-96 rounded-full -top-20 -left-20" />
@@ -367,7 +387,11 @@ const Challenges = () => {
         {!isOnline && <OfflineBanner />}
 
         {/* Timer and Logout Bar */}
-        <div className="backdrop-blur-lg bg-violet-50/10 rounded-lg shadow-lg p-4 mb-6 border border-violet-200/20">
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-lg shadow-lg p-4 mb-6 border`}>
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <FiClock className="text-violet-200 mr-2" size={24} />
@@ -393,7 +417,7 @@ const Challenges = () => {
           </div>
           
           {/* Progress bar for time */}
-          <div className="mt-2 h-2 bg-violet-800/50 rounded-full overflow-hidden">
+          <div className={`mt-2 h-2 ${isDark ? 'bg-gray-700/50' : 'bg-violet-800/50'} rounded-full overflow-hidden`}>
             <div 
               className={`h-full ${timeLeft < 300 ? 'bg-red-500' : timeLeft < 600 ? 'bg-yellow-500' : 'bg-green-500'}`}
               style={{ width: `${calculateTimeProgress()}%` }}
@@ -402,21 +426,29 @@ const Challenges = () => {
         </div>
 
         {/* Challenge Container */}
-        <div className="backdrop-blur-lg bg-violet-50/10 rounded-2xl shadow-2xl border border-violet-200/20 overflow-hidden relative">
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-2xl shadow-2xl border overflow-hidden relative`}>
           {/* Progress Bar */}
-          <div className="border-b border-violet-300/20">
+          <div className={`border-b ${isDark ? 'border-gray-700/50' : 'border-violet-300/20'}`}>
             <div className="flex">
               {progress.completedLevels && progress.completedLevels.map(level => (
                 <div 
                   key={level}
-                  className="flex-1 text-center py-3 bg-green-500/20 text-green-200"
+                  className={`flex-1 text-center py-3 ${
+                    isDark ? 'bg-green-900/20 text-green-300' : 'bg-green-500/20 text-green-200'
+                  }`}
                 >
                   <FiCheckCircle className="inline mr-1" />
                   Level {level}
                 </div>
               ))}
               <div
-              className="flex-1 text-center py-3 bg-violet-600/30 text-violet-50"
+              className={`flex-1 text-center py-3 ${
+                isDark ? 'bg-violet-900/30 text-violet-200' : 'bg-violet-600/30 text-violet-50'
+              }`}
               >
                 <FiUnlock className="inline mr-1" />
                 Level {challenge?.levelNumber}
@@ -429,7 +461,9 @@ const Challenges = () => {
                   return (
                     <div 
                       key={futureLevel}
-                      className="flex-1 text-center py-3 bg-violet-900/30 text-violet-300/50"
+                      className={`flex-1 text-center py-3 ${
+                        isDark ? 'bg-gray-900/30 text-gray-500' : 'bg-violet-900/30 text-violet-300/50'
+                      }`}
                     >
                       <FiLock className="inline mr-1" />
                       Level {futureLevel}
@@ -449,7 +483,9 @@ const Challenges = () => {
 
             {/* Hint Box */}
             {showHint && challenge?.hint && (
-              <div className="bg-yellow-500/10 border-l-4 border-yellow-500/50 p-4 mb-6 rounded-r text-yellow-100">
+              <div className={`${
+                isDark ? 'bg-yellow-900/10 border-yellow-800/50' : 'bg-yellow-500/10 border-yellow-500/50'
+              } border-l-4 p-4 mb-6 rounded-r text-yellow-100`}>
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <FiHelpCircle className="h-5 w-5 text-yellow-300" />
@@ -475,7 +511,11 @@ const Challenges = () => {
                     type="text"
                     value={userFlag}
                     onChange={(e) => setUserFlag(e.target.value)}
-                    className="w-full pl-10 pr-3 py-3 bg-violet-50/5 border border-violet-200/20 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-white placeholder-violet-300"
+                    className={`w-full pl-10 pr-3 py-3 ${
+                      isDark 
+                        ? 'bg-gray-700/50 border-gray-600/50' 
+                        : 'bg-violet-50/5 border-violet-200/20'
+                    } border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-white placeholder-violet-300`}
                     placeholder="Enter the flag for this level..."
                     required
                   />
@@ -513,7 +553,11 @@ const Challenges = () => {
                     type="button"
                     onClick={useHintForLevel}
                     disabled={loading || !isOnline}
-                    className="flex-grow flex items-center justify-center px-6 py-3 bg-violet-50/10 border border-violet-400/20 text-violet-200 rounded-lg hover:bg-violet-50/20 transition shadow-sm disabled:opacity-50"
+                    className={`flex-grow flex items-center justify-center px-6 py-3 ${
+                      isDark
+                        ? 'bg-gray-700/50 border-gray-600/50 text-violet-300 hover:bg-gray-700/70'
+                        : 'bg-violet-50/10 border-violet-400/20 text-violet-200 hover:bg-violet-50/20'
+                    } border rounded-lg transition shadow-sm disabled:opacity-50`}
                   >
                     <FiHelpCircle className="mr-2" />
                     {!isOnline ? 'Hint (Offline)' : 'Use Hint'}
@@ -546,7 +590,9 @@ const Challenges = () => {
 
         {/* Offline Sync Status */}
         {!isOnline && localStorage.getItem('offlineQueue') && (
-          <div className="mt-6 bg-violet-500/10 border-l-4 border-violet-500 p-4 rounded-r">
+          <div className={`mt-6 ${
+            isDark ? 'bg-violet-900/10 border-violet-800/30' : 'bg-violet-500/10 border-violet-500'
+          } border-l-4 p-4 rounded-r`}>
             <div className="flex">
               <div className="flex-shrink-0">
                 <FiClock className="h-5 w-5 text-violet-400" />

@@ -19,13 +19,14 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../utils/api';
 import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
+import { useTheme } from '../../context/ThemeContext';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [challenges, setChallenges] = useState([]);
   const [userProgress, setUserProgress] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ type: null, id: null });
@@ -35,6 +36,7 @@ const AdminDashboard = () => {
 
   const history = useHistory();
   const { currentUser, isAdmin, logout } = useAuth();
+  const { isDark } = useTheme();
 
   // Fetch data based on active tab
   const fetchData = useCallback(async (showToast = false) => {
@@ -298,15 +300,15 @@ const AdminDashboard = () => {
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Set Default Challenge Time Limit</h3>
-          <p className="text-sm text-gray-600 mb-4">
+        <div className={`${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
+          <h3 className="text-xl font-bold mb-4">Set Default Challenge Time Limit</h3>
+          <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
             Set the default time limit for all new challenge attempts. This will not affect users who have already started challenges.
           </p>
           
           <div className="flex items-center space-x-4 mb-6">
             <div>
-              <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">Hours</label>
+              <label htmlFor="hours" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Hours</label>
               <input
                 type="number"
                 id="hours"
@@ -314,11 +316,15 @@ const AdminDashboard = () => {
                 max="24"
                 value={hoursValue}
                 onChange={(e) => setHoursValue(e.target.value)}
-                className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className={`w-20 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               />
             </div>
             <div>
-              <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+              <label htmlFor="minutes" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Minutes</label>
               <input
                 type="number"
                 id="minutes"
@@ -326,11 +332,15 @@ const AdminDashboard = () => {
                 max="59"
                 value={minutesValue}
                 onChange={(e) => setMinutesValue(e.target.value)}
-                className="w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className={`w-20 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               />
             </div>
             <div className="mt-7">
-              <span className="text-gray-500">
+              <span className={isDark ? "text-gray-400" : "text-gray-500"}>
                 = {formatTimeDetailed((parseInt(hoursValue) || 0) * 3600 + (parseInt(minutesValue) || 0) * 60)}
               </span>
             </div>
@@ -339,14 +349,18 @@ const AdminDashboard = () => {
           <div className="flex justify-end space-x-3">
             <button
               onClick={() => setShowTimeSetting(false)}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600'
+                  : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+              }`}
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
@@ -359,27 +373,35 @@ const AdminDashboard = () => {
   // Loading state
   if (loading && !refreshing) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+      <div className={`flex justify-center items-center min-h-screen ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className={`animate-spin rounded-full h-16 w-16 border-b-2 ${
+            isDark ? 'border-indigo-400' : 'border-indigo-600'
+          } mx-auto`}></div>
+          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-wrap justify-between items-center mb-8">
           <div className="flex items-center mb-4 md:mb-0">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Admin Dashboard</h1>
           </div>
           <div className="flex flex-wrap items-center space-x-2 md:space-x-4">
             <button
               onClick={() => setShowTimeSetting(true)}
-              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'text-indigo-400 bg-gray-800 border-gray-700 hover:bg-gray-700'
+                  : 'text-indigo-600 bg-white hover:bg-gray-50 border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               <FiSettings className="mr-2" />
               Time Limit: {formatTimeRemaining(defaultTimeLimit)}
@@ -387,7 +409,11 @@ const AdminDashboard = () => {
             <button
               onClick={() => fetchData(true)}
               disabled={refreshing}
-              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'text-indigo-400 bg-gray-800 border-gray-700 hover:bg-gray-700'
+                  : 'text-indigo-600 bg-white hover:bg-gray-50 border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
             >
               <FiRefreshCw className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -403,47 +429,67 @@ const AdminDashboard = () => {
 
         {/* Error message */}
         {error && (
-          <div className="rounded-md bg-red-50 p-4 mb-6">
+          <div className={`rounded-md p-4 mb-6 ${
+            isDark ? 'bg-red-900/30 text-red-200' : 'bg-red-50 text-red-800'
+          }`}>
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className={`h-5 w-5 ${isDark ? 'text-red-400' : 'text-red-400'}`} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">{error}</div>
+                <h3 className={`text-sm font-medium ${isDark ? 'text-red-300' : 'text-red-800'}`}>Error</h3>
+                <div className={`mt-2 text-sm ${isDark ? 'text-red-200' : 'text-red-700'}`}>{error}</div>
               </div>
             </div>
           </div>
         )}
 
         {/* Tab navigation */}
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="flex border-b">
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg mb-6`}>
+          <div className={`flex border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <button
               onClick={() => setActiveTab('users')}
-              className={`flex-1 py-4 px-4 text-center ${activeTab === 'users' 
-                ? 'border-b-2 border-indigo-500 text-indigo-600 font-medium' 
-                : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'users' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <FiUsers className="inline mr-2" />
               Users
             </button>
             <button
               onClick={() => setActiveTab('challenges')}
-              className={`flex-1 py-4 px-4 text-center ${activeTab === 'challenges' 
-                ? 'border-b-2 border-indigo-500 text-indigo-600 font-medium' 
-                : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'challenges' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <FiFlag className="inline mr-2" />
               Challenges
             </button>
             <button
               onClick={() => setActiveTab('progress')}
-              className={`flex-1 py-4 px-4 text-center ${activeTab === 'progress' 
-                ? 'border-b-2 border-indigo-500 text-indigo-600 font-medium' 
-                : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'progress' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               <FiClock className="inline mr-2" />
               Progress
@@ -453,51 +499,63 @@ const AdminDashboard = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
+            <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">Registered Users</h2>
-                <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Registered Users</h2>
+                <span className={`${
+                  isDark ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-800'
+                } px-3 py-1 rounded-full text-sm font-medium`}>
                   Total: {users.length}
                 </span>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Email
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Institution
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Registration Date
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                   {users.map((user) => (
-                    <tr key={user._id} className="hover:bg-gray-50">
+                    <tr key={user._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{user.institution || 'N/A'}</div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.institution || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           {new Date(user.registrationTime).toLocaleDateString()}
                         </div>
                       </td>
@@ -507,8 +565,12 @@ const AdminDashboard = () => {
                           disabled={loading}
                           className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
                             deleteConfirm.type === 'user' && deleteConfirm.id === user._id
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'text-red-600 hover:text-red-900'
+                              ? isDark
+                                ? 'bg-red-900 text-red-200 hover:bg-red-800'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : isDark
+                                ? 'text-red-400 hover:text-red-300'
+                                : 'text-red-600 hover:text-red-900'
                           }`}
                         >
                           <FiTrash2 className="mr-1" />
@@ -519,7 +581,7 @@ const AdminDashboard = () => {
                   ))}
                   {users.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan="5" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         No users registered yet
                       </td>
                     </tr>
@@ -532,10 +594,10 @@ const AdminDashboard = () => {
 
         {/* Challenges Tab */}
         {activeTab === 'challenges' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
+            <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">Challenge Levels</h2>
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Challenge Levels</h2>
                 <Link
                   to="/admin/challenges/new"
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
@@ -547,43 +609,57 @@ const AdminDashboard = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Level
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Title
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Flag
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                   {challenges.sort((a, b) => a.levelNumber - b.levelNumber).map((challenge) => (
-                    <tr key={challenge._id} className="hover:bg-gray-50">
+                    <tr key={challenge._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">Level {challenge.levelNumber}</div>
+                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Level {challenge.levelNumber}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{challenge.title}</div>
+                        <div className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{challenge.title}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 font-mono">{challenge.flag}</div>
+                        <div className={`text-sm font-mono ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{challenge.flag}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           challenge.enabled 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
+                            ? isDark
+                              ? 'bg-green-900 text-green-200' 
+                              : 'bg-green-100 text-green-800'
+                            : isDark
+                              ? 'bg-gray-700 text-gray-300'
+                              : 'bg-gray-100 text-gray-800'
                         }`}>
                           {challenge.enabled ? 'Enabled' : 'Disabled'}
                         </span>
@@ -594,8 +670,12 @@ const AdminDashboard = () => {
                             onClick={() => handleToggleChallenge(challenge._id, challenge.enabled)}
                             className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
                               challenge.enabled
-                                ? 'text-yellow-600 hover:text-yellow-800'
-                                : 'text-green-600 hover:text-green-800'
+                                ? isDark
+                                  ? 'text-yellow-400 hover:text-yellow-300'
+                                  : 'text-yellow-600 hover:text-yellow-800'
+                                : isDark
+                                  ? 'text-green-400 hover:text-green-300'
+                                  : 'text-green-600 hover:text-green-800'
                             }`}
                           >
                             {challenge.enabled 
@@ -604,7 +684,11 @@ const AdminDashboard = () => {
                           </button>
                           <Link
                             to={`/admin/challenges/edit/${challenge._id}`}
-                            className="inline-flex items-center px-2 py-1 rounded-md text-sm text-indigo-600 hover:text-indigo-800"
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                              isDark
+                                ? 'text-indigo-400 hover:text-indigo-300'
+                                : 'text-indigo-600 hover:text-indigo-800'
+                            }`}
                           >
                             <FiEdit className="mr-1" /> Edit
                           </Link>
@@ -613,8 +697,12 @@ const AdminDashboard = () => {
                             disabled={loading}
                             className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
                               deleteConfirm.type === 'challenge' && deleteConfirm.id === challenge._id
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'text-red-600 hover:text-red-900'
+                                ? isDark
+                                  ? 'bg-red-900 text-red-200 hover:bg-red-800'
+                                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : isDark
+                                  ? 'text-red-400 hover:text-red-300'
+                                  : 'text-red-600 hover:text-red-900'
                             }`}
                           >
                             <FiTrash2 className="mr-1" />
@@ -626,7 +714,7 @@ const AdminDashboard = () => {
                   ))}
                   {challenges.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan="5" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         No challenges created yet
                       </td>
                     </tr>
@@ -639,59 +727,75 @@ const AdminDashboard = () => {
 
         {/* Progress Tab */}
         {activeTab === 'progress' && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
-            <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
+          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
+            <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">User Progress</h2>
-                <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>User Progress</h2>
+                <span className={`${
+                  isDark ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-800'
+                } px-3 py-1 rounded-full text-sm font-medium`}>
                   Total: {userProgress.length}
                 </span>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       User
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Email
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Current Level
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Completed Levels
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Time Left
                     </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                   {userProgress.map((progress) => {
                     const user = users.find(u => u._id === progress.userId) || { name: 'Unknown', email: 'Unknown' };
                     return (
-                      <tr key={progress._id} className="hover:bg-gray-50">
+                      <tr key={progress._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="text-sm font-medium">Level {progress.currentLevel}</div>
+                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Level {progress.currentLevel}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="text-sm text-gray-500">
+                          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                             {progress.levelStatus && Object.entries(progress.levelStatus)
                               .filter(([_, isCompleted]) => isCompleted)
                               .map(([level]) => level)
@@ -702,10 +806,16 @@ const AdminDashboard = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             progress.completed 
-                              ? 'bg-green-100 text-green-800' 
+                              ? isDark
+                                ? 'bg-green-900 text-green-200'
+                                : 'bg-green-100 text-green-800'
                               : progress.timeRemaining <= 0
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                ? isDark
+                                  ? 'bg-red-900 text-red-200'
+                                  : 'bg-red-100 text-red-800'
+                                : isDark
+                                  ? 'bg-yellow-900 text-yellow-200'
+                                  : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {progress.completed 
                               ? 'Completed' 
@@ -716,8 +826,12 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="flex items-center justify-center">
-                            <FiClock className="mr-1 text-gray-500" />
-                            <span className={`text-sm ${progress.timeRemaining < 300 ? 'text-red-600' : 'text-gray-500'}`}>
+                            <FiClock className={`mr-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                            <span className={`text-sm ${
+                              progress.timeRemaining < 300 
+                                ? isDark ? 'text-red-400' : 'text-red-600'
+                                : isDark ? 'text-gray-300' : 'text-gray-500'
+                            }`}>
                               {formatTimeRemaining(progress.timeRemaining)}
                             </span>
                           </div>
@@ -726,7 +840,11 @@ const AdminDashboard = () => {
                           <div className="flex items-center justify-center space-x-2">
                             <Link
                               to={`/admin/progress/${progress.userId}`}
-                              className="inline-flex items-center px-2 py-1 rounded-md text-sm text-indigo-600 hover:text-indigo-800"
+                              className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                                isDark
+                                  ? 'text-indigo-400 hover:text-indigo-300'
+                                  : 'text-indigo-600 hover:text-indigo-800'
+                              }`}
                             >
                               <FiEye className="mr-1" /> View Details
                             </Link>
@@ -737,7 +855,7 @@ const AdminDashboard = () => {
                   })}
                   {userProgress.length === 0 && (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                      <td colSpan="7" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         No progress data available
                       </td>
                     </tr>

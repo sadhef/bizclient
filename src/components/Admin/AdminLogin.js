@@ -3,10 +3,12 @@ import { useHistory } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaEnvelope, FaLock, FaShieldAlt } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const AdminLogin = () => {
   const history = useHistory();
   const { adminLogin, currentUser, isAdmin, loading } = useAuth();
+  const { isDark } = useTheme();
   
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
@@ -54,7 +56,11 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className={`min-h-screen ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+    } py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden`}>
       <div className="absolute inset-0 opacity-10">
         <div className="absolute transform -rotate-45 bg-violet-50 w-96 h-96 rounded-full -top-20 -left-20" />
         <div className="absolute transform rotate-45 bg-violet-50 w-96 h-96 rounded-full -bottom-20 -right-20" />
@@ -74,7 +80,11 @@ const AdminLogin = () => {
           <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
         </div>
 
-        <div className="backdrop-blur-lg bg-violet-50/10 rounded-2xl shadow-2xl p-8 border border-violet-200/20 relative overflow-hidden">
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-2xl shadow-2xl p-8 border relative overflow-hidden`}>
           {error && (
             <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6 rounded-r">
               <div className="flex items-center">
@@ -99,7 +109,11 @@ const AdminLogin = () => {
                   value={credentials.email}
                   onChange={handleChange}
                   required
-                  className="block w-full pl-10 pr-3 py-2.5 border border-violet-200/20 rounded-lg bg-violet-50/5 text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 hover:bg-violet-50/10"
+                  className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 ${
+                    isDark 
+                      ? 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-700/70' 
+                      : 'bg-violet-50/5 border-violet-200/20 hover:bg-violet-50/10'
+                  }`}
                   placeholder="Enter admin email"
                 />
               </div>
@@ -117,7 +131,11 @@ const AdminLogin = () => {
                   value={credentials.password}
                   onChange={handleChange}
                   required
-                  className="block w-full pl-10 pr-3 py-2.5 border border-violet-200/20 rounded-lg bg-violet-50/5 text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 hover:bg-violet-50/10"
+                  className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 ${
+                    isDark 
+                      ? 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-700/70' 
+                      : 'bg-violet-50/5 border-violet-200/20 hover:bg-violet-50/10'
+                  }`}
                   placeholder="Enter admin password"
                 />
               </div>

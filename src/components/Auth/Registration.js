@@ -12,10 +12,12 @@ import {
   FaUserPlus
 } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const Registration = () => {
   const history = useHistory();
   const { register, currentUser, loading } = useAuth();
+  const { isDark } = useTheme();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -92,7 +94,11 @@ const Registration = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className={`min-h-screen ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+    } py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden`}>
       {/* Decorative Background Elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute transform -rotate-45 bg-violet-50 w-96 h-96 rounded-full -top-20 -left-20" />
@@ -120,7 +126,11 @@ const Registration = () => {
         </div>
 
         {/* Form Card */}
-        <div className="backdrop-blur-lg bg-violet-50/10 rounded-2xl shadow-2xl p-8 border border-violet-200/20 relative overflow-hidden">
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-2xl shadow-2xl p-8 border relative overflow-hidden`}>
           {/* Error Message */}
           {error && (
             <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6 rounded-r">
@@ -155,7 +165,11 @@ const Registration = () => {
                     required={required}
                     value={formData[name]}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-violet-200/20 rounded-lg bg-violet-50/5 text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 hover:bg-violet-50/10"
+                    className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 ${
+                      isDark 
+                        ? 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-700/70' 
+                        : 'bg-violet-50/5 border-violet-200/20 hover:bg-violet-50/10'
+                    }`}
                     placeholder={`Enter your ${name}`}
                   />
                 </div>

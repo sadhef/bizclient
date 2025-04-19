@@ -1,4 +1,3 @@
-// Updated Navbar with same design language (violet gradients, blur, glow)
 import React, { useState } from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import {
@@ -12,12 +11,15 @@ import {
   FiX
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const history = useHistory();
   const { currentUser, isAdmin, logout } = useAuth();
+  const { isDark } = useTheme();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -33,7 +35,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-violet-900/80 backdrop-blur-md shadow-md text-white sticky top-0 z-50">
+    <nav className={`${isDark ? 'bg-dark-primary/80 shadow-lg' : 'bg-violet-900/80'} backdrop-blur-md text-white sticky top-0 z-50`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center space-x-4">
@@ -79,6 +81,8 @@ const Navbar = () => {
           </div>
 
           <div className="hidden sm:flex items-center space-x-4">
+            <ThemeToggle />
+            
             {!currentUser ? (
               <>
                 <Link
@@ -104,6 +108,8 @@ const Navbar = () => {
           </div>
 
           <div className="sm:hidden flex items-center">
+            <ThemeToggle className="mr-2" />
+            
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-violet-300 hover:text-white hover:bg-violet-700"
@@ -116,7 +122,7 @@ const Navbar = () => {
       </div>
 
       {isMenuOpen && (
-        <div className="sm:hidden bg-violet-800 border-t border-violet-600">
+        <div className={`sm:hidden ${isDark ? 'bg-dark-secondary border-dark-border' : 'bg-violet-800 border-violet-600'} border-t`}>
           <div className="px-2 pt-2 pb-3 space-y-1">
             {!currentUser && (
               <Link to="/login" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
@@ -134,7 +140,7 @@ const Navbar = () => {
               </Link>
             )}
           </div>
-          <div className="border-t border-violet-600 px-2 py-3">
+          <div className={`border-t ${isDark ? 'border-dark-border' : 'border-violet-600'} px-2 py-3`}>
             {!currentUser ? (
               <Link to="/register" onClick={closeMenu} className="block px-3 py-2 text-base font-medium text-violet-100 hover:bg-violet-700">
                 <FiUserPlus className="inline mr-2" /> Register

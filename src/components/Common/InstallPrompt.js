@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FiDownload, FiX } from 'react-icons/fi';
+import { useTheme } from '../../context/ThemeContext';
 
 const InstallPrompt = () => {
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const captureInstallPrompt = (e) => {
@@ -58,7 +60,9 @@ const InstallPrompt = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 mx-auto max-w-md z-50 bg-violet-700 text-white rounded-lg shadow-lg p-4">
+    <div className={`fixed bottom-4 left-4 right-4 mx-auto max-w-md z-50 ${
+      isDark ? 'bg-violet-900' : 'bg-violet-700'
+    } text-white rounded-lg shadow-lg p-4`}>
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           <div className="mr-3">
@@ -72,14 +76,18 @@ const InstallPrompt = () => {
         <div className="flex gap-2">
           <button 
             onClick={dismissPrompt}
-            className="p-2 hover:bg-violet-600 rounded-lg"
+            className={`p-2 ${
+              isDark ? 'hover:bg-violet-800' : 'hover:bg-violet-600'
+            } rounded-lg`}
             aria-label="Dismiss"
           >
             <FiX />
           </button>
           <button 
             onClick={handleInstallClick}
-            className="flex items-center gap-1 bg-violet-500 hover:bg-violet-600 py-2 px-4 rounded-lg"
+            className={`flex items-center gap-1 ${
+              isDark ? 'bg-violet-800 hover:bg-violet-700' : 'bg-violet-500 hover:bg-violet-600'
+            } py-2 px-4 rounded-lg`}
           >
             <FiDownload />
             <span>Install</span>
