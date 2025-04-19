@@ -41,7 +41,7 @@ const Navbar = () => {
               to={currentUser ? (isAdmin ? '/admin-dashboard' : '/challenges') : '/login'}
               className="text-2xl font-bold text-violet-100 hover:text-white"
             >
-              BizTras Train
+              BizTras
             </Link>
 
             <div className="hidden sm:flex space-x-3">

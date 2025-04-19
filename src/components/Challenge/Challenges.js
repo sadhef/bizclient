@@ -263,7 +263,7 @@ const Challenges = () => {
           </div>
           
           <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">
-            BizTras Challenge
+            BizTras
           </h2>
           <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
           {challenge && (

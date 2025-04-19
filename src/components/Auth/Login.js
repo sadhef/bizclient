@@ -61,7 +61,7 @@ const Login = () => {
             />
             <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-400 to-violet-600 opacity-50 blur rounded-2xl" />
           </div>
-          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">Login to BizTras Train</h2>
+          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">Login to BizTras</h2>
           <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
         </div>
 
