@@ -148,7 +148,7 @@ function App() {
                 
                 {/* Fallback route - redirect to login */}
                 <Route path="*">
-                  <Redirect to="/login" />
+                  <Redirect to="/register" />
                 </Route>
               </Switch>
               
