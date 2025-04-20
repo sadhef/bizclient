@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FiSend, FiUser, FiUsers, FiMessageCircle, FiClock, FiTrash2 } from 'react-icons/fi';
 import { useChat } from '../../context/ChatContext';
 import { useAuth } from '../../context/AuthContext';
@@ -6,12 +6,31 @@ import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import { api } from '../../utils/api';
 
+// Debounce helper function to prevent rapid submissions
+const useDebounce = (callback, delay = 300) => {
+  const timeoutRef = useRef(null);
+  
+  return useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+      timeoutRef.current = null;
+    }, delay);
+  }, [callback, delay]);
+};
+
 const Chat = () => {
   const [newMessage, setNewMessage] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const formRef = useRef(null);
+  const submittedMessagesRef = useRef(new Set());
   
   const { chatMessages, onlineUsers, loading, error, sendMessage, markAllAsRead, fetchMessages, isSending } = useChat();
   const { currentUser, isAdmin } = useAuth();
@@ -35,48 +54,91 @@ const Chat = () => {
   };
 
   // Check if user has scrolled up (to disable auto-scroll)
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (!chatContainerRef.current) return;
     
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
     const isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 100;
     
     setAutoScroll(isScrolledToBottom);
-  };
+  }, []);
 
   // Scroll to bottom of messages
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current && autoScroll) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [autoScroll]);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
     scrollToBottom();
-  }, [chatMessages]);
+  }, [chatMessages, scrollToBottom]);
 
   // Mark messages as read when viewing the chat
   useEffect(() => {
     markAllAsRead();
   }, [markAllAsRead]);
 
-  // Handle sending new messages
-  const handleSendMessage = async (e) => {
+  // Actual message sending implementation, separated from the event handler
+  const processSendMessage = useCallback(async (messageText) => {
+    // Skip empty messages or messages that are already being sent
+    if (!messageText.trim() || isSending || isSubmitting) return;
+    
+    // Check if we've already submitted this message recently to prevent duplicates
+    const trimmedMessage = messageText.trim();
+    if (submittedMessagesRef.current.has(trimmedMessage)) {
+      console.log('Prevented duplicate submission:', trimmedMessage);
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Track this message to prevent duplicates
+      submittedMessagesRef.current.add(trimmedMessage);
+      
+      // Set a timeout to remove the message from tracked set after 3 seconds
+      setTimeout(() => {
+        submittedMessagesRef.current.delete(trimmedMessage);
+      }, 3000);
+      
+      // Send the message through the context
+      const result = await sendMessage(trimmedMessage);
+      
+      if (result) {
+        // Clear the input field only on success
+        setNewMessage('');
+        // Force auto-scroll when user sends a message
+        setAutoScroll(true);
+      }
+    } catch (err) {
+      console.error('Error in send message handler:', err);
+      toast.error('Failed to send message');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isSending, isSubmitting, sendMessage]);
+
+  // Use debounce for the send message function to prevent rapid clicks
+  const debouncedSendMessage = useDebounce(processSendMessage, 300);
+
+  // Handle form submission with extra safeguards
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
     
-    if (!newMessage.trim() || isSending) return;
-    
-    const success = await sendMessage(newMessage);
-    if (success) {
-      setNewMessage('');
-      // Force auto-scroll when user sends a message
-      setAutoScroll(true);
+    // Prevent submission if already submitting or sending
+    if (isSubmitting || isSending) {
+      console.log('Prevented submission attempt while already processing');
+      return;
     }
-  };
+    
+    // Use the debounced function to prevent rapid submissions
+    debouncedSendMessage(newMessage);
+  }, [newMessage, isSubmitting, isSending, debouncedSendMessage]);
 
   // Handle message deletion (admin only)
-  const handleDeleteMessage = async (messageId) => {
+  const handleDeleteMessage = useCallback(async (messageId) => {
     if (!isAdmin) return;
     
     try {
@@ -94,10 +156,10 @@ const Chat = () => {
     } finally {
       setDeletingMessageId(null);
     }
-  };
+  }, [isAdmin, fetchMessages]);
 
   // Group messages by date for better display
-  const groupMessagesByDate = () => {
+  const groupMessagesByDate = useCallback(() => {
     const groups = {};
     
     chatMessages.forEach(message => {
@@ -114,17 +176,22 @@ const Chat = () => {
       date,
       messages
     }));
-  };
+  }, [chatMessages]);
 
   // Check if a message is from the current user
-  const isOwnMessage = (message) => {
+  const isOwnMessage = useCallback((message) => {
     return message.userId === currentUser?._id;
-  };
+  }, [currentUser]);
 
   // Get user status (online/offline)
-  const isUserOnline = (userId) => {
+  const isUserOnline = useCallback((userId) => {
     return onlineUsers.some(user => user._id === userId);
-  };
+  }, [onlineUsers]);
+
+  // Handle input change with duplicate prevention
+  const handleInputChange = useCallback((e) => {
+    setNewMessage(e.target.value);
+  }, []);
 
   return (
     <div className={`flex flex-col h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -193,7 +260,7 @@ const Chat = () => {
                 
                 return (
                   <div 
-                    key={message._id || index} 
+                    key={message._id || `${message.userId}-${index}`} 
                     className={`flex ${own ? 'justify-end' : 'justify-start'} mb-4 group`}
                   >
                     {/* Avatar for other users' messages */}
@@ -280,7 +347,8 @@ const Chat = () => {
                     )}
                   </div>
                 );
-              })}
+              }
+            )}
             </div>
           ))
         )}
@@ -293,13 +361,13 @@ const Chat = () => {
       <div className={`p-4 ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${
         isDark ? 'border-gray-700' : 'border-gray-200'
       }`}>
-        <form onSubmit={handleSendMessage} className="flex items-center">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex items-center">
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Type your message..."
-            disabled={isSending}
+            disabled={isSending || isSubmitting}
             className={`flex-grow px-4 py-2 rounded-l-lg focus:outline-none ${
               isDark 
                 ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -308,14 +376,15 @@ const Chat = () => {
           />
           <button
             type="submit"
-            disabled={!newMessage.trim() || isSending}
+            disabled={!newMessage.trim() || isSending || isSubmitting}
             className={`px-4 py-2 rounded-r-lg ${
               isDark
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            } disabled:opacity-50 transition-colors`}
+            } disabled:opacity-50 transition-colors min-w-[40px] h-[40px] flex items-center justify-center`}
+            aria-label="Send message"
           >
-            {isSending ? (
+            {isSending || isSubmitting ? (
               <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin" />
             ) : (
               <FiSend />
