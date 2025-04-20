@@ -1,28 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaEnvelope, FaLock, FaSignInAlt, FaCloudUploadAlt } from 'react-icons/fa';
 import { FiCloudLightning } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { api } from '../../utils/api';
 
 const CloudLogin = () => {
   const history = useHistory();
-  const { login, currentUser, isCloud, loading, error } = useAuth();
+  const { login, logout, currentUser, isCloud, loading, error } = useAuth();
   const { isDark } = useTheme();
 
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
-  useEffect(() => {
-    if (currentUser && isCloud) {
-      history.push('/cloud-dashboard');
-    } else if (currentUser && !isCloud) {
-      setFormError('Your account does not have cloud access. Please contact an administrator.');
+  // Debug helper function
+  const logAuthState = useCallback(() => {
+    console.log('Auth State:', { 
+      currentUser: currentUser ? 'User exists' : 'No user', 
+      isCloud: isCloud, 
+      loading, 
+      error 
+    });
+    if (currentUser) {
+      console.log('User cloud status:', currentUser.isCloud);
     }
-  }, [currentUser, isCloud, history]);
+  }, [currentUser, isCloud, loading, error]);
 
+  // Custom direct API call to check cloud access
+  const checkCloudAccess = useCallback(async (token) => {
+    try {
+      // Set the token for this specific request
+      api.setToken(token);
+      
+      // Fetch user data directly
+      const response = await api.get('/auth/me');
+      
+      // Log the full response for debugging
+      console.log('Direct API response:', response);
+      
+      // Explicitly check cloud access
+      if (response && response.user) {
+        // Use strict equality to check boolean true
+        return response.user.isCloud === true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error checking cloud access:', err);
+      return false;
+    }
+  }, []);
+
+  // Check if user is already logged in and has cloud access
+  useEffect(() => {
+    // Debug logging
+    logAuthState();
+    
+    // If user exists and has cloud access, redirect
+    if (currentUser && isCloud === true) {
+      console.log('Cloud access confirmed, redirecting to dashboard');
+      history.push('/cloud-dashboard');
+    }
+    // If login was attempted and user exists but doesn't have cloud access
+    else if (loginAttempted && currentUser && isCloud !== true) {
+      console.log('Login attempted but no cloud access');
+      setFormError('Your account does not have cloud access. Please contact an administrator.');
+      toast.error('Access denied: Cloud access required');
+      
+      // Reset login state to prevent loops
+      setLoginAttempted(false);
+      
+      // Log out the user to clear the current state
+      logout();
+    }
+  }, [currentUser, isCloud, history, logAuthState, loginAttempted, logout]);
+
+  // Display error from auth context
   useEffect(() => {
     if (error) {
       setFormError(error);
@@ -37,20 +93,46 @@ const CloudLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
       setFormLoading(true);
-      const user = await login(credentials.email, credentials.password);
+      setFormError('');
       
-      if (user && !user.isCloud) {
-        setFormError('Your account does not have cloud access. Please contact an administrator.');
-        toast.error('Access denied: Cloud access required');
-        return;
+      // First, attempt to directly authenticate with the API
+      const response = await api.post('/auth/login', { 
+        email: credentials.email, 
+        password: credentials.password 
+      });
+      
+      console.log('Login response:', response);
+      
+      if (response && response.token) {
+        // Check cloud access directly before proceeding
+        const hasCloudAccess = await checkCloudAccess(response.token);
+        
+        if (hasCloudAccess) {
+          console.log('Cloud access verified directly');
+          
+          // If confirmed, proceed with normal login flow
+          const user = await login(credentials.email, credentials.password);
+          
+          // Mark login as attempted and let the useEffect handle the redirect
+          setLoginAttempted(true);
+          
+          toast.success('Cloud login successful!');
+          history.push('/cloud-dashboard');
+        } else {
+          console.log('No cloud access found');
+          setFormError('Your account does not have cloud access. Please contact an administrator.');
+          toast.error('Access denied: Cloud access required');
+        }
+      } else {
+        throw new Error('Invalid login response');
       }
-      
-      toast.success('Login successful!');
-      history.push('/cloud-dashboard');
     } catch (err) {
-      setFormError(err.message);
+      console.error('Login error:', err);
+      // Handle login failure
+      setFormError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setFormLoading(false);
     }

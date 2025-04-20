@@ -264,6 +264,7 @@ const CloudDashboard = () => {
           reportDates,
           columns,
           rows,
+          totalSpaceUsed, // Ensure we pass totalSpaceUsed to the preview component
           lastUpdated
         }}
       />
@@ -592,7 +593,8 @@ const CloudReportPreviewComponent = ({ reportData }) => {
       reportDates, 
       columns, 
       rows, 
-      totalSpaceUsed 
+      totalSpaceUsed, // Make sure to use this prop
+      lastUpdated 
     } = reportData;
     
     const history = useHistory();
@@ -699,7 +701,8 @@ const CloudReportPreviewComponent = ({ reportData }) => {
           }
           .status-failed {
             background-color: #fee2e2 !important;
-            color: #b91c1c !important;
+            color: #b91c1c
+            !important;
             padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
@@ -726,6 +729,20 @@ const CloudReportPreviewComponent = ({ reportData }) => {
             text-align: center;
             display: inline-block;
             width: 90%;
+          }
+          /* Add styles for total space used section */
+          .total-space-used {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+          }
+          .total-space-used span {
+            color: #4f46e5;
+            font-size: 18px;
           }
         }
       `;
@@ -807,12 +824,15 @@ const CloudReportPreviewComponent = ({ reportData }) => {
             </p>
           </div>
           
-          {/* Space Used Section */}
+          {/* Space Used Section - Added proper display of total space used */}
           {totalSpaceUsed && (
-            <div className="py-4 px-6 border-t text-center space-used">
-              <p className="text-lg font-semibold">
-                Total Space Used: <span className="text-indigo-600">{totalSpaceUsed}</span>
-              </p>
+            <div className="py-4 px-6 text-center border-b total-space-used">
+              <div className="flex items-center justify-center">
+                <FiHardDrive className={`mr-2 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} size={20} />
+                <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Total Space Used: <span className={isDark ? 'text-indigo-400' : 'text-indigo-600'}>{totalSpaceUsed}</span>
+                </p>
+              </div>
             </div>
           )}
           
