@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiSave, FiArrowLeft, FiCloudLightning, FiRefreshCw, FiEye, FiPrinter } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiSave, FiArrowLeft, FiCloudLightning, FiRefreshCw, FiEye, FiPrinter, FiHardDrive } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -58,7 +58,7 @@ const isStatusColumn = (column) => {
 
 // Main Cloud Dashboard component
 const CloudDashboard = () => {
-  const [columns, setColumns] = useState(['Server', 'Status', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'SSL Expiry', 'Remarks']);
+  const [columns, setColumns] = useState(['Server', 'Status', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'SSL Expiry', 'Space Used', 'Remarks']);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -69,6 +69,7 @@ const CloudDashboard = () => {
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
+  const [totalSpaceUsed, setTotalSpaceUsed] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
@@ -124,6 +125,11 @@ const CloudDashboard = () => {
           setReportDates({ startDate, endDate });
         }
         
+        // Get total space used if available
+        if (response.data.totalSpaceUsed) {
+          setTotalSpaceUsed(response.data.totalSpaceUsed);
+        }
+        
         if (response.data.updatedAt) {
           setLastUpdated(new Date(response.data.updatedAt));
         }
@@ -147,6 +153,7 @@ const CloudDashboard = () => {
         columns,
         rows,
         reportTitle,
+        totalSpaceUsed,
         reportDates: {
           startDate: new Date(reportDates.startDate),
           endDate: new Date(reportDates.endDate)
@@ -398,6 +405,28 @@ const CloudDashboard = () => {
                 }`}
               />
             </div>
+
+            <div>
+              <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                Total Space Used
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiHardDrive className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                </div>
+                <input
+                  type="text"
+                  value={totalSpaceUsed}
+                  onChange={(e) => setTotalSpaceUsed(e.target.value)}
+                  placeholder="e.g., 250GB / 1TB"
+                  className={`w-full pl-10 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -558,7 +587,14 @@ const CloudDashboard = () => {
 
 // CloudReportPreview component
 const CloudReportPreviewComponent = ({ reportData }) => {
-    const { reportTitle, reportDates, columns, rows } = reportData;
+    const { 
+      reportTitle, 
+      reportDates, 
+      columns, 
+      rows, 
+      totalSpaceUsed 
+    } = reportData;
+    
     const history = useHistory();
     const { isDark } = useTheme();
     const printRef = useRef();
@@ -635,6 +671,12 @@ const CloudReportPreviewComponent = ({ reportData }) => {
             font-size: 12px;
             color: #333;
           }
+          .space-used {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+          }
           .status-automatic {
             background-color: #d1fae5 !important;
             color: #065f46 !important;
@@ -699,143 +741,152 @@ const CloudReportPreviewComponent = ({ reportData }) => {
       }, 1000);
     };
   
-  // Function to handle going back to edit mode
-  const handleBackToEdit = () => {
-    history.push('/cloud-dashboard');
-  };
+    // Function to handle going back to edit mode
+    const handleBackToEdit = () => {
+      history.push('/cloud-dashboard');
+    };
+    
+    // Format date for display
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString(undefined, { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    };
   
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-  return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6 print:bg-white print:p-0`}>
-      {/* Toolbar - hidden during print */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 print:hidden">
-        <div className="flex flex-wrap justify-between items-center mb-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={handleBackToEdit}
-              className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
-                isDark
-                  ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-              }`}
-            >
-              <FiArrowLeft className="mr-2" />
-              Back to Edit
-            </button>
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <FiPrinter className="mr-2" />
-              Print Report
-            </button>
+    return (
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6 print:bg-white print:p-0`}>
+        {/* Toolbar - hidden during print */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 print:hidden">
+          <div className="flex flex-wrap justify-between items-center mb-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleBackToEdit}
+                className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                  isDark
+                    ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700'
+                    : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                }`}
+              >
+                <FiArrowLeft className="mr-2" />
+                Back to Edit
+              </button>
+              <button
+                onClick={handlePrint}
+                className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <FiPrinter className="mr-2" />
+                Print Report
+              </button>
+            </div>
+            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Preview Mode
+            </div>
           </div>
-          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            Preview Mode
-          </div>
-        </div>
-      </div>
-      
-      {/* Print Area - this content will be printed */}
-      <div 
-        id="print-area"
-        ref={printRef}
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${
-          isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-        } shadow-lg rounded-lg overflow-hidden print:shadow-none print:rounded-none print:p-0 print:max-w-none print:text-black print:bg-white`}
-      >
-        {/* Report Header */}
-        <div className="py-6 px-4 sm:px-6 border-b print-header">
-          <h1 className="text-3xl font-bold text-center">{reportTitle || 'Cloud Status Report'}</h1>
-          <p className="text-center mt-2">
-            {reportDates?.startDate && reportDates?.endDate 
-              ? `${formatDate(reportDates.startDate)} - ${formatDate(reportDates.endDate)}`
-              : 'Date range not specified'
-            }
-          </p>
         </div>
         
-        {/* Report Table */}
-        <div className="p-4 sm:p-6 overflow-x-auto">
-          <table className="min-w-full divide-y print:border print:border-collapse">
-            <thead>
-              <tr>
-                {columns.map((column, index) => (
-                  <th 
-                    key={index}
-                    className={`px-6 py-3 text-left text-xs font-medium ${
-                      isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500'
-                    } uppercase tracking-wider text-center`}
-                  >
-                    {column}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className={`${isDark ? 'divide-gray-700' : 'divide-gray-200'} divide-y`}>
-              {rows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  {columns.map((column, colIndex) => {
-                    const cellValue = row[column] || 'N/A';
-                    // Apply status styling to status-related columns
-                    const isStatusCol = isStatusColumn(column);
-                    const { bg, text } = isStatusCol ? getStatusColor(cellValue) : { bg: '', text: '' };
-                    
-                    return (
-                      <td 
-                        key={colIndex} 
-                        className={`px-6 py-4 whitespace-nowrap text-center ${
-                          isDark ? 'text-gray-200' : 'text-gray-900'
-                        }`}
-                      >
-                        {isStatusCol ? (
-                          <div 
-                            className={`inline-block px-4 py-1 rounded-full text-xs font-medium ${bg} ${text}`}
-                          >
-                            <span className={getStatusClass(cellValue)}>{cellValue}</span>
-                          </div>
-                        ) : (
-                          cellValue
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-              {rows.length === 0 && (
+        {/* Print Area - this content will be printed */}
+        <div 
+          id="print-area"
+          ref={printRef}
+          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${
+            isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+          } shadow-lg rounded-lg overflow-hidden print:shadow-none print:rounded-none print:p-0 print:max-w-none print:text-black print:bg-white`}
+        >
+          {/* Report Header */}
+          <div className="py-6 px-4 sm:px-6 border-b print-header">
+            <h1 className="text-3xl font-bold text-center">{reportTitle || 'Cloud Status Report'}</h1>
+            <p className="text-center mt-2">
+              {reportDates?.startDate && reportDates?.endDate 
+                ? `${formatDate(reportDates.startDate)} - ${formatDate(reportDates.endDate)}`
+                : 'Date range not specified'
+              }
+            </p>
+          </div>
+          
+          {/* Space Used Section */}
+          {totalSpaceUsed && (
+            <div className="py-4 px-6 border-t text-center space-used">
+              <p className="text-lg font-semibold">
+                Total Space Used: <span className="text-indigo-600">{totalSpaceUsed}</span>
+              </p>
+            </div>
+          )}
+          
+          {/* Report Table */}
+          <div className="p-4 sm:p-6 overflow-x-auto">
+            <table className="min-w-full divide-y print:border print:border-collapse">
+              <thead>
                 <tr>
-                  <td 
-                    colSpan={columns.length} 
-                    className={`px-6 py-4 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    No data available
-                  </td>
+                  {columns.map((column, index) => (
+                    <th 
+                      key={index}
+                      className={`px-6 py-3 text-left text-xs font-medium ${
+                        isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500'
+                      } uppercase tracking-wider text-center`}
+                    >
+                      {column}
+                    </th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Report Footer */}
-        <div className="py-4 px-6 border-t text-center print-footer">
-          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            Generated on {new Date().toLocaleString()}
-          </p>
+              </thead>
+              <tbody className={`${isDark ? 'divide-gray-700' : 'divide-gray-200'} divide-y`}>
+                {rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {columns.map((column, colIndex) => {
+                      const cellValue = row[column] || 'N/A';
+                      // Apply status styling to status-related columns
+                      const isStatusCol = isStatusColumn(column);
+                      const { bg, text } = isStatusCol ? getStatusColor(cellValue) : { bg: '', text: '' };
+                      
+                      return (
+                        <td 
+                          key={colIndex} 
+                          className={`px-6 py-4 whitespace-nowrap text-center ${
+                            isDark ? 'text-gray-200' : 'text-gray-900'
+                          }`}
+                        >
+                          {isStatusCol ? (
+                            <div 
+                              className={`inline-block px-4 py-1 rounded-full text-xs font-medium ${bg} ${text}`}
+                            >
+                              <span className={getStatusClass(cellValue)}>{cellValue}</span>
+                            </div>
+                          ) : (
+                            cellValue
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td 
+                      colSpan={columns.length} 
+                      className={`px-6 py-4 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                    >
+                      No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Report Footer */}
+          <div className="py-4 px-6 border-t text-center print-footer">
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Generated on {new Date().toLocaleString()}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 
 export default CloudDashboard;
