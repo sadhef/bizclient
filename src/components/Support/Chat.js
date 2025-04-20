@@ -13,7 +13,7 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   
-  const { chatMessages, onlineUsers, loading, error, sendMessage, markAllAsRead, fetchMessages } = useChat();
+  const { chatMessages, onlineUsers, loading, error, sendMessage, markAllAsRead, fetchMessages, isSending } = useChat();
   const { currentUser, isAdmin } = useAuth();
   const { isDark } = useTheme();
 
@@ -62,15 +62,17 @@ const Chat = () => {
   }, [markAllAsRead]);
 
   // Handle sending new messages
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isSending) return;
     
-    sendMessage(newMessage);
-    setNewMessage('');
-    // Force auto-scroll when user sends a message
-    setAutoScroll(true);
+    const success = await sendMessage(newMessage);
+    if (success) {
+      setNewMessage('');
+      // Force auto-scroll when user sends a message
+      setAutoScroll(true);
+    }
   };
 
   // Handle message deletion (admin only)
@@ -297,22 +299,27 @@ const Chat = () => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
+            disabled={isSending}
             className={`flex-grow px-4 py-2 rounded-l-lg focus:outline-none ${
               isDark 
                 ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                 : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
-            } border`}
+            } border disabled:opacity-60`}
           />
           <button
             type="submit"
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || isSending}
             className={`px-4 py-2 rounded-r-lg ${
               isDark
                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
             } disabled:opacity-50 transition-colors`}
           >
-            <FiSend />
+            {isSending ? (
+              <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin" />
+            ) : (
+              <FiSend />
+            )}
           </button>
         </form>
       </div>

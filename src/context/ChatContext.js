@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
 
@@ -18,8 +18,11 @@ export const ChatProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [lastFetched, setLastFetched] = useState(null);
+  const [isSending, setIsSending] = useState(false); // Add a flag to prevent duplicate sends
   
   const { currentUser } = useAuth();
+  const messagePollingRef = useRef(null);
+  const userPollingRef = useRef(null);
 
   // Fetch chat messages
   const fetchMessages = async (showLoading = true) => {
@@ -61,9 +64,12 @@ export const ChatProvider = ({ children }) => {
 
   // Send a new message
   const sendMessage = async (messageText) => {
-    if (!currentUser || !messageText.trim()) return null;
+    if (!currentUser || !messageText.trim() || isSending) return null;
     
     try {
+      // Set the sending flag to prevent duplicate submissions
+      setIsSending(true);
+      
       const response = await api.post('/chat/messages', {
         text: messageText
       });
@@ -78,6 +84,9 @@ export const ChatProvider = ({ children }) => {
       console.error('Error sending message:', err);
       setError('Failed to send message');
       return null;
+    } finally {
+      // Reset the sending flag when done
+      setIsSending(false);
     }
   };
 
@@ -124,13 +133,20 @@ export const ChatProvider = ({ children }) => {
       fetchMessages();
       fetchOnlineUsers();
       
+      // Clean up any existing intervals first
+      if (messagePollingRef.current) clearInterval(messagePollingRef.current);
+      if (userPollingRef.current) clearInterval(userPollingRef.current);
+      
       // Set up polling for new messages and online users
-      const messageInterval = setInterval(checkNewMessages, 10000); // Check every 10 seconds
-      const userInterval = setInterval(fetchOnlineUsers, 30000); // Check every 30 seconds
+      messagePollingRef.current = setInterval(checkNewMessages, 10000); // Check every 10 seconds
+      userPollingRef.current = setInterval(fetchOnlineUsers, 30000); // Check every 30 seconds
       
       return () => {
-        clearInterval(messageInterval);
-        clearInterval(userInterval);
+        // Clear intervals when component unmounts or user changes
+        if (messagePollingRef.current) clearInterval(messagePollingRef.current);
+        if (userPollingRef.current) clearInterval(userPollingRef.current);
+        messagePollingRef.current = null;
+        userPollingRef.current = null;
       };
     }
   }, [currentUser]);
@@ -142,6 +158,7 @@ export const ChatProvider = ({ children }) => {
       setOnlineUsers([]);
       setUnreadCount(0);
       setLastFetched(null);
+      setIsSending(false);
     }
   }, [currentUser]);
 
@@ -157,6 +174,7 @@ export const ChatProvider = ({ children }) => {
     loading,
     error,
     unreadCount,
+    isSending,
     fetchMessages,
     fetchOnlineUsers,
     sendMessage,
