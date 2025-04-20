@@ -4,10 +4,10 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Auth components
-import Login from './components/Auth/Login';
+import CloudLogin from './components/Cloud/CloudLogin';
 import Registration from './components/Auth/Registration';
 import AdminLogin from './components/Admin/AdminLogin';
-import CloudLogin from './components/Cloud/CloudLogin';
+import Login from './components/Auth/Login';
 
 // Challenge components
 import Challenges from './components/Challenge/Challenges';
