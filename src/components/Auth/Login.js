@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaEnvelope, FaLock, FaSignInAlt } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaSignInAlt, FaQuestionCircle } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -13,12 +13,17 @@ const Login = () => {
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const [goToSupport, setGoToSupport] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
-      history.push('/challenges');
+      if (goToSupport) {
+        history.push('/support');
+      } else {
+        history.push('/challenges');
+      }
     }
-  }, [currentUser, history]);
+  }, [currentUser, history, goToSupport]);
 
   useEffect(() => {
     if (error) {
@@ -38,9 +43,25 @@ const Login = () => {
       setFormLoading(true);
       await login(credentials.email, credentials.password);
       toast.success('Login successful!');
-      history.push('/challenges');
+      // The redirect will happen in the useEffect when currentUser changes
     } catch (err) {
       setFormError(err.message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleSupportLogin = async (e) => {
+    e.preventDefault();
+    try {
+      setFormLoading(true);
+      setGoToSupport(true);
+      await login(credentials.email, credentials.password);
+      toast.success('Login successful! Redirecting to support...');
+      // The redirect will happen in the useEffect when currentUser changes
+    } catch (err) {
+      setFormError(err.message);
+      setGoToSupport(false);
     } finally {
       setFormLoading(false);
     }
@@ -67,8 +88,12 @@ const Login = () => {
             />
             <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-400 to-violet-600 opacity-50 blur rounded-2xl" />
           </div>
-          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">Login to BizTras</h2>
+          
+          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">
+            BizTras Account Login
+          </h2>
           <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
+          <p className="text-lg text-violet-200">Sign in to your account</p>
         </div>
 
         <div className={`backdrop-blur-lg ${
@@ -76,6 +101,7 @@ const Login = () => {
             ? 'bg-gray-800/40 border-gray-700/30' 
             : 'bg-violet-50/10 border-violet-200/20'
         } rounded-2xl shadow-2xl p-8 border relative overflow-hidden`}>
+          {/* Error Message */}
           {formError && (
             <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6 rounded-r">
               <div className="flex items-center">
@@ -132,11 +158,11 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 type="submit"
                 disabled={formLoading || loading}
-                className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
+                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
               >
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-violet-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <span className="relative flex items-center justify-center">
@@ -153,8 +179,31 @@ const Login = () => {
                   )}
                 </span>
               </button>
+              
+              <button
+                type="button"
+                onClick={handleSupportLogin}
+                disabled={formLoading || loading}
+                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-teal-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <span className="relative flex items-center justify-center">
+                  {formLoading || loading ? (
+                    <>
+                      <div className="w-5 h-5 border-t-2 border-b-2 border-teal-50 rounded-full animate-spin mr-2" />
+                      Logging in...
+                    </>
+                  ) : (
+                    <>
+                      <FaQuestionCircle className="mr-2" />
+                      Go to Support
+                    </>
+                  )}
+                </span>
+              </button>
             </div>
-
+            
+            {/* Login Link */}
             <div className="text-center text-sm text-violet-200 mt-4">
               Don't have an account?{' '}
               <Link to="/register" className="text-violet-300 hover:text-white font-medium">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaEnvelope, FaLock, FaSignInAlt, FaCloudUploadAlt } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaSignInAlt, FaCloudUploadAlt, FaQuestionCircle } from 'react-icons/fa';
 import { FiCloudLightning } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,7 @@ const CloudLogin = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [loginAttempted, setLoginAttempted] = useState(false);
+  const [goToSupport, setGoToSupport] = useState(false);
 
   // Debug helper function
   const logAuthState = useCallback(() => {
@@ -62,7 +63,11 @@ const CloudLogin = () => {
     // If user exists and has cloud access, redirect
     if (currentUser && isCloud === true) {
       console.log('Cloud access confirmed, redirecting to dashboard');
-      history.push('/cloud-dashboard');
+      if (goToSupport) {
+        history.push('/support');
+      } else {
+        history.push('/cloud-dashboard');
+      }
     }
     // If login was attempted and user exists but doesn't have cloud access
     else if (loginAttempted && currentUser && isCloud !== true) {
@@ -76,7 +81,7 @@ const CloudLogin = () => {
       // Log out the user to clear the current state
       logout();
     }
-  }, [currentUser, isCloud, history, logAuthState, loginAttempted, logout]);
+  }, [currentUser, isCloud, history, logAuthState, loginAttempted, logout, goToSupport]);
 
   // Display error from auth context
   useEffect(() => {
@@ -97,6 +102,7 @@ const CloudLogin = () => {
     try {
       setFormLoading(true);
       setFormError('');
+      setGoToSupport(false);
       
       // First, attempt to directly authenticate with the API
       const response = await api.post('/auth/login', { 
@@ -133,6 +139,56 @@ const CloudLogin = () => {
       console.error('Login error:', err);
       // Handle login failure
       setFormError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleSupportLogin = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setFormLoading(true);
+      setFormError('');
+      setGoToSupport(true);
+      
+      // First, attempt to directly authenticate with the API
+      const response = await api.post('/auth/login', { 
+        email: credentials.email, 
+        password: credentials.password 
+      });
+      
+      console.log('Login response:', response);
+      
+      if (response && response.token) {
+        // Check cloud access directly before proceeding
+        const hasCloudAccess = await checkCloudAccess(response.token);
+        
+        if (hasCloudAccess) {
+          console.log('Cloud access verified directly');
+          
+          // If confirmed, proceed with normal login flow
+          const user = await login(credentials.email, credentials.password);
+          
+          // Mark login as attempted and let the useEffect handle the redirect
+          setLoginAttempted(true);
+          
+          toast.success('Cloud login successful! Redirecting to support...');
+          // The redirect will happen in the useEffect
+        } else {
+          console.log('No cloud access found');
+          setFormError('Your account does not have cloud access. Please contact an administrator.');
+          toast.error('Access denied: Cloud access required');
+          setGoToSupport(false);
+        }
+      } else {
+        throw new Error('Invalid login response');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      // Handle login failure
+      setFormError(err.message || 'Login failed. Please check your credentials.');
+      setGoToSupport(false);
     } finally {
       setFormLoading(false);
     }
@@ -224,11 +280,11 @@ const CloudLogin = () => {
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 type="submit"
                 disabled={formLoading || loading}
-                className="w-full flex justify-center py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
+                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
               >
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-indigo-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <span className="relative flex items-center justify-center">
@@ -241,6 +297,28 @@ const CloudLogin = () => {
                     <>
                       <FaCloudUploadAlt className="mr-2" />
                       Access Cloud Dashboard
+                    </>
+                  )}
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleSupportLogin}
+                disabled={formLoading || loading}
+                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
+              >
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-teal-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <span className="relative flex items-center justify-center">
+                  {formLoading || loading ? (
+                    <>
+                      <div className="w-5 h-5 border-t-2 border-b-2 border-teal-50 rounded-full animate-spin mr-2" />
+                      Logging in...
+                    </>
+                  ) : (
+                    <>
+                      <FaQuestionCircle className="mr-2" />
+                      Go to Support
                     </>
                   )}
                 </span>

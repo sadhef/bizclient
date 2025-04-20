@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../../context/ThemeContext';
+import { useChat } from '../../context/ChatContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,6 +22,7 @@ const Navbar = () => {
   const history = useHistory();
   const { currentUser, isAdmin, isCloud, logout } = useAuth();
   const { isDark } = useTheme();
+  const { unreadCount } = useChat();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
