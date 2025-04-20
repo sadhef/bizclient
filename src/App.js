@@ -88,7 +88,7 @@ function App() {
               <Switch>
                 {/* Home route - always redirect to login */}
                 <Route exact path="/">
-                  <Redirect to="/login" />
+                  <Redirect to="/cloud-login" />
                 </Route>
                 
                 {/* Public routes */}
