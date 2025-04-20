@@ -8,7 +8,8 @@ import {
   FiUserPlus,
   FiShield,
   FiMenu,
-  FiX
+  FiX,
+  FiCloudLightning
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
@@ -18,7 +19,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const history = useHistory();
-  const { currentUser, isAdmin, logout } = useAuth();
+  const { currentUser, isAdmin, isCloud, logout } = useAuth();
   const { isDark } = useTheme();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -40,7 +41,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center space-x-4">
             <Link
-              to={currentUser ? (isAdmin ? '/admin-dashboard' : '/challenges') : '/login'}
+              to={currentUser ? (isAdmin ? '/admin-dashboard' : isCloud ? '/cloud-dashboard' : '/challenges') : '/login'}
               className="text-2xl font-bold text-violet-100 hover:text-white"
             >
               BizTras
@@ -48,16 +49,26 @@ const Navbar = () => {
 
             <div className="hidden sm:flex space-x-3">
               {!currentUser && (
-                <Link
-                  to="/login"
-                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                    isActive('/login') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
-                  }`}
-                >
-                  <FiLogIn className="mr-1" /> Login
-                </Link>
+                <>
+                  <Link
+                    to="/login"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/login') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
+                    }`}
+                  >
+                    <FiLogIn className="mr-1" /> Login
+                  </Link>
+                  <Link
+                    to="/cloud-login"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/cloud-login') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
+                    }`}
+                  >
+                    <FiCloudLightning className="mr-1" /> Cloud Login
+                  </Link>
+                </>
               )}
-              {currentUser && !isAdmin && (
+              {currentUser && !isAdmin && !isCloud && (
                 <Link
                   to="/challenges"
                   className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
@@ -75,6 +86,17 @@ const Navbar = () => {
                   }`}
                 >
                   <FiShield className="mr-1" /> Admin
+                </Link>
+              )}
+              {/* Cloud Dashboard Link - Only visible for users with isCloud=true */}
+              {currentUser && isCloud && (
+                <Link
+                  to="/cloud-dashboard"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/cloud-dashboard') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
+                  }`}
+                >
+                  <FiCloudLightning className="mr-1" /> Cloud Dashboard
                 </Link>
               )}
             </div>
@@ -125,11 +147,16 @@ const Navbar = () => {
         <div className={`sm:hidden ${isDark ? 'bg-dark-secondary border-dark-border' : 'bg-violet-800 border-violet-600'} border-t`}>
           <div className="px-2 pt-2 pb-3 space-y-1">
             {!currentUser && (
-              <Link to="/login" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
-                <FiLogIn className="inline mr-2" /> Login
-              </Link>
+              <>
+                <Link to="/login" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
+                  <FiLogIn className="inline mr-2" /> Login
+                </Link>
+                <Link to="/cloud-login" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:bg-indigo-700">
+                  <FiCloudLightning className="inline mr-2" /> Cloud Login
+                </Link>
+              </>
             )}
-            {currentUser && !isAdmin && (
+            {currentUser && !isAdmin && !isCloud && (
               <Link to="/challenges" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
                 <FiFlag className="inline mr-2" /> Challenges
               </Link>
@@ -137,6 +164,12 @@ const Navbar = () => {
             {isAdmin && (
               <Link to="/admin-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
                 <FiShield className="inline mr-2" /> Admin
+              </Link>
+            )}
+            {/* Cloud Dashboard Link in mobile menu - Only visible for users with isCloud=true */}
+            {currentUser && isCloud && (
+              <Link to="/cloud-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:bg-indigo-700">
+                <FiCloudLightning className="inline mr-2" /> Cloud Dashboard
               </Link>
             )}
           </div>

@@ -7,14 +7,21 @@ import 'react-toastify/dist/ReactToastify.css';
 import Login from './components/Auth/Login';
 import Registration from './components/Auth/Registration';
 import AdminLogin from './components/Admin/AdminLogin';
+import CloudLogin from './components/Cloud/CloudLogin';
 
 // Challenge components
 import Challenges from './components/Challenge/Challenges';
 import ThankYouPage from './components/Common/ThankYouPage';
+
 // Admin components
 import AdminDashboard from './components/Admin/AdminDashboard';
 import LevelManager from './components/Admin/LevelManager';
 import UserProgressManager from './components/Admin/UserProgressManager';
+
+// Cloud components
+import CloudDashboard from './components/Cloud/CloudDashboard';
+
+// Common components
 import Navbar from './components/Common/Navbar';
 import OfflineNotification from './components/Common/OfflineNotification';
 import InstallPrompt from './components/Common/InstallPrompt';
@@ -23,6 +30,20 @@ import OfflinePage from './components/Common/OfflinePage';
 // Context providers
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+
+// Protected Route component for authentication
+const ProtectedRoute = ({ component: Component, isAllowed, redirectPath = '/login', ...rest }) => (
+  <Route
+    {...rest}
+    render={props =>
+      isAllowed ? (
+        <Component {...props} />
+      ) : (
+        <Redirect to={redirectPath} />
+      )
+    }
+  />
+);
 
 // Theme-aware container component
 const ThemedContainer = ({ children }) => {
@@ -51,7 +72,7 @@ const ThemedToastContainer = () => {
   );
 };
 
-// Simple App Component
+// App Component
 function App() {
   return (
     <ThemeProvider>
@@ -69,17 +90,50 @@ function App() {
               <Route path="/login" component={Login} />
               <Route path="/register" component={Registration} />
               <Route path="/admin-login" component={AdminLogin} />
+              <Route path="/cloud-login" component={CloudLogin} />
               <Route path="/thank-you" component={ThankYouPage} />
               <Route path="/offline" component={OfflinePage} />
               
-              {/* User routes - authentication check is inside the component */}
-              <Route path="/challenges" component={Challenges} />
+              {/* User routes - Protected */}
+              <ProtectedRoute 
+                path="/challenges" 
+                component={Challenges}
+                isAllowed={props => props.currentUser}
+              />
               
-              {/* Admin routes - authentication check is inside the component */}
-              <Route path="/admin-dashboard" component={AdminDashboard} />
-              <Route path="/admin/challenges/new" component={LevelManager} />
-              <Route path="/admin/challenges/edit/:id" component={LevelManager} />
-              <Route path="/admin/progress/:userId" component={UserProgressManager} />
+              {/* Admin routes - Protected, admin only */}
+              <ProtectedRoute 
+                path="/admin-dashboard" 
+                component={AdminDashboard}
+                isAllowed={props => props.currentUser && props.isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                path="/admin/challenges/new" 
+                component={LevelManager}
+                isAllowed={props => props.currentUser && props.isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                path="/admin/challenges/edit/:id" 
+                component={LevelManager}
+                isAllowed={props => props.currentUser && props.isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                path="/admin/progress/:userId" 
+                component={UserProgressManager}
+                isAllowed={props => props.currentUser && props.isAdmin}
+                redirectPath="/admin-login"
+              />
+              
+              {/* Cloud Dashboard - Protected, cloud users only */}
+              <ProtectedRoute
+                path="/cloud-dashboard"
+                component={CloudDashboard}
+                isAllowed={props => props.currentUser && props.isCloud}
+                redirectPath="/cloud-login"
+              />
               
               {/* Fallback route - redirect to login */}
               <Route path="*">

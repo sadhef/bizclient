@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('isAdmin') === 'true');
+  const [isCloud, setIsCloud] = useState(localStorage.getItem('isCloud') === 'true');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
       if (!token) {
         setCurrentUser(null);
         setIsAdmin(false);
+        setIsCloud(false);
         setLoading(false);
         return;
       }
@@ -36,12 +38,16 @@ export const AuthProvider = ({ children }) => {
         // Fetch current user
         const response = await api.get('/auth/me');
         
-        // Set user data correctly without requiring admin status
+        // Set user data correctly
         if (response.user) {
           setCurrentUser(response.user);
           // Set admin status based on user data
           setIsAdmin(response.user.isAdmin === true);
           localStorage.setItem('isAdmin', response.user.isAdmin === true ? 'true' : 'false');
+          
+          // Set cloud status based on user data
+          setIsCloud(response.user.isCloud === true);
+          localStorage.setItem('isCloud', response.user.isCloud === true ? 'true' : 'false');
         } else {
           throw new Error('User not found');
         }
@@ -49,12 +55,14 @@ export const AuthProvider = ({ children }) => {
         console.error('Error fetching current user:', err);
         setError(err.message || 'Failed to authenticate');
         
-        // Clear invalid token and admin status
+        // Clear invalid token and statuses
         localStorage.removeItem('token');
         localStorage.removeItem('isAdmin');
+        localStorage.removeItem('isCloud');
         setToken(null);
         setCurrentUser(null);
         setIsAdmin(false);
+        setIsCloud(false);
       } finally {
         setLoading(false);
       }
@@ -81,9 +89,11 @@ export const AuthProvider = ({ children }) => {
       // Store token and set user
       localStorage.setItem('token', newToken);
       localStorage.setItem('isAdmin', 'true');
+      localStorage.setItem('isCloud', user.isCloud === true ? 'true' : 'false');
       setToken(newToken);
       setCurrentUser(user);
       setIsAdmin(true);
+      setIsCloud(user.isCloud === true);
       
       return user;
     } catch (err) {
@@ -93,9 +103,11 @@ export const AuthProvider = ({ children }) => {
       // Clear any lingering admin-related data
       localStorage.removeItem('token');
       localStorage.removeItem('isAdmin');
+      localStorage.removeItem('isCloud');
       setToken(null);
       setCurrentUser(null);
       setIsAdmin(false);
+      setIsCloud(false);
       
       throw new Error(errorMsg);
     } finally {
@@ -141,6 +153,12 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(true);
       }
       
+      // Check if user is cloud user
+      if (user.isCloud) {
+        localStorage.setItem('isCloud', 'true');
+        setIsCloud(true);
+      }
+      
       return user;
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Invalid email or password';
@@ -155,15 +173,18 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('isCloud');
     setToken(null);
     setCurrentUser(null);
     setIsAdmin(false);
+    setIsCloud(false);
   };
 
   // Context value
   const value = {
     currentUser,
     isAdmin,
+    isCloud,
     loading,
     error,
     register,
