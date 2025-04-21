@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Chat from './Chat';
@@ -8,16 +8,15 @@ import { FiMessageCircle, FiHelpCircle, FiInfo, FiBookOpen, FiFileText } from 'r
 const SupportPage = () => {
   const { currentUser } = useAuth();
   const { isDark } = useTheme();
+  const history = useHistory();
   const [activeTab, setActiveTab] = useState('chat');
   const [contentHeight, setContentHeight] = useState('600px');
 
-  // If not logged in, redirect to login
-  if (!currentUser) {
-    return <Redirect to="/login" />;
-  }
-  
   // Calculate and set proper content height on mount and window resize
   useEffect(() => {
+    // Only run this effect if user is authenticated
+    if (!currentUser) return;
+    
     const calculateHeight = () => {
       // Get header height (including margins/padding)
       const headerElement = document.querySelector('.support-header');
@@ -36,7 +35,12 @@ const SupportPage = () => {
     // Re-calculate on window resize
     window.addEventListener('resize', calculateHeight);
     return () => window.removeEventListener('resize', calculateHeight);
-  }, []);
+  }, [currentUser]);
+
+  // If not logged in, redirect to login
+  if (!currentUser) {
+    return <Redirect to="/login" />;
+  }
 
   // Tabs configuration
   const tabs = [
