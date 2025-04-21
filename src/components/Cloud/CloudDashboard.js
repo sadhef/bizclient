@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../utils/api';
+import ExportDropdown from './ExportDropdown'; // Import the new component
 
 // Function to determine status color - used throughout the component
 const getStatusColor = (status) => {
@@ -60,7 +61,7 @@ const isStatusColumn = (column) => {
 const CloudDashboard = () => {
   const [columns, setColumns] = useState(['Server', 'Status', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'SSL Expiry', 'Space Used', 'Remarks']);
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [error, setError] = useState(null);
   const [newColumnName, setNewColumnName] = useState('');
@@ -255,18 +256,23 @@ const CloudDashboard = () => {
     }
   };
 
+  // Prepare report data for export
+  const getReportData = () => {
+    return {
+      reportTitle,
+      reportDates,
+      columns,
+      rows,
+      totalSpaceUsed,
+      lastUpdated
+    };
+  };
+
   // If preview mode is active, render the preview component
   if (isPreviewMode) {
     return (
       <CloudReportPreviewComponent 
-        reportData={{
-          reportTitle,
-          reportDates,
-          columns,
-          rows,
-          totalSpaceUsed, // Ensure we pass totalSpaceUsed to the preview component
-          lastUpdated
-        }}
+        reportData={getReportData()}
       />
     );
   }
@@ -317,6 +323,10 @@ const CloudDashboard = () => {
               <FiRefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
+            
+            {/* New Export Dropdown */}
+            <ExportDropdown reportData={getReportData()} />
+            
             <button
               onClick={togglePreviewMode}
               className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
@@ -356,9 +366,8 @@ const CloudDashboard = () => {
 
         {/* Report Settings */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
-          <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Report Settings</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Report Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                 Report Title
@@ -593,7 +602,7 @@ const CloudReportPreviewComponent = ({ reportData }) => {
       reportDates, 
       columns, 
       rows, 
-      totalSpaceUsed, // Make sure to use this prop
+      totalSpaceUsed, 
       lastUpdated 
     } = reportData;
     
@@ -799,8 +808,12 @@ const CloudReportPreviewComponent = ({ reportData }) => {
                 Print Report
               </button>
             </div>
-            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Preview Mode
+            {/* Add Export dropdown to preview mode */}
+            <div className="flex items-center space-x-4">
+              <ExportDropdown reportData={reportData} />
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Preview Mode
+              </div>
             </div>
           </div>
         </div>
@@ -907,6 +920,5 @@ const CloudReportPreviewComponent = ({ reportData }) => {
       </div>
     );
   };
+  export default CloudDashboard;
 
-
-export default CloudDashboard;
