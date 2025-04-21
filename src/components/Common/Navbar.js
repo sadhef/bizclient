@@ -72,65 +72,53 @@ const Navbar = () => {
                 </>
               )}
               {currentUser && !isAdmin && !isCloud && (
-                <>
-                  <Link
-                    to="/challenges"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/challenges') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
-                    }`}
-                  >
-                    <FiFlag className="mr-1" /> Challenges
-                  </Link>
-                  <Link
-                    to="/support"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/support') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
-                    }`}
-                  >
-                    <FiHelpCircle className="mr-1" /> Support
-                  </Link>
-                </>
+                <Link
+                  to="/challenges"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/challenges') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
+                  }`}
+                >
+                  <FiFlag className="mr-1" /> Challenges
+                </Link>
               )}
               {isAdmin && (
-                <>
-                  <Link
-                    to="/admin-dashboard"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/admin') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
-                    }`}
-                  >
-                    <FiShield className="mr-1" /> Admin
-                  </Link>
-                  <Link
-                    to="/support"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/support') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
-                    }`}
-                  >
-                    <FiHelpCircle className="mr-1" /> Support
-                  </Link>
-                </>
+                <Link
+                  to="/admin-dashboard"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/admin') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
+                  }`}
+                >
+                  <FiShield className="mr-1" /> Admin
+                </Link>
               )}
               {/* Cloud Dashboard Link - Only visible for users with isCloud=true */}
               {currentUser && isCloud && (
-                <>
-                  <Link
-                    to="/cloud-dashboard"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/cloud-dashboard') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
-                    }`}
-                  >
-                    <FiCloudLightning className="mr-1" /> Cloud Dashboard
-                  </Link>
-                  <Link
-                    to="/support"
-                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
-                      isActive('/support') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
-                    }`}
-                  >
-                    <FiHelpCircle className="mr-1" /> Support
-                  </Link>
-                </>
+                <Link
+                  to="/cloud-dashboard"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/cloud-dashboard') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
+                  }`}
+                >
+                  <FiCloudLightning className="mr-1" /> Cloud Dashboard
+                </Link>
+              )}
+              
+              {/* Support Link - Show for all logged in users */}
+              {currentUser && (
+                <Link
+                  to="/support"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/support') 
+                      ? isCloud 
+                        ? 'bg-indigo-700 text-white' 
+                        : 'bg-violet-700 text-white' 
+                      : isCloud
+                        ? 'hover:bg-indigo-700/40 text-indigo-300'
+                        : 'hover:bg-violet-700/40 text-violet-300'
+                  }`}
+                >
+                  <FiHelpCircle className="mr-1" /> Support
+                </Link>
               )}
             </div>
           </div>
@@ -190,35 +178,29 @@ const Navbar = () => {
               </>
             )}
             {currentUser && !isAdmin && !isCloud && (
-              <>
-                <Link to="/challenges" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
-                  <FiFlag className="inline mr-2" /> Challenges
-                </Link>
-                <Link to="/support" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
-                  <FiHelpCircle className="inline mr-2" /> Support
-                </Link>
-              </>
+              <Link to="/challenges" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
+                <FiFlag className="inline mr-2" /> Challenges
+              </Link>
             )}
             {isAdmin && (
-              <>
-                <Link to="/admin-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
-                  <FiShield className="inline mr-2" /> Admin
-                </Link>
-                <Link to="/support" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
-                  <FiHelpCircle className="inline mr-2" /> Support
-                </Link>
-              </>
+              <Link to="/admin-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-violet-100 hover:bg-violet-700">
+                <FiShield className="inline mr-2" /> Admin
+              </Link>
             )}
             {/* Cloud Dashboard Link in mobile menu - Only visible for users with isCloud=true */}
             {currentUser && isCloud && (
-              <>
-                <Link to="/cloud-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:bg-indigo-700">
-                  <FiCloudLightning className="inline mr-2" /> Cloud Dashboard
-                </Link>
-                <Link to="/support" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:bg-indigo-700">
-                  <FiHelpCircle className="inline mr-2" /> Support
-                </Link>
-              </>
+              <Link to="/cloud-dashboard" onClick={closeMenu} className="block px-3 py-2 rounded-md text-base font-medium text-indigo-100 hover:bg-indigo-700">
+                <FiCloudLightning className="inline mr-2" /> Cloud Dashboard
+              </Link>
+            )}
+            
+            {/* Support Link in mobile menu - Show for all logged in users */}
+            {currentUser && (
+              <Link to="/support" onClick={closeMenu} className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isCloud ? 'text-indigo-100 hover:bg-indigo-700' : 'text-violet-100 hover:bg-violet-700'
+              }`}>
+                <FiHelpCircle className="inline mr-2" /> Support
+              </Link>
             )}
           </div>
           <div className={`border-t ${isDark ? 'border-dark-border' : 'border-violet-600'} px-2 py-3`}>
