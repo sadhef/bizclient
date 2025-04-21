@@ -35,8 +35,8 @@ const SupportPage = () => {
   const activeComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component;
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={`flex flex-col min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col">
         <div className="text-center mb-8">
           <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Help & Support Center
@@ -65,11 +65,13 @@ const SupportPage = () => {
           ))}
         </div>
 
-        {/* Content area */}
-        <div className={`rounded-lg overflow-hidden shadow-lg h-[calc(100vh-250px)] ${
+        {/* Content area - improved with flex-1 to take available height */}
+        <div className={`rounded-lg overflow-hidden shadow-lg flex-1 flex ${
           isDark ? 'bg-gray-800' : 'bg-white'
         }`}>
-          {activeComponent}
+          <div className="w-full flex flex-col">
+            {activeComponent}
+          </div>
         </div>
       </div>
     </div>

@@ -111,6 +111,7 @@ const Chat = () => {
         setNewMessage('');
         // Force auto-scroll when user sends a message
         setAutoScroll(true);
+        scrollToBottom();
       }
     } catch (err) {
       console.error('Error in send message handler:', err);
@@ -118,7 +119,7 @@ const Chat = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSending, isSubmitting, sendMessage]);
+  }, [isSending, isSubmitting, sendMessage, scrollToBottom]);
 
   // Use debounce for the send message function to prevent rapid clicks
   const debouncedSendMessage = useDebounce(processSendMessage, 300);
@@ -194,7 +195,7 @@ const Chat = () => {
   }, []);
 
   return (
-    <div className={`flex flex-col h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="flex flex-col h-full flex-1">
       {/* Chat header */}
       <div className={`flex justify-between items-center p-4 ${
         isDark 
@@ -216,7 +217,7 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Chat messages */}
+      {/* Chat messages - using flex-1 to fill available space */}
       <div 
         ref={chatContainerRef}
         className={`flex-1 overflow-y-auto p-4 ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}
@@ -347,8 +348,7 @@ const Chat = () => {
                     )}
                   </div>
                 );
-              }
-            )}
+              })}
             </div>
           ))
         )}
