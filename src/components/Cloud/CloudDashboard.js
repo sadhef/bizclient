@@ -324,8 +324,7 @@ const CloudDashboard = () => {
               Refresh
             </button>
             
-            {/* New Export Dropdown */}
-            <ExportDropdown reportData={getReportData()} />
+
             
             <button
               onClick={togglePreviewMode}
