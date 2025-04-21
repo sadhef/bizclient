@@ -70,6 +70,13 @@ const Chat = () => {
     }
   }, [autoScroll]);
 
+  // Force scroll to bottom regardless of autoScroll setting
+  const forceScrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
   // Auto-scroll when new messages arrive
   useEffect(() => {
     scrollToBottom();
@@ -79,6 +86,16 @@ const Chat = () => {
   useEffect(() => {
     markAllAsRead();
   }, [markAllAsRead]);
+
+  // Ensure scroll is at bottom on initial load
+  useEffect(() => {
+    // Short timeout to ensure component is fully rendered
+    const timer = setTimeout(() => {
+      forceScrollToBottom();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [forceScrollToBottom]);
 
   // Actual message sending implementation, separated from the event handler
   const processSendMessage = useCallback(async (messageText) => {
@@ -111,7 +128,8 @@ const Chat = () => {
         setNewMessage('');
         // Force auto-scroll when user sends a message
         setAutoScroll(true);
-        scrollToBottom();
+        // Force scroll to bottom after sending a message
+        setTimeout(() => forceScrollToBottom(), 100);
       }
     } catch (err) {
       console.error('Error in send message handler:', err);
@@ -119,7 +137,7 @@ const Chat = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSending, isSubmitting, sendMessage, scrollToBottom]);
+  }, [isSending, isSubmitting, sendMessage, forceScrollToBottom]);
 
   // Use debounce for the send message function to prevent rapid clicks
   const debouncedSendMessage = useDebounce(processSendMessage, 300);
@@ -194,10 +212,19 @@ const Chat = () => {
     setNewMessage(e.target.value);
   }, []);
 
+  // Handle key press
+  const handleKeyPress = useCallback((e) => {
+    // Submit on Enter, but not with Shift+Enter (which should create a new line)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  }, [handleSubmit]);
+
   return (
-    <div className="flex flex-col h-full flex-1">
+    <div className="flex flex-col h-full">
       {/* Chat header */}
-      <div className={`flex justify-between items-center p-4 ${
+      <div className={`flex justify-between items-center p-4 z-10 ${
         isDark 
           ? 'bg-gray-800 border-gray-700' 
           : 'bg-white border-gray-200'
@@ -217,11 +244,12 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* Chat messages - using flex-1 to fill available space */}
+      {/* Chat messages container with fixed height and scrolling */}
       <div 
         ref={chatContainerRef}
         className={`flex-1 overflow-y-auto p-4 ${isDark ? 'bg-gray-900' : 'bg-gray-100'}`}
         onScroll={handleScroll}
+        style={{ minHeight: 0 }} // Critical for flexbox children with overflow
       >
         {loading && chatMessages.length === 0 ? (
           <div className="flex justify-center items-center h-full">
@@ -360,12 +388,13 @@ const Chat = () => {
       {/* Message input */}
       <div className={`p-4 ${isDark ? 'bg-gray-800' : 'bg-white'} border-t ${
         isDark ? 'border-gray-700' : 'border-gray-200'
-      }`}>
+      } z-10`}>
         <form ref={formRef} onSubmit={handleSubmit} className="flex items-center">
           <input
             type="text"
             value={newMessage}
             onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
             placeholder="Type your message..."
             disabled={isSending || isSubmitting}
             className={`flex-grow px-4 py-2 rounded-l-lg focus:outline-none ${

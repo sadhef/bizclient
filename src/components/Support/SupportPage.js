@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,11 +9,34 @@ const SupportPage = () => {
   const { currentUser } = useAuth();
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('chat');
+  const [contentHeight, setContentHeight] = useState('600px');
 
   // If not logged in, redirect to login
   if (!currentUser) {
     return <Redirect to="/login" />;
   }
+  
+  // Calculate and set proper content height on mount and window resize
+  useEffect(() => {
+    const calculateHeight = () => {
+      // Get header height (including margins/padding)
+      const headerElement = document.querySelector('.support-header');
+      const tabsElement = document.querySelector('.support-tabs');
+      const headerHeight = headerElement ? headerElement.offsetHeight : 100;
+      const tabsHeight = tabsElement ? tabsElement.offsetHeight : 60;
+      
+      // Calculate available space (viewport height - header - tabs - padding)
+      const availableHeight = window.innerHeight - headerHeight - tabsHeight - 64; // 64px for top/bottom padding
+      setContentHeight(`${Math.max(400, availableHeight)}px`);
+    };
+    
+    // Calculate on mount
+    calculateHeight();
+    
+    // Re-calculate on window resize
+    window.addEventListener('resize', calculateHeight);
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, []);
 
   // Tabs configuration
   const tabs = [
@@ -35,16 +58,17 @@ const SupportPage = () => {
   const activeComponent = tabs.find(tab => tab.id === activeTab)?.component || tabs[0].component;
 
   return (
-    <div className={`flex flex-col min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex flex-col">
-        <div className="text-center mb-8">
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} pb-8`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Header - with class for height calculation */}
+        <div className="text-center mb-8 support-header">
           <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Help & Support Center
           </h1>
         </div>
 
-        {/* Tab navigation */}
-        <div className="flex overflow-x-auto mb-6 border-b scrollbar-hide pb-2">
+        {/* Tab navigation - with class for height calculation */}
+        <div className="flex overflow-x-auto mb-6 border-b scrollbar-hide pb-2 support-tabs">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -65,11 +89,15 @@ const SupportPage = () => {
           ))}
         </div>
 
-        {/* Content area - improved with flex-1 to take available height */}
-        <div className={`rounded-lg overflow-hidden shadow-lg flex-1 flex ${
-          isDark ? 'bg-gray-800' : 'bg-white'
-        }`}>
-          <div className="w-full flex flex-col">
+        {/* Content area with explicit height */}
+        <div 
+          className={`rounded-lg overflow-hidden shadow-lg ${
+            isDark ? 'bg-gray-800' : 'bg-white'
+          }`}
+          style={{ height: contentHeight }}
+        >
+          {/* Chat component with full height */}
+          <div className="h-full overflow-hidden">
             {activeComponent}
           </div>
         </div>
@@ -104,6 +132,22 @@ const FAQ = ({ isDark }) => {
     {
       question: "Can I pause the timer?",
       answer: "No, once you start the challenges, the timer continues even if you log out. This is to maintain fairness for all participants."
+    },
+    {
+      question: "Is there a time limit for completing all challenges?",
+      answer: "Yes, there is a fixed time limit for all challenges combined. This time limit starts when you first access the challenges and continues to count down even if you log out."
+    },
+    {
+      question: "How do I know how much time I have left?",
+      answer: "The remaining time is displayed at the top of the challenge page. You'll see a countdown timer showing hours, minutes, and seconds."
+    },
+    {
+      question: "Can I start over if I run out of time?",
+      answer: "Generally, no. The time limit is enforced to provide a fair competition environment. If you need an exception, please contact an administrator."
+    },
+    {
+      question: "Can I use external resources to solve challenges?",
+      answer: "Yes, you can use internet resources, books, or tools to help you solve challenges, unless specifically prohibited in the challenge description."
     }
   ];
 
@@ -113,7 +157,7 @@ const FAQ = ({ isDark }) => {
         Frequently Asked Questions
       </h2>
       
-      <div className="space-y-6">
+      <div className="space-y-6 pb-4">
         {faqs.map((faq, index) => (
           <div 
             key={index} 
@@ -131,4 +175,5 @@ const FAQ = ({ isDark }) => {
     </div>
   );
 };
+
 export default SupportPage;
