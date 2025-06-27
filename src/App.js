@@ -31,7 +31,7 @@ import OfflinePage from './components/Common/OfflinePage';
 import SupportPage from './components/Support/SupportPage';
 
 // Context providers
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ChatProvider } from './context/ChatContext';
 
@@ -48,6 +48,60 @@ const ProtectedRoute = ({ component: Component, isAllowed, redirectPath = '/logi
     }
   />
 );
+
+// Cloud Protected Route component
+const CloudProtectedRoute = ({ component: Component, ...rest }) => {
+  const { currentUser, isCloud } = useAuth();
+  
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        currentUser && isCloud ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to="/cloud-login" />
+        )
+      }
+    />
+  );
+};
+
+// Admin Protected Route component
+const AdminProtectedRoute = ({ component: Component, ...rest }) => {
+  const { currentUser, isAdmin } = useAuth();
+  
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        currentUser && isAdmin ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to="/admin-login" />
+        )
+      }
+    />
+  );
+};
+
+// User Protected Route component
+const UserProtectedRoute = ({ component: Component, ...rest }) => {
+  const { currentUser, isAdmin, isCloud } = useAuth();
+  
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        currentUser && !isAdmin && !isCloud ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to="/login" />
+        )
+      }
+    />
+  );
+};
 
 // Theme-aware container component
 const ThemedContainer = ({ children }) => {
@@ -76,6 +130,25 @@ const ThemedToastContainer = () => {
   );
 };
 
+// Default redirect component
+const DefaultRedirect = () => {
+  const { currentUser, isAdmin, isCloud } = useAuth();
+  
+  if (!currentUser) {
+    return <Redirect to="/cloud-login" />;
+  }
+  
+  if (isAdmin) {
+    return <Redirect to="/admin-dashboard" />;
+  }
+  
+  if (isCloud) {
+    return <Redirect to="/cloud-dashboard" />;
+  }
+  
+  return <Redirect to="/challenges" />;
+};
+
 // App Component
 function App() {
   return (
@@ -86,7 +159,7 @@ function App() {
             <ThemedContainer>
               <Navbar />
               <Switch>
-                {/* Home route - always redirect to login */}
+                {/* Home route - always redirect to cloud login */}
                 <Route exact path="/">
                   <Redirect to="/cloud-login" />
                 </Route>
@@ -99,62 +172,25 @@ function App() {
                 <Route path="/thank-you" component={ThankYouPage} />
                 <Route path="/offline" component={OfflinePage} />
                 
-                {/* User routes - Protected */}
-                <ProtectedRoute 
-                  path="/challenges" 
-                  component={Challenges}
-                  isAllowed={props => props.currentUser}
-                />
+                {/* User protected routes */}
+                <UserProtectedRoute path="/challenges" component={Challenges} />
                 
-                <ProtectedRoute 
-                  path="/support" 
-                  component={SupportPage}
-                  isAllowed={props => props.currentUser}
-                />
+                {/* Admin protected routes */}
+                <AdminProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
+                <AdminProtectedRoute path="/level-manager" component={LevelManager} />
+                <AdminProtectedRoute path="/user-progress" component={UserProgressManager} />
                 
-                {/* Admin routes - Protected, admin only */}
-                <ProtectedRoute 
-                  path="/admin-dashboard" 
-                  component={AdminDashboard}
-                  isAllowed={props => props.currentUser && props.isAdmin}
-                  redirectPath="/admin-login"
-                />
-                <ProtectedRoute 
-                  path="/admin/challenges/new" 
-                  component={LevelManager}
-                  isAllowed={props => props.currentUser && props.isAdmin}
-                  redirectPath="/admin-login"
-                />
-                <ProtectedRoute 
-                  path="/admin/challenges/edit/:id" 
-                  component={LevelManager}
-                  isAllowed={props => props.currentUser && props.isAdmin}
-                  redirectPath="/admin-login"
-                />
-                <ProtectedRoute 
-                  path="/admin/progress/:userId" 
-                  component={UserProgressManager}
-                  isAllowed={props => props.currentUser && props.isAdmin}
-                  redirectPath="/admin-login"
-                />
+                {/* Cloud protected routes */}
+                <CloudProtectedRoute path="/cloud-dashboard" component={CloudDashboard} />
+                <CloudProtectedRoute path="/support" component={SupportPage} />
                 
-                {/* Cloud Dashboard - Protected, cloud users only */}
-                <ProtectedRoute
-                  path="/cloud-dashboard"
-                  component={CloudDashboard}
-                  isAllowed={props => props.currentUser && props.isCloud}
-                  redirectPath="/cloud-login"
-                />
-                
-                {/* Fallback route - redirect to login */}
-                <Route path="*">
-                  <Redirect to="/register" />
-                </Route>
+                {/* Catch all route - redirect to appropriate dashboard based on user type */}
+                <Route path="*" component={DefaultRedirect} />
               </Switch>
               
+              {/* Global components */}
               <OfflineNotification />
               <InstallPrompt />
-              
               <ThemedToastContainer />
             </ThemedContainer>
           </Router>
