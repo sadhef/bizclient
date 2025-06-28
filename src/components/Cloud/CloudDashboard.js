@@ -619,7 +619,7 @@ const CloudPrintPreview = ({ cloudData, backupData }) => {
           {/* Cloud Services Section */}
           <div className="mb-12">
             <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center border-b pb-2`}>
-              <FiCloudLightning className="mr-2" /> Cloud Services Status
+              <FiCloudLightning className="mr-2" /> IDrive Weekly Report
             </h3>
             <div className="overflow-x-auto">
               <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
