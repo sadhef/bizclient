@@ -1,17 +1,33 @@
 {
-    "short_name": "BizTras",
-    "name": "BizTras",
-    "icons": [
-      {
-        "src": "biztrasz.png",
-        "sizes": "64x64 96x96 128x128 192x192 256x256 512x512",
-        "type": "image/png",
-        "purpose": "any maskable"
-      }
-    ],
-    "start_url": ".",
-    "display": "standalone",
-    "theme_color": "#4c1d95",
-    "background_color": "#4c1d95",
-    "orientation": "portrait"
-  }
+  "short_name": "BizTras Todo",
+  "name": "BizTras Todo Management System",
+  "description": "Professional task management and collaboration platform",
+  "icons": [
+    {
+      "src": "/biztras.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/biztras.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/biztras.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/cloud-dashboard",
+  "display": "standalone",
+  "theme_color": "#7c3aed",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["productivity", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "gcm_sender_id": "103953800507"
+}

@@ -3,11 +3,14 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
-import { FiPlus, FiTrash2, FiDownload, FiEye, FiPrinter, FiArrowLeft } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiDownload, FiEye, FiPrinter, FiArrowLeft, FiCheckCircle, FiClock, FiAlertCircle } from 'react-icons/fi';
 import api from '../../utils/api';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+
+// Import Todo Components
+import TodoDashboard from './TodoDashboard';
 
 // Styled Status Select Component with Colors
 const StyledStatusSelect = ({ value, onChange, isDark, isCloudStatus = false }) => {
@@ -155,7 +158,7 @@ const formatDate = (date) => {
   });
 };
 
-// Print Preview Component
+// Print Preview Component (keep existing functionality)
 const CloudPrintPreview = ({ cloudData, backupData }) => {
   const history = useHistory();
   const { isDark } = useTheme();
@@ -557,7 +560,7 @@ const CloudPrintPreview = ({ cloudData, backupData }) => {
   );
 };
 
-// Export Dropdown Component
+// Export Dropdown Component (keep existing functionality)
 const ExportDropdown = ({ reportData, disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -872,9 +875,9 @@ const ExportDropdown = ({ reportData, disabled = false }) => {
   );
 };
 
-// Main Cloud Dashboard Component
+// Main Cloud Dashboard Component with Todo Integration
 const CloudDashboard = () => {
-  // Cloud Data State
+  // Cloud Data State (keep all existing state)
   const [cloudColumns, setCloudColumns] = useState(['Server', 'Status', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'SSL Expiry', 'Space Used', 'Remarks']);
   const [cloudRows, setCloudRows] = useState([]);
   const [cloudReportTitle, setCloudReportTitle] = useState('Cloud Status Report');
@@ -884,7 +887,7 @@ const CloudDashboard = () => {
   });
   const [cloudTotalSpaceUsed, setCloudTotalSpaceUsed] = useState('');
 
-  // Backup Data State
+  // Backup Data State (keep all existing state)
   const [backupColumns, setBackupColumns] = useState(['Server', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Remarks']);
   const [backupRows, setBackupRows] = useState([]);
   const [backupReportTitle, setBackupReportTitle] = useState('Backup Server Cronjob Status');
@@ -893,16 +896,24 @@ const CloudDashboard = () => {
     endDate: new Date().toISOString().split('T')[0]
   });
 
-  // Common State
+  // Common State (keep all existing state)
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [activeTab, setActiveTab] = useState('cloud'); // 'cloud' or 'backup'
+  const [activeTab, setActiveTab] = useState('cloud'); // Updated to include 'todos' tab
   
-  // Column management states
+  // Column management states (keep existing)
   const [newCloudColumnName, setNewCloudColumnName] = useState('');
   const [newBackupColumnName, setNewBackupColumnName] = useState('');
+
+  // NEW: Todo statistics state
+  const [todoStats, setTodoStats] = useState({
+    totalTasks: 0,
+    dueTodayTasks: 0,
+    overdueTasks: 0,
+    completedTasks: 0
+  });
 
   const history = useHistory();
   const location = useLocation();
@@ -912,7 +923,20 @@ const CloudDashboard = () => {
   // Check if we're in preview mode
   const isPreviewMode = new URLSearchParams(location.search).get('preview') === 'true';
 
-  // Fetch both cloud and backup data
+  // NEW: Fetch todo statistics
+  const fetchTodoStats = useCallback(async () => {
+    try {
+      const response = await api.get('/cloud/todos/stats');
+      if (response.status === 'success') {
+        setTodoStats(response.statistics);
+      }
+    } catch (error) {
+      console.error('Error fetching todo stats:', error);
+      // Don't show error toast for todo stats as it's optional
+    }
+  }, []);
+
+  // Fetch both cloud and backup data (keep existing function)
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -953,6 +977,11 @@ const CloudDashboard = () => {
         setBackupColumns(columns || ['Server', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Remarks']);
         setBackupRows(rows || []);
       }
+
+      // NEW: Fetch todo statistics if user is cloud user
+      if (currentUser?.isCloud) {
+        await fetchTodoStats();
+      }
     } catch (err) {
       console.error('Error fetching cloud dashboard data:', err);
       setError('Failed to load dashboard data');
@@ -960,14 +989,14 @@ const CloudDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchTodoStats, currentUser]);
 
-  // Load data on component mount
+  // Load data on component mount (keep existing)
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Save both datasets
+  // Save both datasets (keep existing function)
   const saveData = async () => {
     try {
       setSaveLoading(true);
@@ -1006,7 +1035,7 @@ const CloudDashboard = () => {
     }
   };
 
-  // Handle date change for cloud
+  // Handle date change functions (keep existing)
   const handleCloudDateChange = (field, value) => {
     setCloudReportDates({
       ...cloudReportDates,
@@ -1014,7 +1043,6 @@ const CloudDashboard = () => {
     });
   };
 
-  // Handle date change for backup
   const handleBackupDateChange = (field, value) => {
     setBackupReportDates({
       ...backupReportDates,
@@ -1022,7 +1050,7 @@ const CloudDashboard = () => {
     });
   };
 
-  // Cloud Column Management
+  // Column Management functions (keep all existing functions)
   const handleAddCloudColumn = () => {
     if (newCloudColumnName.trim() && !cloudColumns.includes(newCloudColumnName.trim())) {
       setCloudColumns([...cloudColumns, newCloudColumnName.trim()]);
@@ -1049,7 +1077,6 @@ const CloudDashboard = () => {
     toast.success(`Cloud column "${columnToRemove}" removed successfully!`);
   };
 
-  // Backup Column Management
   const handleAddBackupColumn = () => {
     if (newBackupColumnName.trim() && !backupColumns.includes(newBackupColumnName.trim())) {
       setBackupColumns([...backupColumns, newBackupColumnName.trim()]);
@@ -1076,7 +1103,7 @@ const CloudDashboard = () => {
     toast.success(`Backup column "${columnToRemove}" removed successfully!`);
   };
 
-  // Cloud Row Management
+  // Row Management functions (keep all existing functions)
   const handleAddCloudRow = () => {
     const newRow = {};
     cloudColumns.forEach(column => {
@@ -1097,7 +1124,6 @@ const CloudDashboard = () => {
     setCloudRows(updatedRows);
   };
 
-  // Backup Row Management
   const handleAddBackupRow = () => {
     const newRow = {};
     backupColumns.forEach(column => {
@@ -1118,7 +1144,7 @@ const CloudDashboard = () => {
     setBackupRows(updatedRows);
   };
 
-  // Toggle preview mode
+  // Toggle preview mode (keep existing)
   const togglePreviewMode = () => {
     if (!isPreviewMode) {
       saveData().then((success) => {
@@ -1131,7 +1157,7 @@ const CloudDashboard = () => {
     }
   };
 
-  // Prepare report data for preview
+  // Prepare report data for preview (keep existing)
   const getReportData = () => {
     return {
       cloudData: {
@@ -1151,7 +1177,7 @@ const CloudDashboard = () => {
     };
   };
 
-  // Cell rendering with styled dropdowns
+  // Cell rendering functions (keep all existing functions)
   const renderCloudCell = (row, column, rowIndex) => {
     const isStatusColumn = column === 'Status';
     const isWeekdayColumn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(column);
@@ -1223,13 +1249,13 @@ const CloudDashboard = () => {
     }
   };
 
-  // Render preview mode
+  // Render preview mode (keep existing)
   if (isPreviewMode) {
     const reportData = getReportData();
     return <CloudPrintPreview cloudData={reportData.cloudData} backupData={reportData.backupData} />;
   }
 
-  // Loading state
+  // Loading state (keep existing)
   if (loading) {
     return (
       <div className={`flex justify-center items-center min-h-screen ${
@@ -1255,7 +1281,7 @@ const CloudDashboard = () => {
               Cloud Infrastructure Dashboard
             </h1>
             <p className={`mt-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              Manage cloud services and backup server configurations
+              Manage cloud services, backup servers, and todo tasks
             </p>
           </div>
           
@@ -1294,7 +1320,100 @@ const CloudDashboard = () => {
           </div>
         )}
 
-        {/* Tab Navigation */}
+        {/* NEW: Todo Statistics Cards (only show if user is cloud user) */}
+        {currentUser?.isCloud && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="bg-blue-500 rounded-lg p-3">
+                      <FiCheckCircle className="text-white" size={24} />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                        Total Tasks
+                      </dt>
+                      <dd className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {todoStats.totalTasks}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="bg-yellow-500 rounded-lg p-3">
+                      <FiClock className="text-white" size={24} />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                        Due Today
+                      </dt>
+                      <dd className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {todoStats.dueTodayTasks}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="bg-red-500 rounded-lg p-3">
+                      <FiAlertCircle className="text-white" size={24} />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                        Overdue
+                      </dt>
+                      <dd className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {todoStats.overdueTasks}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="bg-green-500 rounded-lg p-3">
+                      <FiCheckCircle className="text-white" size={24} />
+                    </div>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                        Completed
+                      </dt>
+                      <dd className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {todoStats.completedTasks}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* UPDATED: Tab Navigation with Todo Tab */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg mb-6`}>
           <div className="flex border-b">
             <button
@@ -1302,7 +1421,7 @@ const CloudDashboard = () => {
               className={`flex-1 py-4 px-6 text-center font-medium text-sm ${
                 activeTab === 'cloud'
                   ? isDark
-                    ? 'border-b-2 border-indigo-400 text-indigo-400 bg-gray-700'
+                    ? 'border-b-2 border-indigo-400 bg-gray-700'
                     : 'border-b-2 border-indigo-500 text-indigo-600 bg-indigo-50'
                   : isDark
                     ? 'text-gray-400 hover:text-gray-300'
@@ -1325,10 +1444,32 @@ const CloudDashboard = () => {
             >
               🗄️ Backup Servers ({backupRows.length})
             </button>
+            {/* NEW: Todo Tab (only show for cloud users) */}
+            {currentUser?.isCloud && (
+              <button
+                onClick={() => setActiveTab('todos')}
+                className={`flex-1 py-4 px-6 text-center font-medium text-sm ${
+                  activeTab === 'todos'
+                    ? isDark
+                      ? 'border-b-2 border-violet-400 text-violet-400 bg-gray-700'
+                      : 'border-b-2 border-violet-500 text-violet-600 bg-violet-50'
+                    : isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                📋 Todo Tasks ({todoStats.totalTasks})
+                {todoStats.dueTodayTasks > 0 && (
+                  <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    {todoStats.dueTodayTasks}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Cloud Services Tab */}
+        {/* Cloud Services Tab Content (keep all existing content) */}
         {activeTab === 'cloud' && (
           <>
             {/* Cloud Configuration */}
@@ -1516,7 +1657,7 @@ const CloudDashboard = () => {
           </>
         )}
 
-        {/* Backup Services Tab */}
+        {/* Backup Services Tab Content (keep all existing content) */}
         {activeTab === 'backup' && (
           <>
             {/* Backup Configuration */}
@@ -1688,7 +1829,12 @@ const CloudDashboard = () => {
           </>
         )}
 
-        {/* Footer Info */}
+        {/* NEW: Todo Tasks Tab Content */}
+        {activeTab === 'todos' && currentUser?.isCloud && (
+          <TodoDashboard />
+        )}
+
+        {/* Footer Info (keep existing) */}
         {lastUpdated && (
           <div className={`text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             Last updated: {new Date(lastUpdated).toLocaleString()}
