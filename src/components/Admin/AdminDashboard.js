@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useHistory, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { 
   FiUsers, 
-  FiBarChart2, 
-  FiPlus, 
-  FiEdit, 
-  FiTrash2, 
-  FiEye, 
-  FiClock, 
-  FiShield,
-  FiUserCheck,
-  FiCloud,
-  FiSettings,
-  FiAlertTriangle
+  FiFlag, 
+  FiPlusCircle, 
+  FiHome, 
+  FiLogOut,
+  FiRefreshCw,
+  FiTrash2,
+  FiEdit,
+  FiClock,
+  FiEye,
+  FiToggleLeft,
+  FiToggleRight,
+  FiSettings
 } from 'react-icons/fi';
-import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../utils/api';
+import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
+import { useTheme } from '../../context/ThemeContext';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -25,243 +27,360 @@ const AdminDashboard = () => {
   const [challenges, setChallenges] = useState([]);
   const [userProgress, setUserProgress] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deleteLoading, setDeleteLoading] = useState(null);
-  const [roleUpdateLoading, setRoleUpdateLoading] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [newRole, setNewRole] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ type: null, id: null });
+  const [showTimeSetting, setShowTimeSetting] = useState(false);
+  const [defaultTimeLimit, setDefaultTimeLimit] = useState(3600); // Default 1 hour in seconds
+  const [newTimeLimit, setNewTimeLimit] = useState(3600);
 
-  const { currentUser } = useAuth();
-  const { isDark } = useTheme();
   const history = useHistory();
+  const { currentUser, isAdmin, logout } = useAuth();
+  const { isDark } = useTheme();
 
-  // Fetch all data
+  // Fetch data based on active tab
+  const fetchData = useCallback(async (showToast = false) => {
+    try {
+      setRefreshing(true);
+      setError(null);
+      
+      // Fetch appropriate data based on active tab
+      if (activeTab === 'users' || activeTab === 'progress') {
+        const [usersResponse, progressResponse] = await Promise.all([
+          api.get('/users'),
+          api.get('/progress')
+        ]);
+        
+        setUsers(usersResponse.users);
+        setUserProgress(progressResponse.progress);
+      }
+      
+      if (activeTab === 'challenges') {
+        const challengesResponse = await api.get('/challenges');
+        setChallenges(challengesResponse.challenges);
+      }
+      
+      // Fetch the system settings
+      try {
+        const settingsResponse = await api.get('/settings');
+        if (settingsResponse && settingsResponse.settings) {
+          setDefaultTimeLimit(settingsResponse.settings.defaultTimeLimit || 3600);
+          setNewTimeLimit(settingsResponse.settings.defaultTimeLimit || 3600);
+        }
+      } catch (settingsError) {
+        console.warn('Could not load settings:', settingsError);
+        // Don't fail the whole fetch operation if settings can't be loaded
+      }
+      
+      if (showToast) {
+        toast.success('Data refreshed successfully');
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again.');
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [activeTab]);
+
+  // Load data on mount and when active tab changes
   useEffect(() => {
+    // Redirect if not logged in as admin
+    if (!currentUser || !isAdmin) {
+      toast.error('Admin access required');
+      history.push('/admin-login');
+      return;
+    }
+    
     fetchData();
-  }, []);
+  }, [currentUser, isAdmin, fetchData, history, activeTab]);
 
-  const fetchData = async () => {
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    history.push('/admin-login');
+  };
+
+  // Handle deleting a user
+  const handleDeleteUser = async (userId) => {
+    // First click sets confirmation state
+    if (deleteConfirm.type !== 'user' || deleteConfirm.id !== userId) {
+      setDeleteConfirm({ type: 'user', id: userId });
+      setTimeout(() => setDeleteConfirm({ type: null, id: null }), 3000);
+      return;
+    }
+
     try {
       setLoading(true);
-      const [usersRes, challengesRes, progressRes] = await Promise.all([
-        api.get('/admin/users'),
-        api.get('/admin/challenges'),
-        api.get('/admin/progress')
-      ]);
-
-      setUsers(usersRes.data || []);
-      setChallenges(challengesRes.data || []);
-      setUserProgress(progressRes.data || []);
+      
+      // Delete the user first - the backend should handle deleting progress
+      await api.delete(`/users/${userId}`);
+      
+      // Update UI state to remove the deleted user
+      setUsers(prev => prev.filter(user => user._id !== userId));
+      setUserProgress(prev => prev.filter(progress => progress.userId !== userId));
+      
+      toast.success('User deleted successfully');
+      setDeleteConfirm({ type: null, id: null });
     } catch (error) {
-      console.error('Error fetching admin data:', error);
-      toast.error('Failed to fetch admin data');
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete user progress
-  const handleDeleteProgress = async (progressId) => {
+  // Handle deleting a challenge
+  const handleDeleteChallenge = async (challengeId) => {
+    // First click sets confirmation state
+    if (deleteConfirm.type !== 'challenge' || deleteConfirm.id !== challengeId) {
+      setDeleteConfirm({ type: 'challenge', id: challengeId });
+      setTimeout(() => setDeleteConfirm({ type: null, id: null }), 3000);
+      return;
+    }
+
     try {
-      setDeleteLoading(progressId);
-      await api.delete(`/admin/progress/${progressId}`);
+      setLoading(true);
+      await api.delete(`/challenges/${challengeId}`);
       
-      // Update local state
-      setUserProgress(prev => prev.filter(p => p._id !== progressId));
-      toast.success('User progress deleted successfully');
-      setShowDeleteModal(false);
-      setSelectedItem(null);
+      setChallenges(prev => prev.filter(challenge => challenge._id !== challengeId));
+      
+      toast.success('Challenge deleted successfully');
+      setDeleteConfirm({ type: null, id: null });
     } catch (error) {
-      console.error('Error deleting progress:', error);
-      toast.error('Failed to delete user progress');
+      console.error('Error deleting challenge:', error);
+      toast.error('Failed to delete challenge');
     } finally {
-      setDeleteLoading(null);
+      setLoading(false);
     }
   };
 
-  // Update user role
-  const handleUpdateUserRole = async (userId, role) => {
+  // Handle toggling challenge enabled status
+  const handleToggleChallenge = async (challengeId, currentStatus) => {
     try {
-      setRoleUpdateLoading(userId);
-      await api.put(`/admin/users/${userId}/role`, { role });
+      setLoading(true);
       
-      // Update local state
-      setUsers(prev => prev.map(user => 
-        user._id === userId ? { ...user, role } : user
+      await api.patch(`/challenges/${challengeId}`, {
+        enabled: !currentStatus
+      });
+      
+      setChallenges(prev => prev.map(challenge => 
+        challenge._id === challengeId 
+          ? { ...challenge, enabled: !challenge.enabled } 
+          : challenge
       ));
       
-      toast.success(`User role updated to ${role} successfully`);
-      setShowRoleModal(false);
-      setSelectedUser(null);
-      setNewRole('');
+      toast.success(`Challenge ${!currentStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (error) {
-      console.error('Error updating user role:', error);
-      toast.error('Failed to update user role');
+      console.error('Error toggling challenge:', error);
+      toast.error('Failed to update challenge');
     } finally {
-      setRoleUpdateLoading(null);
+      setLoading(false);
     }
   };
 
-  // Get role badge styling
-  const getRoleBadge = (role) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-    switch (role) {
-      case 'admin':
-        return `${baseClasses} ${isDark ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-800'}`;
-      case 'iscloud':
-        return `${baseClasses} ${isDark ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`;
-      default:
-        return `${baseClasses} ${isDark ? 'bg-gray-900/30 text-gray-300' : 'bg-gray-100 text-gray-800'}`;
+  // Handle updating the default time limit
+  const handleUpdateTimeLimit = async () => {
+    try {
+      setLoading(true);
+      
+      // Get time in seconds from hours and minutes
+      const hours = parseInt(document.getElementById('hours').value) || 0;
+      const minutes = parseInt(document.getElementById('minutes').value) || 0;
+      const totalSeconds = (hours * 3600) + (minutes * 60);
+      
+      console.log("Raw input values - Hours:", hours, "Minutes:", minutes);
+      console.log("Calculated total seconds:", totalSeconds);
+      
+      // Ensure newTimeLimit is a valid number between 5 minutes and 24 hours
+      if (totalSeconds < 300) {
+        toast.error('Time limit must be at least 5 minutes (300 seconds)');
+        setLoading(false);
+        return;
+      }
+      
+      if (totalSeconds > 86400) {
+        toast.error('Time limit cannot exceed 24 hours (86400 seconds)');
+        setLoading(false);
+        return;
+      }
+      
+      console.log("About to send time limit update request with totalSeconds:", totalSeconds);
+      
+      // Make the API call with the calculated total seconds
+      const response = await api.post('/settings/update', {
+        defaultTimeLimit: totalSeconds
+      });
+      
+      console.log("API response:", response);
+      
+      // Update the UI with the new time limit
+      setDefaultTimeLimit(totalSeconds);
+      setNewTimeLimit(totalSeconds);
+      setShowTimeSetting(false);
+      
+      toast.success('Default time limit updated successfully');
+      
+      // Refresh progress data to see updated time limits
+      if (activeTab === 'progress') {
+        fetchData(false);
+      }
+    } catch (error) {
+      console.error('Error updating time limit:', error);
+      if (error.response && error.response.data) {
+        console.error('Server response:', error.response.data);
+      }
+      toast.error('Failed to update time limit: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Get role icon
-  const getRoleIcon = (role) => {
-    switch (role) {
-      case 'admin':
-        return <FiShield className="w-4 h-4" />;
-      case 'iscloud':
-        return <FiCloud className="w-4 h-4" />;
-      default:
-        return <FiUserCheck className="w-4 h-4" />;
-    }
+  // Get user's progress status
+  const getUserProgressStatus = (userId) => {
+    const progress = userProgress.find(p => p.userId === userId);
+    if (!progress) return { completed: false, currentLevel: 1, timeRemaining: defaultTimeLimit };
+    
+    return {
+      completed: progress.completed,
+      currentLevel: progress.currentLevel,
+      completedLevels: progress.levelStatus ? Array.from(progress.levelStatus.entries())
+        .filter(([_, completed]) => completed)
+        .map(([level]) => parseInt(level))
+        : [],
+      timeRemaining: progress.timeRemaining
+    };
   };
 
-  // Format time remaining
-  const formatTimeRemaining = (endTime) => {
-    if (!endTime) return 'No time limit';
+  // Format time input for display
+  const formatTimeForInput = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     
-    const now = new Date();
-    const end = new Date(endTime);
-    const diff = end.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Expired';
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    return `${hours}h ${minutes}m`;
+    return {
+      hours,
+      minutes
+    };
   };
 
-  // Get status badge
-  const getStatusBadge = (status) => {
-    const baseClasses = "px-2 py-1 text-xs font-medium rounded-full";
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return `${baseClasses} ${isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'}`;
-      case 'in-progress':
-        return `${baseClasses} ${isDark ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-800'}`;
-      case 'expired':
-        return `${baseClasses} ${isDark ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-800'}`;
-      default:
-        return `${baseClasses} ${isDark ? 'bg-gray-900/30 text-gray-300' : 'bg-gray-100 text-gray-800'}`;
-    }
+  // Parse time input to seconds
+  const parseTimeToSeconds = (hours, minutes) => {
+    return (parseInt(hours) * 3600) + (parseInt(minutes) * 60);
   };
 
-  // Delete confirmation modal
-  const DeleteModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4`}>
-        <div className="flex items-center mb-4">
-          <FiAlertTriangle className="text-red-500 w-6 h-6 mr-3" />
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Delete User Progress
-          </h3>
-        </div>
-        <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-          Are you sure you want to delete this user's progress? This action cannot be undone.
-        </p>
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={() => {
-              setShowDeleteModal(false);
-              setSelectedItem(null);
-            }}
-            className={`px-4 py-2 rounded-md ${
-              isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleDeleteProgress(selectedItem._id)}
-            disabled={deleteLoading === selectedItem?._id}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-          >
-            {deleteLoading === selectedItem?._id ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Role update modal
-  const RoleModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full mx-4`}>
-        <div className="flex items-center mb-4">
-          <FiSettings className="text-blue-500 w-6 h-6 mr-3" />
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Update User Role
-          </h3>
-        </div>
-        <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-          Update role for: <strong>{selectedUser?.name}</strong>
-        </p>
-        
-        <div className="mb-6">
-          <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-            Select New Role
-          </label>
-          <select
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isDark 
-                ? 'bg-gray-700 border-gray-600 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-          >
-            <option value="">Select role...</option>
-            <option value="user">User</option>
-            <option value="iscloud">Cloud User</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={() => {
-              setShowRoleModal(false);
-              setSelectedUser(null);
-              setNewRole('');
-            }}
-            className={`px-4 py-2 rounded-md ${
-              isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => handleUpdateUserRole(selectedUser._id, newRole)}
-            disabled={!newRole || roleUpdateLoading === selectedUser?._id}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {roleUpdateLoading === selectedUser?._id ? 'Updating...' : 'Update Role'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (loading) {
+  // Time limit input component
+  const TimeLimitSetting = () => {
+    const [hoursValue, setHoursValue] = useState(Math.floor(defaultTimeLimit / 3600));
+    const [minutesValue, setMinutesValue] = useState(Math.floor((defaultTimeLimit % 3600) / 60));
+    
+    const handleSave = () => {
+      // This doesn't do the actual saving - it just validates and calls handleUpdateTimeLimit
+      // which will read the values directly from the inputs
+      const hours = parseInt(hoursValue) || 0;
+      const minutes = parseInt(minutesValue) || 0;
+      const totalSeconds = (hours * 3600) + (minutes * 60);
+      
+      // Validate the time limit
+      if (totalSeconds < 300) {
+        toast.error('Time limit must be at least 5 minutes (300 seconds)');
+        return;
+      }
+      
+      if (totalSeconds > 86400) {
+        toast.error('Time limit cannot exceed 24 hours (86400 seconds)');
+        return;
+      }
+      
+      // Call the handler that will make the API request
+      handleUpdateTimeLimit();
+    };
+    
     return (
-      <div className={`flex justify-center items-center min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className={`${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
+          <h3 className="text-xl font-bold mb-4">Set Default Challenge Time Limit</h3>
+          <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+            Set the default time limit for all new challenge attempts. This will not affect users who have already started challenges.
+          </p>
+          
+          <div className="flex items-center space-x-4 mb-6">
+            <div>
+              <label htmlFor="hours" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Hours</label>
+              <input
+                type="number"
+                id="hours"
+                min="0"
+                max="24"
+                value={hoursValue}
+                onChange={(e) => setHoursValue(e.target.value)}
+                className={`w-20 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+            <div>
+              <label htmlFor="minutes" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Minutes</label>
+              <input
+                type="number"
+                id="minutes"
+                min="0"
+                max="59"
+                value={minutesValue}
+                onChange={(e) => setMinutesValue(e.target.value)}
+                className={`w-20 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+            <div className="mt-7">
+              <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                = {formatTimeDetailed((parseInt(hoursValue) || 0) * 3600 + (parseInt(minutesValue) || 0) * 60)}
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setShowTimeSetting(false)}
+              className={`px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600'
+                  : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Loading state
+  if (loading && !refreshing) {
+    return (
+      <div className={`flex justify-center items-center min-h-screen ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
         <div className="text-center">
-          <div className={`animate-spin rounded-full h-16 w-16 border-b-2 ${isDark ? 'border-indigo-400' : 'border-indigo-600'} mx-auto`}></div>
-          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading admin dashboard...</p>
+          <div className={`animate-spin rounded-full h-16 w-16 border-b-2 ${
+            isDark ? 'border-indigo-400' : 'border-indigo-600'
+          } mx-auto`}></div>
+          <p className={`mt-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</p>
         </div>
       </div>
     );
@@ -271,53 +390,110 @@ const AdminDashboard = () => {
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Admin Dashboard
-          </h1>
-          <p className={`mt-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            Manage users, challenges, and monitor progress
-          </p>
+        <div className="flex flex-wrap justify-between items-center mb-8">
+          <div className="flex items-center mb-4 md:mb-0">
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Admin Dashboard</h1>
+          </div>
+          <div className="flex flex-wrap items-center space-x-2 md:space-x-4">
+            <button
+              onClick={() => setShowTimeSetting(true)}
+              className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'text-indigo-400 bg-gray-800 border-gray-700 hover:bg-gray-700'
+                  : 'text-indigo-600 bg-white hover:bg-gray-50 border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+            >
+              <FiSettings className="mr-2" />
+              Time Limit: {formatTimeRemaining(defaultTimeLimit)}
+            </button>
+            <button
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              className={`inline-flex items-center px-3 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDark
+                  ? 'text-indigo-400 bg-gray-800 border-gray-700 hover:bg-gray-700'
+                  : 'text-indigo-600 bg-white hover:bg-gray-50 border-gray-300'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50`}
+            >
+              <FiRefreshCw className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <FiLogOut className="mr-2" /> Logout
+            </button>
+          </div>
         </div>
 
-        {/* Tab Navigation */}
+        {/* Error message */}
+        {error && (
+          <div className={`rounded-md p-4 mb-6 ${
+            isDark ? 'bg-red-900/30 text-red-200' : 'bg-red-50 text-red-800'
+          }`}>
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className={`h-5 w-5 ${isDark ? 'text-red-400' : 'text-red-400'}`} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className={`text-sm font-medium ${isDark ? 'text-red-300' : 'text-red-800'}`}>Error</h3>
+                <div className={`mt-2 text-sm ${isDark ? 'text-red-200' : 'text-red-700'}`}>{error}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab navigation */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg mb-6`}>
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('users')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                  activeTab === 'users'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiUsers className="inline mr-2" />
-                Users ({users.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('challenges')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                  activeTab === 'challenges'
-                    ? 'border-green-500 text-green-600 dark:text-green-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiBarChart2 className="inline mr-2" />
-                Challenges ({challenges.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('progress')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                  activeTab === 'progress'
-                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiClock className="inline mr-2" />
-                Progress ({userProgress.length})
-              </button>
-            </nav>
+          <div className={`flex border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'users' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FiUsers className="inline mr-2" />
+              Users
+            </button>
+            <button
+              onClick={() => setActiveTab('challenges')}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'challenges' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FiFlag className="inline mr-2" />
+              Challenges
+            </button>
+            <button
+              onClick={() => setActiveTab('progress')}
+              className={`flex-1 py-4 px-4 text-center ${
+                activeTab === 'progress' 
+                  ? isDark 
+                    ? 'border-b-2 border-indigo-500 text-indigo-400 font-medium' 
+                    : 'border-b-2 border-indigo-500 text-indigo-600 font-medium'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FiClock className="inline mr-2" />
+              Progress
+            </button>
           </div>
         </div>
 
@@ -326,10 +502,10 @@ const AdminDashboard = () => {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
             <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Registered Users
-                </h2>
-                <span className={`${isDark ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-800'} px-3 py-1 rounded-full text-sm font-medium`}>
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Registered Users</h2>
+                <span className={`${
+                  isDark ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-800'
+                } px-3 py-1 rounded-full text-sm font-medium`}>
                   Total: {users.length}
                 </span>
               </div>
@@ -339,80 +515,74 @@ const AdminDashboard = () => {
               <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                      User
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
+                      Name
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Email
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Role
-                    </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Institution
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Registration Date
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
                   {users.map((user) => (
                     <tr key={user._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {user.name}
-                        </div>
+                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.institution || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {user.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={getRoleBadge(user.role)}>
-                          <span className="flex items-center">
-                            {getRoleIcon(user.role)}
-                            <span className="ml-1 capitalize">{user.role}</span>
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {user.institution || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {new Date(user.registrationTime).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setNewRole(user.role);
-                            setShowRoleModal(true);
-                          }}
-                          className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${
-                            isDark 
-                              ? 'text-blue-300 bg-blue-900/30 hover:bg-blue-900/50' 
-                              : 'text-blue-700 bg-blue-100 hover:bg-blue-200'
+                          onClick={() => handleDeleteUser(user._id)}
+                          disabled={loading}
+                          className={`inline-flex items-center px-3 py-1 rounded-md text-sm ${
+                            deleteConfirm.type === 'user' && deleteConfirm.id === user._id
+                              ? isDark
+                                ? 'bg-red-900 text-red-200 hover:bg-red-800'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : isDark
+                                ? 'text-red-400 hover:text-red-300'
+                                : 'text-red-600 hover:text-red-900'
                           }`}
                         >
-                          <FiSettings className="w-4 h-4 mr-1" />
-                          Change Role
+                          <FiTrash2 className="mr-1" />
+                          {deleteConfirm.type === 'user' && deleteConfirm.id === user._id ? 'Confirm' : 'Delete'}
                         </button>
                       </td>
                     </tr>
                   ))}
                   {users.length === 0 && (
                     <tr>
-                      <td colSpan={6} className={`px-6 py-4 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        No users found
+                      <td colSpan="5" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        No users registered yet
                       </td>
                     </tr>
                   )}
@@ -427,20 +597,14 @@ const AdminDashboard = () => {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
             <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Challenge Levels
-                </h2>
-                <div className="flex items-center space-x-3">
-                  <span className={`${isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-sm font-medium`}>
-                    Total: {challenges.length}
-                  </span>
-                  <button
-                    onClick={() => history.push('/admin/levels/new')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-                  >
-                    <FiPlus className="mr-2" /> Create Level
-                  </button>
-                </div>
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Challenge Levels</h2>
+                <Link
+                  to="/admin/challenges/new"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <FiPlusCircle className="mr-2" />
+                  Add New Level
+                </Link>
               </div>
             </div>
 
@@ -448,73 +612,101 @@ const AdminDashboard = () => {
               <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Level
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Title
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Difficulty
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
+                      Flag
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Created Date
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
+                      Status
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-                  {challenges.map((challenge) => (
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                  {challenges.sort((a, b) => a.levelNumber - b.levelNumber).map((challenge) => (
                     <tr key={challenge._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          Level {challenge.level}
-                        </div>
+                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Level {challenge.levelNumber}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {challenge.title}
-                        </div>
+                        <div className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{challenge.title}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          challenge.difficulty === 'Easy' ? (isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800') :
-                          challenge.difficulty === 'Medium' ? (isDark ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-800') :
-                          (isDark ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-800')
+                        <div className={`text-sm font-mono ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{challenge.flag}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          challenge.enabled 
+                            ? isDark
+                              ? 'bg-green-900 text-green-200' 
+                              : 'bg-green-100 text-green-800'
+                            : isDark
+                              ? 'bg-gray-700 text-gray-300'
+                              : 'bg-gray-100 text-gray-800'
                         }`}>
-                          {challenge.difficulty}
+                          {challenge.enabled ? 'Enabled' : 'Disabled'}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {new Date(challenge.createdAt).toLocaleDateString()}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <button
-                            onClick={() => history.push(`/admin/levels/${challenge._id}`)}
-                            className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${
-                              isDark 
-                                ? 'text-blue-300 bg-blue-900/30 hover:bg-blue-900/50' 
-                                : 'text-blue-700 bg-blue-100 hover:bg-blue-200'
+                            onClick={() => handleToggleChallenge(challenge._id, challenge.enabled)}
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                              challenge.enabled
+                                ? isDark
+                                  ? 'text-yellow-400 hover:text-yellow-300'
+                                  : 'text-yellow-600 hover:text-yellow-800'
+                                : isDark
+                                  ? 'text-green-400 hover:text-green-300'
+                                  : 'text-green-600 hover:text-green-800'
                             }`}
                           >
-                            <FiEdit className="w-4 h-4 mr-1" />
-                            Edit
+                            {challenge.enabled 
+                              ? <><FiToggleRight className="mr-1" /> Disable</> 
+                              : <><FiToggleLeft className="mr-1" /> Enable</>}
                           </button>
-                          <button
-                            onClick={() => history.push(`/challenge/${challenge._id}`)}
-                            className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${
-                              isDark 
-                                ? 'text-green-300 bg-green-900/30 hover:bg-green-900/50' 
-                                : 'text-green-700 bg-green-100 hover:bg-green-200'
+                          <Link
+                            to={`/admin/challenges/edit/${challenge._id}`}
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                              isDark
+                                ? 'text-indigo-400 hover:text-indigo-300'
+                                : 'text-indigo-600 hover:text-indigo-800'
                             }`}
                           >
-                            <FiEye className="w-4 h-4 mr-1" />
-                            View
+                            <FiEdit className="mr-1" /> Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteChallenge(challenge._id)}
+                            disabled={loading}
+                            className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                              deleteConfirm.type === 'challenge' && deleteConfirm.id === challenge._id
+                                ? isDark
+                                  ? 'bg-red-900 text-red-200 hover:bg-red-800'
+                                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : isDark
+                                  ? 'text-red-400 hover:text-red-300'
+                                  : 'text-red-600 hover:text-red-900'
+                            }`}
+                          >
+                            <FiTrash2 className="mr-1" />
+                            {deleteConfirm.type === 'challenge' && deleteConfirm.id === challenge._id ? 'Confirm' : 'Delete'}
                           </button>
                         </div>
                       </td>
@@ -522,7 +714,7 @@ const AdminDashboard = () => {
                   ))}
                   {challenges.length === 0 && (
                     <tr>
-                      <td colSpan={5} className={`px-6 py-4 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <td colSpan="5" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         No challenges created yet
                       </td>
                     </tr>
@@ -538,10 +730,10 @@ const AdminDashboard = () => {
           <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg overflow-hidden`}>
             <div className={`px-4 py-5 ${isDark ? 'border-gray-700' : 'border-gray-200'} border-b sm:px-6`}>
               <div className="flex items-center justify-between">
-                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  User Progress
-                </h2>
-                <span className={`${isDark ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-800'} px-3 py-1 rounded-full text-sm font-medium`}>
+                <h2 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>User Progress</h2>
+                <span className={`${
+                  isDark ? 'bg-indigo-900/30 text-indigo-300' : 'bg-indigo-100 text-indigo-800'
+                } px-3 py-1 rounded-full text-sm font-medium`}>
                   Total: {userProgress.length}
                 </span>
               </div>
@@ -551,102 +743,120 @@ const AdminDashboard = () => {
               <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 <thead className={isDark ? "bg-gray-700" : "bg-gray-50"}>
                   <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       User
                     </th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Email
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Current Level
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Completed Levels
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Status
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Time Left
                     </th>
-                    <th className={`px-6 py-3 text-center text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    <th scope="col" className={`px-6 py-3 text-center text-xs font-medium ${
+                      isDark ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-                  {userProgress.map((progress) => (
-                    <tr key={progress._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {progress.user?.name || 'Unknown User'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {progress.user?.email || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          Level {progress.currentLevel || 1}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {progress.completedLevels?.length || 0} levels
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className={getStatusBadge(progress.status)}>
-                          {progress.status || 'unknown'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
-                          {formatTimeRemaining(progress.endTime)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => history.push(`/progress/${progress._id}`)}
-                            className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${
-                              isDark 
-                                ? 'text-blue-300 bg-blue-900/30 hover:bg-blue-900/50' 
-                                : 'text-blue-700 bg-blue-100 hover:bg-blue-200'
-                            }`}
-                          >
-                            <FiEye className="w-4 h-4 mr-1" />
-                            View
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedItem(progress);
-                              setShowDeleteModal(true);
-                            }}
-                            disabled={deleteLoading === progress._id}
-                            className={`inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${
-                              deleteLoading === progress._id
-                                ? 'opacity-50 cursor-not-allowed'
-                                : ''
-                            } ${
-                              isDark 
-                                ? 'text-red-300 bg-red-900/30 hover:bg-red-900/50' 
-                                : 'text-red-700 bg-red-100 hover:bg-red-200'
-                            }`}
-                          >
-                            <FiTrash2 className="w-4 h-4 mr-1" />
-                            {deleteLoading === progress._id ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
+                  {userProgress.map((progress) => {
+                    const user = users.find(u => u._id === progress.userId) || { name: 'Unknown', email: 'Unknown' };
+                    return (
+                      <tr key={progress._id} className={isDark ? "hover:bg-gray-700" : "hover:bg-gray-50"}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Level {progress.currentLevel}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                            {progress.levelStatus && Object.entries(progress.levelStatus)
+                              .filter(([_, isCompleted]) => isCompleted)
+                              .map(([level]) => level)
+                              .sort((a, b) => parseInt(a) - parseInt(b))
+                              .join(', ') || 'None'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            progress.completed 
+                              ? isDark
+                                ? 'bg-green-900 text-green-200'
+                                : 'bg-green-100 text-green-800'
+                              : progress.timeRemaining <= 0
+                                ? isDark
+                                  ? 'bg-red-900 text-red-200'
+                                  : 'bg-red-100 text-red-800'
+                                : isDark
+                                  ? 'bg-yellow-900 text-yellow-200'
+                                  : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {progress.completed 
+                              ? 'Completed' 
+                              : progress.timeRemaining <= 0
+                                ? 'Time Expired'
+                                : 'In Progress'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center">
+                            <FiClock className={`mr-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                            <span className={`text-sm ${
+                              progress.timeRemaining < 300 
+                                ? isDark ? 'text-red-400' : 'text-red-600'
+                                : isDark ? 'text-gray-300' : 'text-gray-500'
+                            }`}>
+                              {formatTimeRemaining(progress.timeRemaining)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <Link
+                              to={`/admin/progress/${progress.userId}`}
+                              className={`inline-flex items-center px-2 py-1 rounded-md text-sm ${
+                                isDark
+                                  ? 'text-indigo-400 hover:text-indigo-300'
+                                  : 'text-indigo-600 hover:text-indigo-800'
+                              }`}
+                            >
+                              <FiEye className="mr-1" /> View Details
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {userProgress.length === 0 && (
                     <tr>
-                      <td colSpan={7} className={`px-6 py-4 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        No user progress found
+                      <td colSpan="7" className={`px-6 py-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        No progress data available
                       </td>
                     </tr>
                   )}
@@ -655,111 +865,10 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FiUsers className={`h-6 w-6 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} truncate`}>
-                      Total Users
-                    </dt>
-                    <dd>
-                      <div className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {users.length}
-                      </div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-3`}>
-              <div className="text-sm">
-                <span className={`font-medium ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                  {users.filter(u => u.role === 'admin').length} Admins
-                </span>
-                <span className={`ml-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  • {users.filter(u => u.role === 'iscloud').length} Cloud Users
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FiBarChart2 className={`h-6 w-6 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} truncate`}>
-                      Total Challenges
-                    </dt>
-                    <dd>
-                      <div className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {challenges.length}
-                      </div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-3`}>
-              <div className="text-sm">
-                <span className={`font-medium ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                  {challenges.filter(c => c.difficulty === 'Easy').length} Easy
-                </span>
-                <span className={`ml-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  • {challenges.filter(c => c.difficulty === 'Medium').length} Medium
-                  • {challenges.filter(c => c.difficulty === 'Hard').length} Hard
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <FiClock className={`h-6 w-6 ${isDark ? 'text-gray-400' : 'text-gray-400'}`} />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} truncate`}>
-                      Active Progress
-                    </dt>
-                    <dd>
-                      <div className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {userProgress.length}
-                      </div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-3`}>
-              <div className="text-sm">
-                <span className={`font-medium ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                  {userProgress.filter(p => p.status === 'completed').length} Completed
-                </span>
-                <span className={`ml-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  • {userProgress.filter(p => p.status === 'in-progress').length} In Progress
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Modals */}
-      {showDeleteModal && <DeleteModal />}
-      {showRoleModal && <RoleModal />}
+      {/* Time Setting Modal */}
+      {showTimeSetting && <TimeLimitSetting />}
     </div>
   );
 };
