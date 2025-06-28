@@ -1,59 +1,560 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { FiPlus, FiTrash2, FiSave, FiArrowLeft, FiCloudLightning, FiServer, FiRefreshCw, FiEye, FiPrinter, FiHardDrive, FiDownload, FiChevronDown, FiFileText, FiFile, FiTable } from 'react-icons/fi';
-import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { api } from '../../utils/api';
+import { toast } from 'react-toastify';
+import { FiPlus, FiTrash2, FiDownload, FiEye, FiPrinter, FiArrowLeft } from 'react-icons/fi';
+import api from '../../utils/api';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
-// Function to determine status color for cloud services
-const getCloudStatusColor = (status) => {
-  if (!status) return { bg: 'bg-gray-200', text: 'text-gray-800' };
-  
-  status = String(status).toUpperCase().trim();
-  
-  if (status.includes('AUTOMATIC') || status.includes('SUCCESS') || status.includes('ONLINE')) {
-    return { bg: 'bg-green-200', text: 'text-green-800' };
-  } else if (status.includes('MANUAL') || status.includes('MAINTENANCE')) {
-    return { bg: 'bg-yellow-200', text: 'text-yellow-800' };
-  } else if (status.includes('FAILED') || status.includes('ERROR') || status.includes('OFFLINE')) {
-    return { bg: 'bg-red-200', text: 'text-red-800' };
-  } else if (status.includes('N/A') || status.includes('NOT APPLICABLE')) {
-    return { bg: 'bg-purple-200', text: 'text-purple-800' };
-  } else if (status.includes('IN PROGRESS') || status.includes('RUNNING')) {
-    return { bg: 'bg-pink-200', text: 'text-pink-800' };
-  }
-  
-  return { bg: 'bg-gray-200', text: 'text-gray-800' };
+// Styled Status Select Component with Colors
+const StyledStatusSelect = ({ value, onChange, isDark, isCloudStatus = false }) => {
+  // Get background color based on value
+  const getBackgroundColor = (val) => {
+    if (!val) return isDark ? '#374151' : '#ffffff'; // Default gray-700 for dark, white for light
+    
+    const normalizedVal = val.toUpperCase();
+    
+    if (isCloudStatus) {
+      // Cloud service status colors
+      switch (normalizedVal) {
+        case 'AUTOMATIC':
+          return '#10b981'; // Green (emerald-500)
+        case 'MANUAL':
+          return '#f59e0b'; // Yellow/Orange (amber-500)
+        case 'FAILED':
+          return '#ef4444'; // Red (red-500)
+        case 'IN PROGRESS':
+          return '#3b82f6'; // Blue (blue-500)
+        case 'ONLINE':
+          return '#10b981'; // Green (emerald-500)
+        case 'MAINTENANCE':
+          return '#f59e0b'; // Yellow/Orange (amber-500)
+        case 'OFFLINE':
+          return '#ef4444'; // Red (red-500)
+        case 'N/A':
+          return '#6b7280'; // Gray (gray-500)
+        default:
+          return isDark ? '#374151' : '#ffffff';
+      }
+    } else {
+      // Backup server status colors
+      switch (normalizedVal) {
+        case 'RUNNING':
+          return '#10b981'; // Green (emerald-500)
+        case 'NOT RUNNING':
+          return '#ef4444'; // Red (red-500)
+        case 'N/A':
+          return '#6b7280'; // Gray (gray-500)
+        default:
+          return isDark ? '#374151' : '#ffffff';
+      }
+    }
+  };
+
+  // Get text color based on background
+  const getTextColor = (val) => {
+    if (!val) return isDark ? '#ffffff' : '#000000';
+    
+    const normalizedVal = val.toUpperCase();
+    // Use black text for yellow/orange backgrounds for better readability
+    if (normalizedVal === 'MANUAL' || normalizedVal === 'MAINTENANCE') {
+      return '#000000';
+    }
+    // Use white text for colored backgrounds, black for default
+    return val ? '#ffffff' : (isDark ? '#ffffff' : '#000000');
+  };
+
+  const backgroundColor = getBackgroundColor(value);
+  const textColor = getTextColor(value);
+
+  return (
+    <select
+      value={value || ''}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        backgroundColor,
+        color: textColor,
+        fontWeight: value ? 'bold' : 'normal',
+        transition: 'all 0.2s ease-in-out'
+      }}
+      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center ${
+        isDark 
+          ? 'border-gray-600' 
+          : 'border-gray-300'
+      }`}
+    >
+      {isCloudStatus ? (
+        <>
+          <option value="" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+            Select Status
+          </option>
+          <option value="AUTOMATIC" style={{ backgroundColor: '#10b981', color: '#ffffff' }}>
+            AUTOMATIC
+          </option>
+          <option value="MANUAL" style={{ backgroundColor: '#f59e0b', color: '#000000' }}>
+            MANUAL
+          </option>
+          <option value="FAILED" style={{ backgroundColor: '#ef4444', color: '#ffffff' }}>
+            FAILED
+          </option>
+          <option value="IN PROGRESS" style={{ backgroundColor: '#3b82f6', color: '#ffffff' }}>
+            IN PROGRESS
+          </option>
+          <option value="ONLINE" style={{ backgroundColor: '#10b981', color: '#ffffff' }}>
+            ONLINE
+          </option>
+          <option value="MAINTENANCE" style={{ backgroundColor: '#f59e0b', color: '#000000' }}>
+            MAINTENANCE
+          </option>
+          <option value="OFFLINE" style={{ backgroundColor: '#ef4444', color: '#ffffff' }}>
+            OFFLINE
+          </option>
+          <option value="N/A" style={{ backgroundColor: '#6b7280', color: '#ffffff' }}>
+            N/A
+          </option>
+        </>
+      ) : (
+        <>
+          <option value="" style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+            Select Status
+          </option>
+          <option value="RUNNING" style={{ backgroundColor: '#10b981', color: '#ffffff' }}>
+            RUNNING
+          </option>
+          <option value="NOT RUNNING" style={{ backgroundColor: '#ef4444', color: '#ffffff' }}>
+            NOT RUNNING
+          </option>
+          <option value="N/A" style={{ backgroundColor: '#6b7280', color: '#ffffff' }}>
+            N/A
+          </option>
+        </>
+      )}
+    </select>
+  );
 };
 
-// Function to determine backup status color
-const getBackupStatusColor = (status) => {
-  if (!status) return { bg: 'bg-gray-200', text: 'text-gray-800' };
-  
-  status = String(status).toUpperCase().trim();
-  
-  if (status === 'RUNNING') {
-    return { bg: 'bg-green-200', text: 'text-green-800' };
-  } else if (status === 'NOT RUNNING') {
-    return { bg: 'bg-red-200', text: 'text-red-800' };
-  }
-  
-  return { bg: 'bg-gray-200', text: 'text-gray-800' };
-};
-
-// Check if a column is a status column for cloud
+// Helper functions
 const isCloudStatusColumn = (column) => {
   return column === 'Status' || 
     ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(column);
 };
 
-// Check if a column is a weekday column for backup
 const isBackupWeekdayColumn = (column) => {
   return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(column);
+};
+
+const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// Print Preview Component
+const CloudPrintPreview = ({ cloudData, backupData }) => {
+  const history = useHistory();
+  const { isDark } = useTheme();
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    
+    // Convert logo to base64 to ensure it loads in print
+    const logoCanvas = document.createElement('canvas');
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    
+    logoImg.onload = function() {
+      logoCanvas.width = this.width;
+      logoCanvas.height = this.height;
+      const ctx = logoCanvas.getContext('2d');
+      ctx.drawImage(this, 0, 0);
+      const logoBase64 = logoCanvas.toDataURL();
+      
+      generatePrintContent(logoBase64);
+    };
+    
+    logoImg.onerror = function() {
+      // If logo fails to load, continue without it
+      generatePrintContent(null);
+    };
+    
+    // Try to load logo from multiple possible paths
+    logoImg.src = './biztras.png';
+    
+    // Fallback: if logo doesn't load within 2 seconds, continue without it
+    setTimeout(() => {
+      if (!logoImg.complete) {
+        generatePrintContent(null);
+      }
+    }, 2000);
+
+    function generatePrintContent(logoBase64) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Cloud Infrastructure Status Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              color: #000;
+              background: #fff;
+            }
+            .report-header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #000;
+              padding-bottom: 15px;
+            }
+            .logo {
+              width: 120px;
+              height: auto;
+              margin-bottom: 15px;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+            }
+            .report-title {
+              font-size: 28px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              color: #000;
+            }
+            .report-subtitle {
+              font-size: 18px;
+              margin-bottom: 8px;
+              color: #333;
+            }
+            .report-date {
+              font-size: 14px;
+              margin-bottom: 5px;
+              color: #666;
+            }
+            .total-space {
+              font-size: 16px;
+              margin-top: 10px;
+              font-weight: bold;
+              color: #333;
+            }
+            .section-header {
+              font-size: 20px;
+              font-weight: bold;
+              margin: 30px 0 15px 0;
+              padding: 8px 12px;
+              background-color: #f0f0f0;
+              border-left: 4px solid #333;
+            }
+            .report-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+              font-size: 10px;
+            }
+            .report-table th, .report-table td {
+              border: 1px solid #000;
+              padding: 6px 4px;
+              text-align: left;
+              vertical-align: top;
+            }
+            .report-table th {
+              background-color: #e0e0e0;
+              font-weight: bold;
+              text-transform: uppercase;
+              font-size: 9px;
+            }
+            .report-footer {
+              text-align: center;
+              margin-top: 30px;
+              font-size: 12px;
+              color: #666;
+              border-top: 1px solid #ccc;
+              padding-top: 15px;
+            }
+            .status-automatic, .status-online {
+              background-color: #d4edda;
+              color: #155724;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            .status-manual, .status-maintenance {
+              background-color: #fff3cd;
+              color: #856404;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            .status-failed, .status-offline {
+              background-color: #f8d7da;
+              color: #721c24;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            .status-progress {
+              background-color: #d1ecf1;
+              color: #0c5460;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            .status-na {
+              background-color: #e2e6ea;
+              color: #383d41;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            .status-running {
+              background-color: #d1ecf1;
+              color: #0c5460;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-weight: bold;
+              font-size: 9px;
+            }
+            @page {
+              size: A4 landscape;
+              margin: 15mm;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report-header">
+            ${logoBase64 ? `<img src="${logoBase64}" alt="BizTras Logo" class="logo" />` : ''}
+            <div class="report-title">Cloud Infrastructure Status Report</div>
+            <div class="report-subtitle">${cloudData.reportTitle || 'Cloud Status Report'}</div>
+            <div class="report-subtitle">${backupData.reportTitle || 'Backup Server Cronjob Status'}</div>
+            <div class="report-date">Cloud Services: ${formatDate(cloudData.reportDates?.startDate)} - ${formatDate(cloudData.reportDates?.endDate)}</div>
+            <div class="report-date">Backup Servers: ${formatDate(backupData.reportDates?.startDate)} - ${formatDate(backupData.reportDates?.endDate)}</div>
+            ${cloudData.totalSpaceUsed ? `<div class="total-space">Total Space Used: ${cloudData.totalSpaceUsed}</div>` : ''}
+          </div>
+          
+          <!-- Cloud Status Section -->
+          <div class="section-header">☁️ ${cloudData.reportTitle || 'Cloud Services Status'}</div>
+          <table class="report-table">
+            <thead>
+              <tr>
+                ${cloudData.columns.map(col => `<th>${col}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${cloudData.rows.map(row => `
+                <tr>
+                  ${cloudData.columns.map(column => {
+                    const value = row[column] || '';
+                    if (isCloudStatusColumn(column)) {
+                      const statusClass = value.toLowerCase().includes('automatic') || value.toLowerCase().includes('online') ? 'status-automatic' :
+                                         value.toLowerCase().includes('manual') || value.toLowerCase().includes('maintenance') ? 'status-manual' :
+                                         value.toLowerCase().includes('failed') || value.toLowerCase().includes('offline') ? 'status-failed' :
+                                         value.toLowerCase().includes('progress') ? 'status-progress' :
+                                         value.toLowerCase().includes('n/a') ? 'status-na' : '';
+                      return `<td><span class="${statusClass}">${value}</span></td>`;
+                    }
+                    return `<td>${value}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <!-- Backup Server Section -->
+          <div class="section-header">🗄️ ${backupData.reportTitle || 'Backup Server Cronjob Status'}</div>
+          <table class="report-table">
+            <thead>
+              <tr>
+                ${backupData.columns.map(col => `<th>${col}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${backupData.rows.map(row => `
+                <tr>
+                  ${backupData.columns.map(column => {
+                    const value = row[column] || '';
+                    if (isBackupWeekdayColumn(column)) {
+                      const statusClass = value.toUpperCase() === 'RUNNING' ? 'status-running' :
+                                         value.toLowerCase().includes('not running') || value.toLowerCase().includes('failed') ? 'status-failed' :
+                                         value.toLowerCase().includes('n/a') ? 'status-na' : '';
+                      return `<td><span class="${statusClass}">${value}</span></td>`;
+                    }
+                    return `<td>${value}</td>`;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="report-footer">
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <p>Cloud Services: ${cloudData.rows.length} | Backup Servers: ${backupData.rows.length}</p>
+            ${cloudData.totalSpaceUsed ? `<p>Total Space Used: ${cloudData.totalSpaceUsed}</p>` : ''}
+          </div>
+          
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
+  return (
+    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header with navigation */}
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={() => history.push('/cloud-dashboard')}
+            className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+              isDark
+                ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+            }`}
+          >
+            <FiArrowLeft className="mr-2" />
+            Back to Edit
+          </button>
+          
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <FiPrinter className="mr-2" />
+            Print Report
+          </button>
+        </div>
+
+        {/* Preview content */}
+        <div className={`${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} shadow-lg rounded-lg overflow-hidden`}>
+          {/* Header */}
+          <div className="text-center py-8 px-6 border-b">
+            <img 
+              src="./biztras.png" 
+              alt="BizTras Logo" 
+              className="w-24 h-24 mx-auto mb-4 rounded-lg"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+            <h1 className="text-3xl font-bold mb-2">Cloud Infrastructure Status Report</h1>
+            <h2 className="text-xl font-semibold mb-2">{cloudData.reportTitle || 'Cloud Status Report'}</h2>
+            <h3 className="text-xl font-semibold mb-4">{backupData.reportTitle || 'Backup Server Cronjob Status'}</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Cloud Services: {formatDate(cloudData.reportDates?.startDate)} - {formatDate(cloudData.reportDates?.endDate)}
+            </p>
+            <p className="text-sm text-gray-600 mb-4">
+              Backup Servers: {formatDate(backupData.reportDates?.startDate)} - {formatDate(backupData.reportDates?.endDate)}
+            </p>
+            {cloudData.totalSpaceUsed && (
+              <p className="text-lg font-semibold text-blue-600">
+                Total Space Used: {cloudData.totalSpaceUsed}
+              </p>
+            )}
+          </div>
+
+          {/* Cloud Services Section */}
+          <div className="p-6">
+            <h3 className="text-xl font-bold mb-4">☁️ {cloudData.reportTitle || 'Cloud Services Status'}</h3>
+            <div className="overflow-x-auto mb-8">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    {cloudData.columns.map((column, index) => (
+                      <th
+                        key={index}
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}
+                      >
+                        {column}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+                  {cloudData.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {cloudData.columns.map((column, colIndex) => (
+                        <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm">
+                          {row[column] || 'N/A'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Backup Servers Section */}
+            <h3 className="text-xl font-bold mb-4">🗄️ {backupData.reportTitle || 'Backup Server Cronjob Status'}</h3>
+            <div className="overflow-x-auto">
+              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    {backupData.columns.map((column, index) => (
+                      <th
+                        key={index}
+                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                          isDark ? 'text-gray-300' : 'text-gray-500'
+                        }`}
+                      >
+                        {column}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+                  {backupData.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {backupData.columns.map((column, colIndex) => (
+                        <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm">
+                          {row[column] || 'N/A'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className={`px-6 py-4 border-t text-center ${isDark ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'}`}>
+            <p className="text-sm mb-2">
+              Generated on {new Date().toLocaleString()}
+            </p>
+            <p className="text-sm">
+              Cloud Services: {cloudData.rows.length} | Backup Servers: {backupData.rows.length}
+              {cloudData.totalSpaceUsed && ` | Total Space Used: ${cloudData.totalSpaceUsed}`}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // Export Dropdown Component
@@ -127,6 +628,65 @@ const ExportDropdown = ({ reportData, disabled = false }) => {
     }
   };
 
+  const exportToCSV = (data, fileName) => {
+    try {
+      const { cloudData, backupData } = data;
+      
+      let csvContent = '';
+      
+      // Metadata
+      csvContent += `Report Information\n`;
+      csvContent += `Cloud Report Title,${cloudData.reportTitle}\n`;
+      csvContent += `Backup Report Title,${backupData.reportTitle}\n`;
+      csvContent += `Cloud Start Date,${formatDate(cloudData.reportDates?.startDate)}\n`;
+      csvContent += `Cloud End Date,${formatDate(cloudData.reportDates?.endDate)}\n`;
+      csvContent += `Backup Start Date,${formatDate(backupData.reportDates?.startDate)}\n`;
+      csvContent += `Backup End Date,${formatDate(backupData.reportDates?.endDate)}\n`;
+      csvContent += `Total Space Used,${cloudData.totalSpaceUsed || 'N/A'}\n`;
+      csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
+      
+      // Cloud Services
+      csvContent += `Cloud Services\n`;
+      csvContent += cloudData.columns.join(',') + '\n';
+      cloudData.rows.forEach(row => {
+        const rowData = cloudData.columns.map(column => {
+          const value = row[column] || '';
+          return value.includes(',') ? `"${value}"` : value;
+        });
+        csvContent += rowData.join(',') + '\n';
+      });
+      
+      csvContent += '\n';
+      
+      // Backup Servers
+      csvContent += `Backup Servers\n`;
+      csvContent += backupData.columns.join(',') + '\n';
+      backupData.rows.forEach(row => {
+        const rowData = backupData.columns.map(column => {
+          const value = row[column] || '';
+          return value.includes(',') ? `"${value}"` : value;
+        });
+        csvContent += rowData.join(',') + '\n';
+      });
+      
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${fileName}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      return true;
+    } catch (error) {
+      console.error('Error exporting to CSV:', error);
+      throw error;
+    }
+  };
+
   const exportToPDF = (data, fileName) => {
     try {
       const { cloudData, backupData } = data;
@@ -192,106 +752,36 @@ const ExportDropdown = ({ reportData, disabled = false }) => {
     }
   };
 
-  const exportToCSV = (data, fileName) => {
-    try {
-      const { cloudData, backupData } = data;
-      
-      let csvContent = '';
-      
-      // Metadata
-      csvContent += `Report Information\n`;
-      csvContent += `Cloud Report Title,${cloudData.reportTitle}\n`;
-      csvContent += `Backup Report Title,${backupData.reportTitle}\n`;
-      csvContent += `Cloud Start Date,${formatDate(cloudData.reportDates?.startDate)}\n`;
-      csvContent += `Cloud End Date,${formatDate(cloudData.reportDates?.endDate)}\n`;
-      csvContent += `Backup Start Date,${formatDate(backupData.reportDates?.startDate)}\n`;
-      csvContent += `Backup End Date,${formatDate(backupData.reportDates?.endDate)}\n`;
-      csvContent += `Total Space Used,${cloudData.totalSpaceUsed || 'N/A'}\n`;
-      csvContent += `Generated On,${new Date().toLocaleString()}\n\n`;
-      
-      // Cloud Services
-      csvContent += `Cloud Services\n`;
-      csvContent += cloudData.columns.join(',') + '\n';
-      cloudData.rows.forEach(row => {
-        const rowData = cloudData.columns.map(column => {
-          const value = row[column] || '';
-          return value.includes(',') ? `"${value}"` : value;
-        });
-        csvContent += rowData.join(',') + '\n';
-      });
-      
-      csvContent += '\n';
-      
-      // Backup Servers
-      csvContent += `Backup Servers\n`;
-      csvContent += backupData.columns.join(',') + '\n';
-      backupData.rows.forEach(row => {
-        const rowData = backupData.columns.map(column => {
-          const value = row[column] || '';
-          return value.includes(',') ? `"${value}"` : value;
-        });
-        csvContent += rowData.join(',') + '\n';
-      });
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${fileName}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error exporting to CSV:', error);
-      throw error;
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const handleExport = async (format) => {
+    if (!reportData || isExporting) return;
+
     try {
       setIsExporting(true);
-      setIsOpen(false);
-      
-      const now = new Date();
-      const dateStr = now.toISOString().split('T')[0];
-      const fileName = `cloud-infrastructure-report-${dateStr}`;
-      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const fileName = `cloud-infrastructure-report-${timestamp}`;
+
       let success = false;
       switch (format) {
         case 'excel':
           success = exportToExcel(reportData, fileName);
           break;
-        case 'pdf':
-          success = exportToPDF(reportData, fileName);
-          break;
         case 'csv':
           success = exportToCSV(reportData, fileName);
           break;
+        case 'pdf':
+          success = exportToPDF(reportData, fileName);
+          break;
         default:
-          throw new Error(`Unsupported format: ${format}`);
+          throw new Error('Invalid export format');
       }
-      
+
       if (success) {
-        toast.success(`Successfully exported report as ${format.toUpperCase()}`);
+        toast.success(`Report exported to ${format.toUpperCase()} successfully!`);
+        setIsOpen(false);
       }
     } catch (error) {
-      console.error(`Export error (${format}):`, error);
-      toast.error(`Failed to export as ${format.toUpperCase()}: ${error.message}`);
+      console.error('Export error:', error);
+      toast.error(`Failed to export to ${format.toUpperCase()}`);
     } finally {
       setIsExporting(false);
     }
@@ -299,69 +789,66 @@ const ExportDropdown = ({ reportData, disabled = false }) => {
 
   const exportOptions = [
     {
-      format: 'excel',
-      label: 'Export as Excel',
-      icon: FiTable,
-      description: 'Multi-sheet Excel with cloud and backup data'
-    },
-    {
-      format: 'pdf',
+      id: 'pdf',
       label: 'Export as PDF',
-      icon: FiFileText,
-      description: 'Professional PDF format for printing'
+      description: 'Portable Document Format - Best for printing',
+      icon: '📄'
     },
     {
-      format: 'csv',
+      id: 'excel',
+      label: 'Export as Excel',
+      description: 'Microsoft Excel - Best for data analysis',
+      icon: '📊'
+    },
+    {
+      id: 'csv',
       label: 'Export as CSV',
-      icon: FiFile,
-      description: 'CSV format for data analysis'
+      description: 'Comma Separated Values - Best for data import',
+      icon: '📋'
     }
   ];
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled || isExporting}
-        className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+        className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
           disabled || isExporting
-            ? isDark
-              ? 'border-gray-600 text-gray-400 bg-gray-800 cursor-not-allowed'
-              : 'border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed'
-            : isDark
-              ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700'
-              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-        }`}
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-green-600 hover:bg-green-700'
+        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500`}
       >
-        <FiDownload className={`mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
+        <FiDownload className="mr-2" />
         {isExporting ? 'Exporting...' : 'Export'}
-        <FiChevronDown className={`ml-2 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && !disabled && !isExporting && (
-        <div className={`origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50 ${
-          isDark ? 'bg-gray-800 ring-gray-700' : 'bg-white'
+      {isOpen && !disabled && (
+        <div className={`absolute right-0 mt-2 w-80 rounded-md shadow-lg z-50 ${
+          isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
         }`}>
           <div className="py-1">
             {exportOptions.map((option) => {
-              const IconComponent = option.icon;
               return (
                 <button
-                  key={option.format}
-                  onClick={() => handleExport(option.format)}
-                  className={`group flex items-start w-full px-4 py-3 text-sm hover:bg-opacity-75 transition-colors ${
+                  key={option.id}
+                  onClick={() => handleExport(option.id)}
+                  disabled={isExporting}
+                  className={`w-full text-left px-4 py-3 text-sm border-b last:border-b-0 ${
                     isDark
-                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
+                      ? 'hover:bg-gray-700 text-gray-200 border-gray-700'
+                      : 'hover:bg-gray-50 text-gray-900 border-gray-100'
+                  } ${isExporting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  <IconComponent className="mr-3 mt-0.5 flex-shrink-0" size={16} />
-                  <div className="text-left">
-                    <div className="font-medium">{option.label}</div>
-                    <div className={`text-xs mt-1 ${
-                      isDark ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      {option.description}
+                  <div className="flex items-start space-x-3">
+                    <span className="text-lg">{option.icon}</span>
+                    <div>
+                      <div className="font-medium">{option.label}</div>
+                      <div className={`text-xs mt-1 ${
+                        isDark ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        {option.description}
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -381,345 +868,6 @@ const ExportDropdown = ({ reportData, disabled = false }) => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
-// Print Preview Component
-const CloudPrintPreview = ({ cloudData, backupData }) => {
-  const history = useHistory();
-  const { isDark } = useTheme();
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Cloud Infrastructure Status Report</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            color: #000;
-          }
-          .report-header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 15px;
-          }
-          .logo {
-            width: 120px;
-            height: auto;
-            margin-bottom: 15px;
-          }
-          .report-title {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 10px;
-          }
-          .report-date {
-            font-size: 16px;
-            margin-bottom: 10px;
-          }
-          .section-header {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 30px 0 15px 0;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-left: 4px solid #007bff;
-          }
-          .report-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-          }
-          .report-table th, .report-table td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-          }
-          .report-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-transform: uppercase;
-          }
-          .status-running, .status-automatic, .status-success, .status-online {
-            background-color: #d1fae5;
-            color: #065f46;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          .status-not-running, .status-failed, .status-error, .status-offline {
-            background-color: #fee2e2;
-            color: #b91c1c;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          .status-manual, .status-maintenance {
-            background-color: #fef3c7;
-            color: #92400e;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          .status-na {
-            background-color: #e0e7ff;
-            color: #4338ca;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          @page {
-            size: A4 landscape;
-            margin: 15mm;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="report-header">
-          <img src="./biztras.png" alt="BizTras Logo" class="logo" />
-          <div class="report-title">Cloud Infrastructure Status Report</div>
-          <div class="report-date">Cloud Services: ${formatDate(cloudData.reportDates?.startDate)} - ${formatDate(cloudData.reportDates?.endDate)}</div>
-          <div class="report-date">Backup Servers: ${formatDate(backupData.reportDates?.startDate)} - ${formatDate(backupData.reportDates?.endDate)}</div>
-          <div style="font-size: 14px; margin-top: 10px;">Total Space Used: ${cloudData.totalSpaceUsed || 'N/A'}</div>
-        </div>
-        
-        <!-- Cloud Status Section -->
-        <div class="section-header">☁️ Cloud Services Status</div>
-        <table class="report-table">
-          <thead>
-            <tr>
-              ${cloudData.columns.map(col => `<th>${col}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${cloudData.rows.map(row => `
-              <tr>
-                ${cloudData.columns.map(column => {
-                  const value = row[column] || '';
-                  if (isCloudStatusColumn(column)) {
-                    const statusClass = value.toLowerCase().includes('automatic') || value.toLowerCase().includes('success') || value.toLowerCase().includes('online') ? 'status-automatic' :
-                                       value.toLowerCase().includes('manual') || value.toLowerCase().includes('maintenance') ? 'status-manual' :
-                                       value.toLowerCase().includes('failed') || value.toLowerCase().includes('error') || value.toLowerCase().includes('offline') ? 'status-failed' :
-                                       value.toLowerCase().includes('n/a') ? 'status-na' : '';
-                    return `<td><span class="${statusClass}">${value}</span></td>`;
-                  }
-                  return `<td>${value}</td>`;
-                }).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <!-- Backup Server Section -->
-        <div class="section-header">🗄️ Backup Server Cronjob Status</div>
-        <table class="report-table">
-          <thead>
-            <tr>
-              ${backupData.columns.map(col => `<th>${col}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            ${backupData.rows.map(row => `
-              <tr>
-                ${backupData.columns.map(column => {
-                  const value = row[column] || '';
-                  if (isBackupWeekdayColumn(column)) {
-                    const statusClass = value.toUpperCase() === 'RUNNING' ? 'status-running' : 
-                                       value.toUpperCase() === 'NOT RUNNING' ? 'status-not-running' : '';
-                    return `<td><span class="${statusClass}">${value}</span></td>`;
-                  }
-                  return `<td>${value}</td>`;
-                }).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
-          <p>Generated on ${new Date().toLocaleString()}</p>
-          <p>Cloud Services: ${cloudData.rows.length} | Backup Servers: ${backupData.rows.length}</p>
-        </div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center">
-            <button
-              onClick={() => history.goBack()}
-              className={`mr-4 flex items-center ${
-                isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-black'
-              }`}
-            >
-              <FiArrowLeft className="mr-1" /> Back to Edit
-            </button>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
-              <FiCloudLightning className="mr-2" /> Print Preview
-            </h1>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => history.push('/cloud-dashboard')}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <FiArrowLeft className="mr-2" /> Back to Edit
-            </button>
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              <FiPrinter className="mr-2" /> Print Report
-            </button>
-          </div>
-        </div>
-
-        {/* Combined Report Content */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-8`}>
-          {/* Report Header */}
-          <div className="text-center mb-8">
-            <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-              Cloud Infrastructure Status Report
-            </h2>
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <strong>Cloud Services:</strong> {formatDate(cloudData.reportDates?.startDate)} - {formatDate(cloudData.reportDates?.endDate)}
-            </p>
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <strong>Backup Servers:</strong> {formatDate(backupData.reportDates?.startDate)} - {formatDate(backupData.reportDates?.endDate)}
-            </p>
-            {cloudData.totalSpaceUsed && (
-              <p className={`text-md ${isDark ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
-                Total Space Used: {cloudData.totalSpaceUsed}
-              </p>
-            )}
-          </div>
-
-          {/* Cloud Services Section */}
-          <div className="mb-12">
-            <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center border-b pb-2`}>
-              <FiCloudLightning className="mr-2" /> IDrive Weekly Report
-            </h3>
-            <div className="overflow-x-auto">
-              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-                  <tr>
-                    {cloudData.columns.map((column, index) => (
-                      <th
-                        key={index}
-                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                          isDark ? 'text-gray-300' : 'text-gray-500'
-                        }`}
-                      >
-                        {column}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-                  {cloudData.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {cloudData.columns.map((column, colIndex) => {
-                        const value = row[column] || '';
-                        return (
-                          <td key={colIndex} className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                            {isCloudStatusColumn(column) ? (
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                getCloudStatusColor(value).bg
-                              } ${getCloudStatusColor(value).text}`}>
-                                {value}
-                              </span>
-                            ) : (
-                              value
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Backup Servers Section */}
-          <div className="mb-8">
-            <h3 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 flex items-center border-b pb-2`}>
-              <FiServer className="mr-2" /> Backup Server Cronjob Status
-            </h3>
-            <div className="overflow-x-auto">
-              <table className={`min-w-full divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                <thead className={isDark ? 'bg-gray-700' : 'bg-gray-50'}>
-                  <tr>
-                    {backupData.columns.map((column, index) => (
-                      <th
-                        key={index}
-                        className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                          isDark ? 'text-gray-300' : 'text-gray-500'
-                        }`}
-                      >
-                        {column}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className={`${isDark ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-                  {backupData.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {backupData.columns.map((column, colIndex) => {
-                        const value = row[column] || '';
-                        return (
-                          <td key={colIndex} className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>
-                            {isBackupWeekdayColumn(column) ? (
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                getBackupStatusColor(value).bg
-                              } ${getBackupStatusColor(value).text}`}>
-                                {value}
-                              </span>
-                            ) : (
-                              value
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Summary Footer */}
-          <div className={`text-center mt-8 pt-6 border-t ${isDark ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'}`}>
-            <p className="text-sm">
-              Generated on {new Date().toLocaleString()} | 
-              Cloud Services: {cloudData.rows.length} | 
-              Backup Servers: {backupData.rows.length}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -1003,6 +1151,78 @@ const CloudDashboard = () => {
     };
   };
 
+  // Cell rendering with styled dropdowns
+  const renderCloudCell = (row, column, rowIndex) => {
+    const isStatusColumn = column === 'Status';
+    const isWeekdayColumn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(column);
+    const isSSLColumn = column === 'SSL Expiry';
+
+    if (isStatusColumn || isWeekdayColumn) {
+      return (
+        <StyledStatusSelect
+          value={row[column] || ''}
+          onChange={(newValue) => handleCloudCellChange(rowIndex, column, newValue)}
+          isDark={isDark}
+          isCloudStatus={true}
+        />
+      );
+    } else if (isSSLColumn) {
+      return (
+        <input
+          type="date"
+          value={row[column] || ''}
+          onChange={(e) => handleCloudCellChange(rowIndex, column, e.target.value)}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+            isDark 
+              ? 'bg-gray-700 border-gray-600 text-white' 
+              : 'bg-white border-gray-300 text-gray-900'
+          }`}
+        />
+      );
+    } else {
+      return (
+        <input
+          type="text"
+          value={row[column] || ''}
+          onChange={(e) => handleCloudCellChange(rowIndex, column, e.target.value)}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+            isDark 
+              ? 'bg-gray-700 border-gray-600 text-white' 
+              : 'bg-white border-gray-300 text-gray-900'
+          }`}
+        />
+      );
+    }
+  };
+
+  const renderBackupCell = (row, column, rowIndex) => {
+    const isWeekdayColumn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(column);
+
+    if (isWeekdayColumn) {
+      return (
+        <StyledStatusSelect
+          value={row[column] || ''}
+          onChange={(newValue) => handleBackupCellChange(rowIndex, column, newValue)}
+          isDark={isDark}
+          isCloudStatus={false}
+        />
+      );
+    } else {
+      return (
+        <input
+          type="text"
+          value={row[column] || ''}
+          onChange={(e) => handleBackupCellChange(rowIndex, column, e.target.value)}
+          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
+            isDark 
+              ? 'bg-gray-700 border-gray-600 text-white' 
+              : 'bg-white border-gray-300 text-gray-900'
+          }`}
+        />
+      );
+    }
+  };
+
   // Render preview mode
   if (isPreviewMode) {
     const reportData = getReportData();
@@ -1029,94 +1249,95 @@ const CloudDashboard = () => {
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} py-6`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-wrap justify-between items-center mb-8">
-          <div className="flex items-center mb-4 md:mb-0">
-            <button
-              onClick={() => history.goBack()}
-              className={`mr-4 flex items-center ${
-                isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-black'
-              }`}
-            >
-              <FiArrowLeft className="mr-1" /> Back
-            </button>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
-              <FiCloudLightning className="mr-2" /> Cloud Infrastructure Dashboard
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Cloud Infrastructure Dashboard
             </h1>
+            <p className={`mt-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Manage cloud services and backup server configurations
+            </p>
           </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={fetchData}
-              disabled={loading}
-              className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
-                isDark
-                  ? 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700'
-                  : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-              }`}
-            >
-              <FiRefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+          
+          <div className="flex space-x-3">
             <ExportDropdown 
               reportData={getReportData()} 
-              disabled={loading || saveLoading}
+              disabled={cloudRows.length === 0 && backupRows.length === 0}
             />
+            
             <button
               onClick={togglePreviewMode}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <FiEye className="mr-2" /> Preview Report
+              <FiEye className="mr-2" />
+              Preview & Print
             </button>
+            
             <button
               onClick={saveData}
               disabled={saveLoading}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                saveLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
-              <FiSave className={`mr-2 ${saveLoading ? 'animate-spin' : ''}`} />
-              {saveLoading ? 'Saving...' : 'Save All'}
+              {saveLoading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
         {/* Tab Navigation */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg mb-6`}>
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('cloud')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                  activeTab === 'cloud'
-                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiCloudLightning className="inline mr-2" />
-                Cloud Services ({cloudRows.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('backup')}
-                className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                  activeTab === 'backup'
-                    ? 'border-green-500 text-green-600 dark:text-green-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiServer className="inline mr-2" />
-                Backup Servers ({backupRows.length})
-              </button>
-            </nav>
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('cloud')}
+              className={`flex-1 py-4 px-6 text-center font-medium text-sm ${
+                activeTab === 'cloud'
+                  ? isDark
+                    ? 'border-b-2 border-indigo-400 text-indigo-400 bg-gray-700'
+                    : 'border-b-2 border-indigo-500 text-indigo-600 bg-indigo-50'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              ☁️ Cloud Services ({cloudRows.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('backup')}
+              className={`flex-1 py-4 px-6 text-center font-medium text-sm ${
+                activeTab === 'backup'
+                  ? isDark
+                    ? 'border-b-2 border-green-400 text-green-400 bg-gray-700'
+                    : 'border-b-2 border-green-500 text-green-600 bg-green-50'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🗄️ Backup Servers ({backupRows.length})
+            </button>
           </div>
         </div>
 
         {/* Cloud Services Tab */}
         {activeTab === 'cloud' && (
           <>
-            {/* Cloud Report Details */}
+            {/* Cloud Configuration */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
-                <FiCloudLightning className="mr-2" /> Cloud Services Configuration
+              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Cloud Service Configuration
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     Report Title
@@ -1183,54 +1404,47 @@ const CloudDashboard = () => {
 
             {/* Cloud Column Management */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Manage Cloud Columns</h2>
+              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Cloud Service Columns
+              </h2>
               
-              <div className="flex items-end mb-4">
-                <div className="flex-grow mr-4">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    New Column Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newCloudColumnName}
-                    onChange={(e) => setNewCloudColumnName(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="Enter column name"
-                  />
-                </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newCloudColumnName}
+                  onChange={(e) => setNewCloudColumnName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddCloudColumn()}
+                  placeholder="Enter new column name"
+                  className={`px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
                 <button
                   onClick={handleAddCloudColumn}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <FiPlus className="mr-2" /> Add Column
+                  Add Column
                 </button>
               </div>
               
-              <div className="overflow-x-auto mt-4">
-                <div className="inline-flex flex-nowrap">
-                  {cloudColumns.map((column, index) => (
-                    <div 
-                      key={index} 
-                      className={`min-w-max px-4 py-2 m-1 rounded-md ${
-                        isDark ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
-                      } flex items-center justify-between`}
+              <div className="flex flex-wrap gap-2">
+                {cloudColumns.map((column, index) => (
+                  <div key={index} className={`flex items-center px-3 py-1 rounded-full text-sm ${
+                    isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    <span>{column}</span>
+                    <button
+                      onClick={() => handleRemoveCloudColumn(index)}
+                      className={`ml-2 text-red-500 hover:text-red-700 focus:outline-none ${
+                        isDark ? 'hover:text-red-400' : 'hover:text-red-600'
+                      }`}
                     >
-                      <span className="mr-2">{column}</span>
-                      <button
-                        onClick={() => handleRemoveCloudColumn(index)}
-                        className={`text-xs p-1 rounded-full ${
-                          isDark ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-500'
-                        }`}
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1281,16 +1495,7 @@ const CloudDashboard = () => {
                       </td>
                       {cloudColumns.map((column, colIndex) => (
                         <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="text"
-                            value={row[column] || ''}
-                            onChange={(e) => handleCloudCellChange(rowIndex, column, e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                              isDark 
-                                ? 'bg-gray-700 border-gray-600 text-white' 
-                                : 'bg-white border-gray-300 text-gray-900'
-                            }`}
-                          />
+                          {renderCloudCell(row, column, rowIndex)}
                         </td>
                       ))}
                     </tr>
@@ -1311,13 +1516,13 @@ const CloudDashboard = () => {
           </>
         )}
 
-        {/* Backup Servers Tab */}
+        {/* Backup Services Tab */}
         {activeTab === 'backup' && (
           <>
-            {/* Backup Report Details */}
+            {/* Backup Configuration */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
-                <FiServer className="mr-2" /> Backup Server Configuration
+              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Backup Server Configuration
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1325,8 +1530,9 @@ const CloudDashboard = () => {
                   <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     Report Title
                   </label>
-                  <input type="text"
-                  value={backupReportTitle}
+                  <input
+                    type="text"
+                    value={backupReportTitle}
                     onChange={(e) => setBackupReportTitle(e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
                       isDark 
@@ -1370,54 +1576,47 @@ const CloudDashboard = () => {
 
             {/* Backup Column Management */}
             <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded-lg p-6 mb-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Manage Backup Columns</h2>
+              <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Backup Server Columns
+              </h2>
               
-              <div className="flex items-end mb-4">
-                <div className="flex-grow mr-4">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    New Column Name
-                  </label>
-                  <input
-                    type="text"
-                    value={newBackupColumnName}
-                    onChange={(e) => setNewBackupColumnName(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                    placeholder="Enter column name"
-                  />
-                </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newBackupColumnName}
+                  onChange={(e) => setNewBackupColumnName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddBackupColumn()}
+                  placeholder="Enter new column name"
+                  className={`px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
                 <button
                   onClick={handleAddBackupColumn}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
-                  <FiPlus className="mr-2" /> Add Column
+                  Add Column
                 </button>
               </div>
               
-              <div className="overflow-x-auto mt-4">
-                <div className="inline-flex flex-nowrap">
-                  {backupColumns.map((column, index) => (
-                    <div 
-                      key={index} 
-                      className={`min-w-max px-4 py-2 m-1 rounded-md ${
-                        isDark ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-900'
-                      } flex items-center justify-between`}
+              <div className="flex flex-wrap gap-2">
+                {backupColumns.map((column, index) => (
+                  <div key={index} className={`flex items-center px-3 py-1 rounded-full text-sm ${
+                    isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    <span>{column}</span>
+                    <button
+                      onClick={() => handleRemoveBackupColumn(index)}
+                      className={`ml-2 text-red-500 hover:text-red-700 focus:outline-none ${
+                        isDark ? 'hover:text-red-400' : 'hover:text-red-600'
+                      }`}
                     >
-                      <span className="mr-2">{column}</span>
-                      <button
-                        onClick={() => handleRemoveBackupColumn(index)}
-                        className={`text-xs p-1 rounded-full ${
-                          isDark ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-200 text-gray-500'
-                        }`}
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1468,32 +1667,7 @@ const CloudDashboard = () => {
                       </td>
                       {backupColumns.map((column, colIndex) => (
                         <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
-                          {isBackupWeekdayColumn(column) ? (
-                            <select
-                              value={row[column] || ''}
-                              onChange={(e) => handleBackupCellChange(rowIndex, column, e.target.value)}
-                              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
-                                isDark 
-                                  ? 'bg-gray-700 border-gray-600 text-white' 
-                                  : 'bg-white border-gray-300 text-gray-900'
-                              }`}
-                            >
-                              <option value="">Select Status</option>
-                              <option value="RUNNING" className="text-green-600">RUNNING</option>
-                              <option value="NOT RUNNING" className="text-red-600">NOT RUNNING</option>
-                            </select>
-                          ) : (
-                            <input
-                              type="text"
-                              value={row[column] || ''}
-                              onChange={(e) => handleBackupCellChange(rowIndex, column, e.target.value)}
-                              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 ${
-                                isDark 
-                                  ? 'bg-gray-700 border-gray-600 text-white' 
-                                  : 'bg-white border-gray-300 text-gray-900'
-                              }`}
-                            />
-                          )}
+                          {renderBackupCell(row, column, rowIndex)}
                         </td>
                       ))}
                     </tr>
@@ -1526,4 +1700,3 @@ const CloudDashboard = () => {
 };
 
 export default CloudDashboard;
-                
