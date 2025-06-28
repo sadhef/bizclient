@@ -32,110 +32,29 @@ import SupportPage from './components/Support/SupportPage';
 
 // Context providers
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ChatProvider } from './context/ChatContext';
 
 // Protected Route component for authentication
-const ProtectedRoute = ({ component: Component, isAllowed, redirectPath = '/login', ...rest }) => (
+const ProtectedRoute = ({ component: Component, condition, redirectPath = '/login', ...rest }) => (
   <Route
     {...rest}
-    render={props =>
-      isAllowed ? (
-        <Component {...props} />
-      ) : (
-        <Redirect to={redirectPath} />
-      )
-    }
+    render={props => {
+      if (condition) {
+        return <Component {...props} />;
+      } else {
+        return <Redirect to={redirectPath} />;
+      }
+    }}
   />
 );
-
-// Cloud Protected Route component
-const CloudProtectedRoute = ({ component: Component, ...rest }) => {
-  const { currentUser, isCloud } = useAuth();
-  
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        currentUser && isCloud ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to="/cloud-login" />
-        )
-      }
-    />
-  );
-};
-
-// Admin Protected Route component
-const AdminProtectedRoute = ({ component: Component, ...rest }) => {
-  const { currentUser, isAdmin } = useAuth();
-  
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        currentUser && isAdmin ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to="/admin-login" />
-        )
-      }
-    />
-  );
-};
-
-// User Protected Route component
-const UserProtectedRoute = ({ component: Component, ...rest }) => {
-  const { currentUser, isAdmin, isCloud } = useAuth();
-  
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        currentUser && !isAdmin && !isCloud ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to="/login" />
-        )
-      }
-    />
-  );
-};
-
-// Theme-aware container component
-const ThemedContainer = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary text-light-primary dark:text-dark-primary">
-      {children}
-    </div>
-  );
-};
-
-// Toast container with theme support
-const ThemedToastContainer = () => {
-  return (
-    <ToastContainer
-      position="top-right"
-      autoClose={3000}
-      hideProgressBar={false}
-      newestOnTop
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-      theme="colored"
-    />
-  );
-};
 
 // Default redirect component
 const DefaultRedirect = () => {
   const { currentUser, isAdmin, isCloud } = useAuth();
   
   if (!currentUser) {
-    return <Redirect to="/cloud-login" />;
+    return <Redirect to="/login" />;
   }
   
   if (isAdmin) {
@@ -149,52 +68,155 @@ const DefaultRedirect = () => {
   return <Redirect to="/challenges" />;
 };
 
-// App Component
+// Themed Toast Container
+const ThemedToastContainer = () => {
+  const { isDark } = useTheme();
+  
+  return (
+    <ToastContainer
+      position="top-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme={isDark ? 'dark' : 'light'}
+    />
+  );
+};
+
+// Themed Container
+const ThemedContainer = ({ children }) => {
+  const { isDark } = useTheme();
+  
+  return (
+    <div className={isDark ? 'dark' : ''}>
+      {children}
+    </div>
+  );
+};
+
+// Main App Content
+const AppContent = () => {
+  const { currentUser, isAdmin, isCloud, loading } = useAuth();
+  
+  // Show loading spinner while auth is being determined
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 dark:border-indigo-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ThemedContainer>
+      <Router>
+        <ChatProvider>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            {/* Navbar - only show if user is logged in */}
+            {currentUser && <Navbar />}
+            
+            <Switch>
+              {/* Public routes */}
+              <Route exact path="/login" component={Login} />
+              <Route exact path="/register" component={Registration} />
+              <Route exact path="/admin-login" component={AdminLogin} />
+              <Route exact path="/cloud-login" component={CloudLogin} />
+              <Route exact path="/offline" component={OfflinePage} />
+              
+              {/* Thank you page - accessible to all authenticated users */}
+              <ProtectedRoute 
+                exact 
+                path="/thank-you" 
+                component={ThankYouPage}
+                condition={!!currentUser}
+              />
+              
+              {/* User protected routes */}
+              <ProtectedRoute 
+                exact 
+                path="/challenges" 
+                component={Challenges}
+                condition={currentUser && !isAdmin && !isCloud}
+                redirectPath="/login"
+              />
+              
+              {/* Admin protected routes */}
+              <ProtectedRoute 
+                exact 
+                path="/admin-dashboard" 
+                component={AdminDashboard}
+                condition={currentUser && isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                exact 
+                path="/level-manager" 
+                component={LevelManager}
+                condition={currentUser && isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                exact 
+                path="/level-manager/:id" 
+                component={LevelManager}
+                condition={currentUser && isAdmin}
+                redirectPath="/admin-login"
+              />
+              <ProtectedRoute 
+                exact 
+                path="/user-progress/:userId" 
+                component={UserProgressManager}
+                condition={currentUser && isAdmin}
+                redirectPath="/admin-login"
+              />
+              
+              {/* Cloud protected routes */}
+              <ProtectedRoute 
+                exact 
+                path="/cloud-dashboard" 
+                component={CloudDashboard}
+                condition={currentUser && isCloud}
+                redirectPath="/cloud-login"
+              />
+              <ProtectedRoute 
+                exact 
+                path="/support" 
+                component={SupportPage}
+                condition={currentUser && isCloud}
+                redirectPath="/cloud-login"
+              />
+              
+              {/* Root redirect */}
+              <Route exact path="/" component={DefaultRedirect} />
+              
+              {/* Catch all route - redirect to appropriate dashboard based on user type */}
+              <Route path="*" component={DefaultRedirect} />
+            </Switch>
+            
+            {/* Global components */}
+            <OfflineNotification />
+            <InstallPrompt />
+            <ThemedToastContainer />
+          </div>
+        </ChatProvider>
+      </Router>
+    </ThemedContainer>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ChatProvider>
-          <Router>
-            <ThemedContainer>
-              <Navbar />
-              <Switch>
-                {/* Home route - always redirect to cloud login */}
-                <Route exact path="/">
-                  <Redirect to="/cloud-login" />
-                </Route>
-                
-                {/* Public routes */}
-                <Route path="/login" component={Login} />
-                <Route path="/register" component={Registration} />
-                <Route path="/admin-login" component={AdminLogin} />
-                <Route path="/cloud-login" component={CloudLogin} />
-                <Route path="/thank-you" component={ThankYouPage} />
-                <Route path="/offline" component={OfflinePage} />
-                
-                {/* User protected routes */}
-                <UserProtectedRoute path="/challenges" component={Challenges} />
-                
-                {/* Admin protected routes */}
-                <AdminProtectedRoute path="/admin-dashboard" component={AdminDashboard} />
-                <AdminProtectedRoute path="/level-manager" component={LevelManager} />
-                <AdminProtectedRoute path="/user-progress" component={UserProgressManager} />
-                
-                {/* Cloud protected routes */}
-                <CloudProtectedRoute path="/cloud-dashboard" component={CloudDashboard} />
-                <CloudProtectedRoute path="/support" component={SupportPage} />
-                
-                {/* Catch all route - redirect to appropriate dashboard based on user type */}
-                <Route path="*" component={DefaultRedirect} />
-              </Switch>
-              
-              {/* Global components */}
-              <OfflineNotification />
-              <InstallPrompt />
-              <ThemedToastContainer />
-            </ThemedContainer>
-          </Router>
-        </ChatProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   );

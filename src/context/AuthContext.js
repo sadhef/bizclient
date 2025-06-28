@@ -1,240 +1,123 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 
-// Create the context
 const AuthContext = createContext();
 
-// Hook to use the auth context
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
-// Provider component
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCloud, setIsCloud] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Helper function to normalize boolean flags
-  const normalizeBoolean = (value) => {
-    // Handle all possible truthy/falsy values
-    if (value === true || value === 'true' || value === 1 || value === '1') {
-      return true;
-    }
-    return false;
-  };
-
-  // Helper function to convert and store flags in localStorage
-  const setUserFlags = (user) => {
-    // Check for admin access (strictly)
-    const hasAdminAccess = normalizeBoolean(user.isAdmin);
-    localStorage.setItem('isAdmin', hasAdminAccess ? 'true' : 'false');
-    setIsAdmin(hasAdminAccess);
-    
-    // Check for cloud access (strictly)
-    const hasCloudAccess = normalizeBoolean(user.isCloud);
-    localStorage.setItem('isCloud', hasCloudAccess ? 'true' : 'false');
-    setIsCloud(hasCloudAccess);
-    
-    // Debug logging
-    console.log('User flags set:', { isAdmin: hasAdminAccess, isCloud: hasCloudAccess });
-    console.log('Original values:', { isAdmin: user.isAdmin, isCloud: user.isCloud });
-  };
-
-  // Effect to load user on mount or token change
+  // Initialize auth state on mount
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      if (!token) {
-        setCurrentUser(null);
-        setIsAdmin(false);
-        setIsCloud(false);
-        setLoading(false);
-        return;
-      }
-
+    const initializeAuth = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        
-        // Set token for API calls
-        api.setToken(token);
-        
-        // Fetch current user
-        const response = await api.get('/auth/me');
-        console.log('Auth context: Fetched user data:', response);
-        
-        // Set user data correctly
-        if (response && response.user) {
-          // Update user state
-          setCurrentUser(response.user);
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Set the token in API headers
+          api.setToken(token);
           
-          // Set user flags
-          setUserFlags(response.user);
-        } else {
-          throw new Error('User not found');
+          // Verify token and get user data
+          const response = await api.get('/auth/me');
+          if (response && response.user) {
+            setCurrentUser(response.user);
+          } else {
+            // Invalid token, clear it
+            localStorage.removeItem('token');
+            api.setToken(null);
+          }
         }
-      } catch (err) {
-        console.error('Error fetching current user:', err);
-        setError(err.message || 'Failed to authenticate');
-        
-        // Clear invalid token and statuses
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Clear invalid token
         localStorage.removeItem('token');
-        localStorage.removeItem('isAdmin');
-        localStorage.removeItem('isCloud');
-        setToken(null);
-        setCurrentUser(null);
-        setIsAdmin(false);
-        setIsCloud(false);
+        api.setToken(null);
       } finally {
         setLoading(false);
+        setIsInitialized(true);
       }
     };
 
-    fetchCurrentUser();
-  }, [token]);
+    initializeAuth();
+  }, []); // Empty dependency array - only run once on mount
 
-  // Admin login function with enhanced validation
-  const adminLogin = async (email, password) => {
+  // Login function
+  const login = async (email, password, userType = 'user') => {
     try {
-      setLoading(true);
-      setError(null);
+      const endpoint = userType === 'admin' ? '/auth/admin-login' : 
+                     userType === 'cloud' ? '/auth/cloud-login' : '/auth/login';
       
-      const response = await api.post('/auth/admin/login', { email, password });
-      console.log('Admin login response:', response);
+      const response = await api.post(endpoint, { email, password });
       
-      if (!response || !response.token || !response.user) {
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
         throw new Error('Invalid response from server');
       }
-      
-      const { token: newToken, user } = response;
-      
-      // Check for admin access specifically
-      if (!normalizeBoolean(user.isAdmin)) {
-        throw new Error('Admin access required');
-      }
-      
-      // Store token
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      
-      // Update user state
-      setCurrentUser(user);
-      
-      // Set user flags
-      setUserFlags(user);
-      
-      return user;
-    } catch (err) {
-      console.error('Admin login error:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Invalid admin credentials';
-      setError(errorMsg);
-      
-      // Clear any lingering admin-related data
-      localStorage.removeItem('token');
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('isCloud');
-      setToken(null);
-      setCurrentUser(null);
-      setIsAdmin(false);
-      setIsCloud(false);
-      
-      throw new Error(errorMsg);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
-  // User registration
+  // Register function
   const register = async (userData) => {
     try {
-      setLoading(true);
-      setError(null);
-      
       const response = await api.post('/auth/register', userData);
       
-      return response.user;
-    } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Registration failed';
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Regular user login
-  const login = async (email, password) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Logging in user:', email);
-      const response = await api.post('/auth/login', { email, password });
-      console.log('Login response:', response);
-      
-      if (!response || !response.token || !response.user) {
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
         throw new Error('Invalid response from server');
       }
-      
-      const { token: newToken, user } = response;
-      
-      // Store token
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      
-      // Update user state
-      setCurrentUser(user);
-      
-      // Set user flags
-      setUserFlags(user);
-      
-      return user;
-    } catch (err) {
-      console.error('Login error:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Invalid email or password';
-      setError(errorMsg);
-      
-      // Clear any existing auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('isCloud');
-      setToken(null);
-      setCurrentUser(null);
-      setIsAdmin(false);
-      setIsCloud(false);
-      
-      throw new Error(errorMsg);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 
   // Logout function
   const logout = () => {
-    console.log('Logging out user');
     localStorage.removeItem('token');
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('isCloud');
-    setToken(null);
+    api.setToken(null);
     setCurrentUser(null);
-    setIsAdmin(false);
-    setIsCloud(false);
   };
 
-  // Context value
+  // Update user function
+  const updateUser = (userData) => {
+    setCurrentUser(prev => ({ ...prev, ...userData }));
+  };
+
+  // Computed values using useMemo to prevent unnecessary re-renders
+  const isAdmin = currentUser?.isAdmin === true;
+  const isCloud = currentUser?.isCloud === true;
+  const isRegularUser = currentUser && !isAdmin && !isCloud;
+
   const value = {
     currentUser,
+    loading,
+    isInitialized,
     isAdmin,
     isCloud,
-    loading,
-    error,
-    register,
+    isRegularUser,
     login,
-    adminLogin,
+    register,
     logout,
+    updateUser
   };
 
   return (
@@ -243,5 +126,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;
