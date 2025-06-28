@@ -21,7 +21,7 @@ import {
   FiBarChart2
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../utils/api';
+import api from '../../utils/api';
 import { formatTimeRemaining, formatTimeDetailed } from '../../utils/timer';
 import { useTheme } from '../../context/ThemeContext';
 
