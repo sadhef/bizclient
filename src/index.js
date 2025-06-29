@@ -1,32 +1,56 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
-const container = document.getElementById('root');
-const root = createRoot(container);
-
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
-    <ToastContainer
-      position="top-right"
-      autoClose={3000}
-      hideProgressBar={false}
-      newestOnTop
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
-    />
   </React.StrictMode>
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.register();
+// Register service worker for push notifications and offline functionality
+serviceWorkerRegistration.register({
+  onSuccess: (registration) => {
+    console.log('Service Worker registered successfully:', registration);
+    
+    // Check if the service worker is ready for push notifications
+    if ('PushManager' in window && 'serviceWorker' in navigator) {
+      console.log('Push notifications are supported');
+    }
+  },
+  onUpdate: (registration) => {
+    console.log('Service Worker updated:', registration);
+    
+    // Optionally, you can notify the user about the update
+    if (registration && registration.waiting) {
+      // New service worker is waiting to activate
+      console.log('New version available! Please refresh the page.');
+    }
+  }
+});
+
+// Register the Firebase messaging service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then((registration) => {
+      console.log('Firebase messaging service worker registered:', registration);
+    })
+    .catch((error) => {
+      console.error('Firebase messaging service worker registration failed:', error);
+    });
+}
+
+// Performance monitoring (optional)
+if (process.env.NODE_ENV === 'production') {
+  // Log any unhandled errors
+  window.addEventListener('error', (event) => {
+    console.error('Unhandled error:', event.error);
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+  });
+}
