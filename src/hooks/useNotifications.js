@@ -1,130 +1,50 @@
 import { useState, useEffect, useCallback } from 'react';
 import notificationService from '../services/notificationService';
-import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-toastify';
-
-const useNotifications = () => {
-  const { currentUser } = useAuth();
-  const [isPermissionGranted, setIsPermissionGranted] = useState(false);
-  const [fcmToken, setFcmToken] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const useNotifications = (userId) => {
+  const [isSupported, setIsSupported] = useState(false);
+  const [permission, setPermission] = useState(Notification.permission);
+  const [token, setToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Check notification permission status
-  const checkPermissionStatus = useCallback(() => {
-    if ('Notification' in window) {
-      setIsPermissionGranted(Notification.permission === 'granted');
+  useEffect(() => {
+    setIsSupported(NotificationService.isSupported());
+    
+    // Initialize if permission already granted
+    if (userId && Notification.permission === 'granted') {
+      NotificationService.initialize(userId);
     }
-  }, []);
+  }, [userId]);
 
-  // Initialize notifications
-  const initializeNotifications = useCallback(async () => {
-    if (!currentUser || !notificationService.isSupported) {
-      setIsLoading(false);
-      return;
-    }
-
+  const requestPermission = async () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      // Check current permission
-      checkPermissionStatus();
-
-      if (Notification.permission === 'granted') {
-        // Get FCM token
-        const token = await notificationService.getFCMToken();
-        setFcmToken(token);
-
-        // Save token to database
-        await notificationService.saveTokenToDatabase(token, currentUser.id);
-
-        // Listen for messages
-        notificationService.onMessageListener();
+      
+      const token = await NotificationService.requestPermission();
+      setToken(token);
+      setPermission(Notification.permission);
+      
+      if (userId) {
+        await NotificationService.saveTokenToServer(userId);
       }
-    } catch (err) {
-      console.error('Error initializing notifications:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentUser, checkPermissionStatus]);
-
-  // Request permission
-  const requestPermission = useCallback(async () => {
-    if (!notificationService.isSupported) {
-      throw new Error('Notifications are not supported on this device');
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const token = await notificationService.requestPermission();
-      setFcmToken(token);
-      setIsPermissionGranted(true);
-
-      if (currentUser) {
-        await notificationService.saveTokenToDatabase(token, currentUser.id);
-      }
-
-      toast.success('Notifications enabled successfully!');
+      
+      NotificationService.setupMessageListener();
       return token;
-    } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
-      throw err;
+    } catch (error) {
+      setError(error.message);
+      throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser]);
-
-  // Disable notifications
-  const disableNotifications = useCallback(async () => {
-    try {
-      // Remove token from database
-      if (fcmToken) {
-        await fetch('/api/notifications/token', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ token: fcmToken })
-        });
-      }
-
-      setFcmToken(null);
-      setIsPermissionGranted(false);
-      toast.success('Notifications disabled successfully!');
-    } catch (err) {
-      console.error('Error disabling notifications:', err);
-      toast.error('Failed to disable notifications');
-    }
-  }, [fcmToken]);
-
-  // Initialize on mount and user change
-  useEffect(() => {
-    initializeNotifications();
-  }, [initializeNotifications]);
-
-  // Check permission status on focus
-  useEffect(() => {
-    const handleFocus = () => checkPermissionStatus();
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [checkPermissionStatus]);
+  };
 
   return {
-    isPermissionGranted,
-    fcmToken,
+    isSupported,
+    permission,
+    token,
     isLoading,
     error,
-    isSupported: notificationService.isSupported,
-    requestPermission,
-    disableNotifications,
-    initializeNotifications
+    requestPermission
   };
 };
-
-export default useNotifications;

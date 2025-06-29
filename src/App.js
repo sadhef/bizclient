@@ -102,7 +102,7 @@ const ThemedContainer = ({ children }) => {
   );
 };
 
-// Notification Initializer Component
+// Notification Initializer Component - Non-intrusive
 const NotificationInitializer = () => {
   const { currentUser } = useAuth();
 
@@ -110,15 +110,14 @@ const NotificationInitializer = () => {
     const initializeNotifications = async () => {
       try {
         if (currentUser && notificationService.isSupported) {
-          // Request permission and get token
-          const token = await notificationService.requestPermission();
+          // Initialize gracefully without forcing permission request
+          const result = await notificationService.initializeGracefully(currentUser);
           
-          if (token) {
-            // Save token to database
-            await notificationService.saveTokenToDatabase(token, currentUser.id);
-            
-            // Listen for foreground messages
-            notificationService.onMessageListener();
+          if (result.success) {
+            console.log('Notifications initialized successfully');
+          } else {
+            console.log('Notifications not initialized:', result.reason);
+            // This is fine - notifications are optional
           }
         }
       } catch (error) {
@@ -127,7 +126,10 @@ const NotificationInitializer = () => {
       }
     };
 
-    initializeNotifications();
+    // Only initialize if user is logged in
+    if (currentUser) {
+      initializeNotifications();
+    }
   }, [currentUser]);
 
   return null; // This component doesn't render anything
@@ -145,73 +147,9 @@ function App() {
                 <InstallPrompt />
                 <NotificationInitializer />
                 
-                <Switch>
-                  {/* Public routes */}
-                  <Route path="/login" component={Login} />
-                  <Route path="/register" component={Registration} />
-                  <Route path="/admin-login" component={AdminLogin} />
-                  <Route path="/cloud-login" component={CloudLogin} />
-                  <Route path="/thank-you" component={ThankYouPage} />
-                  <Route path="/offline" component={OfflinePage} />
-                  
-                  {/* Protected routes with navbar */}
-                  <Route
-                    path="/"
-                    render={() => (
-                      <div>
-                        <Navbar />
-                        <Switch>
-                          {/* Default redirect */}
-                          <Route exact path="/" component={DefaultRedirect} />
-                          
-                          {/* User routes */}
-                          <ProtectedRoute
-                            path="/challenges"
-                            component={Challenges}
-                            condition={true} // Any authenticated user can access
-                          />
-                          
-                          {/* Support routes */}
-                          <ProtectedRoute
-                            path="/support"
-                            component={SupportPage}
-                            condition={true} // Any authenticated user can access
-                          />
-                          
-                          {/* Admin routes */}
-                          <ProtectedRoute
-                            path="/admin-dashboard"
-                            component={AdminDashboard}
-                            condition={true} // Will be checked in component
-                          />
-                          
-                          <ProtectedRoute
-                            path="/level-manager"
-                            component={LevelManager}
-                            condition={true} // Will be checked in component
-                          />
-                          
-                          <ProtectedRoute
-                            path="/user-progress-manager"
-                            component={UserProgressManager}
-                            condition={true} // Will be checked in component
-                          />
-                          
-                          {/* Cloud routes */}
-                          <ProtectedRoute
-                            path="/cloud-dashboard"
-                            component={CloudDashboard}
-                            condition={true} // Will be checked in component
-                          />
-                          
-                          {/* Fallback redirect */}
-                          <Route component={DefaultRedirect} />
-                        </Switch>
-                      </div>
-                    )}
-                  />
-                </Switch>
+                <AppRoutes />
                 
+                <Navbar />
                 <ThemedToastContainer />
               </div>
             </ThemedContainer>
@@ -221,5 +159,71 @@ function App() {
     </AuthProvider>
   );
 }
+
+// Separate component for routes to access auth context
+const AppRoutes = () => {
+  const { currentUser, isAdmin, isCloud } = useAuth();
+
+  return (
+    <Switch>
+      {/* Public routes */}
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Registration} />
+      <Route path="/admin-login" component={AdminLogin} />
+      <Route path="/cloud-login" component={CloudLogin} />
+      <Route path="/support" component={SupportPage} />
+      <Route path="/offline" component={OfflinePage} />
+      
+      {/* Protected Routes */}
+      <ProtectedRoute 
+        path="/challenges" 
+        component={Challenges} 
+        condition={!!currentUser && !isAdmin && !isCloud}
+      />
+      
+      <ProtectedRoute 
+        path="/thank-you" 
+        component={ThankYouPage} 
+        condition={!!currentUser}
+      />
+      
+      {/* Admin Routes */}
+      <ProtectedRoute 
+        path="/admin-dashboard" 
+        component={AdminDashboard} 
+        condition={!!currentUser && isAdmin}
+        redirectPath="/admin-login"
+      />
+      
+      <ProtectedRoute 
+        path="/level-manager" 
+        component={LevelManager} 
+        condition={!!currentUser && isAdmin}
+        redirectPath="/admin-login"
+      />
+      
+      <ProtectedRoute 
+        path="/user-progress" 
+        component={UserProgressManager} 
+        condition={!!currentUser && isAdmin}
+        redirectPath="/admin-login"
+      />
+      
+      {/* Cloud Routes */}
+      <ProtectedRoute 
+        path="/cloud-dashboard" 
+        component={CloudDashboard} 
+        condition={!!currentUser && isCloud}
+        redirectPath="/cloud-login"
+      />
+      
+      {/* Default redirect */}
+      <Route exact path="/" component={DefaultRedirect} />
+      
+      {/* 404 fallback */}
+      <Route path="*" render={() => <Redirect to="/" />} />
+    </Switch>
+  );
+};
 
 export default App;

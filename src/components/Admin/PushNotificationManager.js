@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiBell, FiSend, FiUsers, FiUser, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiBell, FiSend, FiUsers, FiUser, FiX, FiAlertTriangle, FiRefreshCw, FiCheck } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 
 const PushNotificationManager = ({ onClose }) => {
@@ -8,7 +8,7 @@ const PushNotificationManager = ({ onClose }) => {
   const [notification, setNotification] = useState({
     title: '',
     body: '',
-    targetType: 'all', // 'all', 'specific', 'role'
+    targetType: 'all',
     targetUsers: [],
     role: 'user'
   });
@@ -20,100 +20,143 @@ const PushNotificationManager = ({ onClose }) => {
   });
   const [backendReady, setBackendReady] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState('');
 
-  // Check if backend is ready
+  // Get the correct base URL
+  const getBaseURL = () => {
+    if (typeof window !== 'undefined') {
+      if (window.location.hostname === 'localhost') {
+        return 'http://localhost:5000';
+      } else {
+        return window.location.origin;
+      }
+    }
+    return '';
+  };
+
   useEffect(() => {
     checkBackendStatus();
   }, []);
 
   const checkBackendStatus = async () => {
+    const baseURL = getBaseURL();
+    const debugUrl = `${baseURL}/api/debug/routes`;
+    
     try {
-      const response = await fetch('/api/debug/routes', {
+      setDebugInfo(`🔍 Testing: ${debugUrl}`);
+      console.log('🔍 Testing backend at:', debugUrl);
+      
+      const response = await fetch(debugUrl, {
+        method: 'GET',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', [...response.headers.entries()]);
+      
+      setDebugInfo(prev => prev + `\n📡 Status: ${response.status}`);
+
       if (response.ok) {
-        const data = await response.json();
-        setBackendReady(true);
-        console.log('✅ Backend notification routes are available:', data);
+        const contentType = response.headers.get('content-type');
+        console.log('📋 Content-Type:', contentType);
+        setDebugInfo(prev => prev + `\n📋 Content-Type: ${contentType}`);
         
-        // If backend is ready, fetch users and stats
-        fetchUsers();
-        fetchNotificationStats();
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const data = await response.json();
+            console.log('✅ Backend response:', data);
+            setDebugInfo(prev => prev + '\n✅ JSON response received');
+            setBackendReady(true);
+            
+            // Fetch users and stats
+            fetchUsers();
+            fetchNotificationStats();
+          } catch (jsonError) {
+            console.error('❌ JSON parsing error:', jsonError);
+            const text = await response.text();
+            console.error('📄 Raw response:', text.substring(0, 500));
+            setDebugInfo(prev => prev + `\n❌ JSON parse error: ${jsonError.message}\n📄 Raw: ${text.substring(0, 200)}`);
+            throw new Error('Failed to parse JSON response');
+          }
+        } else {
+          const text = await response.text();
+          console.error('❌ Non-JSON response:', text.substring(0, 500));
+          setDebugInfo(prev => prev + `\n❌ Non-JSON response\n📄 Raw: ${text.substring(0, 200)}`);
+          throw new Error('Backend returned non-JSON response');
+        }
       } else {
-        throw new Error('Backend routes not available');
+        const text = await response.text();
+        console.error(`❌ HTTP ${response.status}:`, text.substring(0, 500));
+        setDebugInfo(prev => prev + `\n❌ HTTP ${response.status}\n📄 Raw: ${text.substring(0, 200)}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('❌ Backend not ready:', error);
+      setDebugInfo(prev => prev + `\n❌ Error: ${error.message}`);
       setBackendReady(false);
-      
-      // Set mock data for demo
-      setUsers([
-        { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
-        { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
-      ]);
-      setStats({
-        totalTokens: 5,
-        activeUsers: 3
-      });
+      setUsers([]);
+      setStats({ totalTokens: 0, activeUsers: 0 });
     } finally {
       setLoading(false);
     }
   };
 
   const fetchUsers = async () => {
+    const baseURL = getBaseURL();
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(`${baseURL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setUsers(data.users || []);
+        } else {
+          console.error('Users endpoint returned non-JSON');
+          setUsers([]);
+        }
       } else {
-        console.error('Failed to fetch users, using mock data');
-        setUsers([
-          { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
-          { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
-        ]);
+        console.error('Failed to fetch users');
+        setUsers([]);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      setUsers([
-        { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
-        { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
-      ]);
+      setUsers([]);
     }
   };
 
   const fetchNotificationStats = async () => {
+    const baseURL = getBaseURL();
     try {
-      const response = await fetch('/api/notifications/stats', {
+      const response = await fetch(`${baseURL}/api/notifications/stats`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setStats(data);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setStats(data);
+        } else {
+          console.error('Stats endpoint returned non-JSON');
+          setStats({ totalTokens: 0, activeUsers: 0 });
+        }
       } else {
-        console.error('Failed to fetch stats, using mock data');
-        setStats({
-          totalTokens: 5,
-          activeUsers: 3
-        });
+        console.error('Failed to fetch stats');
+        setStats({ totalTokens: 0, activeUsers: 0 });
       }
     } catch (error) {
-      console.error('Error fetching notification stats:', error);
-      setStats({
-        totalTokens: 5,
-        activeUsers: 3
-      });
+      console.error('Error fetching stats:', error);
+      setStats({ totalTokens: 0, activeUsers: 0 });
     }
   };
 
@@ -140,30 +183,16 @@ const PushNotificationManager = ({ onClose }) => {
       return;
     }
 
+    if (!backendReady) {
+      toast.error('Backend is not ready. Please try again later.');
+      return;
+    }
+
     setSending(true);
+    const baseURL = getBaseURL();
 
     try {
-      if (!backendReady) {
-        // Simulate sending for demo
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        toast.success(`Demo: Notification would be sent to ${
-          notification.targetType === 'all' ? 'all users' :
-          notification.targetType === 'role' ? `${notification.role} users` :
-          `${notification.targetUsers.length} selected users`
-        }`);
-        
-        // Reset form
-        setNotification({
-          title: '',
-          body: '',
-          targetType: 'all',
-          targetUsers: [],
-          role: 'user'
-        });
-        return;
-      }
-
-      const response = await fetch('/api/notifications/send', {
+      const response = await fetch(`${baseURL}/api/notifications/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,8 +202,13 @@ const PushNotificationManager = ({ onClose }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        toast.success(`Notification sent successfully to ${data.sentCount} users`);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          toast.success(`Notification sent successfully to ${data.sentCount} users`);
+        } else {
+          toast.success('Notification sent successfully');
+        }
         
         // Reset form
         setNotification({
@@ -188,8 +222,15 @@ const PushNotificationManager = ({ onClose }) => {
         // Refresh stats
         fetchNotificationStats();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to send notification');
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Failed to send notification';
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json().catch(() => ({}));
+          errorMessage = errorData.message || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error sending notification:', error);
@@ -200,16 +241,16 @@ const PushNotificationManager = ({ onClose }) => {
   };
 
   const sendTestNotification = async () => {
-    setSending(true);
-    try {
-      if (!backendReady) {
-        // Demo mode
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success('Demo: Test notification would be sent to your devices!');
-        return;
-      }
+    if (!backendReady) {
+      toast.error('Backend is not ready. Please try again later.');
+      return;
+    }
 
-      const response = await fetch('/api/notifications/test', {
+    setSending(true);
+    const baseURL = getBaseURL();
+    
+    try {
+      const response = await fetch(`${baseURL}/api/notifications/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -218,11 +259,23 @@ const PushNotificationManager = ({ onClose }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        toast.success('Test notification sent to your devices!');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          toast.success('Test notification sent to your devices!');
+        } else {
+          toast.success('Test notification sent to your devices!');
+        }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to send test notification');
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Failed to send test notification';
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json().catch(() => ({}));
+          errorMessage = errorData.message || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error sending test notification:', error);
@@ -253,10 +306,15 @@ const PushNotificationManager = ({ onClose }) => {
         <div className="flex items-center">
           <FiBell className="mr-3 text-2xl text-indigo-500" />
           <h2 className="text-2xl font-bold">Push Notifications</h2>
-          {!backendReady && (
-            <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-              Demo Mode
-            </span>
+          <button
+            onClick={checkBackendStatus}
+            className="ml-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+            title="Refresh backend status"
+          >
+            <FiRefreshCw className={`${loading ? 'animate-spin' : ''}`} />
+          </button>
+          {backendReady && (
+            <FiCheck className="ml-2 text-green-500" title="Backend Ready" />
           )}
         </div>
         {onClose && (
@@ -269,219 +327,219 @@ const PushNotificationManager = ({ onClose }) => {
         )}
       </div>
 
-      {/* Backend Status Warning */}
+      {/* Debug Information */}
+      {debugInfo && (
+        <div className={`mb-6 p-4 rounded-lg font-mono text-sm ${
+          isDark ? 'bg-gray-700' : 'bg-gray-100'
+        }`}>
+          <h4 className="font-bold mb-2">🔍 Debug Information:</h4>
+          <pre className="whitespace-pre-wrap">{debugInfo}</pre>
+        </div>
+      )}
+
+      {/* Backend Status */}
       {!backendReady && (
-        <div className={`mb-6 p-4 rounded-lg border-l-4 border-yellow-400 ${
-          isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'
+        <div className={`mb-6 p-4 rounded-lg border-l-4 border-red-400 ${
+          isDark ? 'bg-red-900/20' : 'bg-red-50'
         }`}>
           <div className="flex">
-            <FiAlertTriangle className="text-yellow-400 mr-3 mt-0.5" />
+            <FiAlertTriangle className="text-red-400 mr-3 mt-0.5" />
             <div>
-              <h4 className="font-medium">Backend Not Ready</h4>
+              <h4 className="font-medium">Backend Not Available</h4>
               <p className="text-sm mt-1">
-                The notification API endpoints are not available yet. You can still test the interface in demo mode.
-                Deploy the notification routes to enable real functionality.
+                The notification API endpoints are not responding correctly. Check the debug information above for details.
               </p>
+              <button
+                onClick={checkBackendStatus}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Retry Connection
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className={`p-4 rounded-lg ${
-          isDark ? 'bg-gray-700' : 'bg-gray-100'
-        }`}>
-          <div className="flex items-center">
-            <FiUsers className="mr-2 text-indigo-500" />
-            <div>
-              <p className="text-sm opacity-75">Total Registered Devices</p>
-              <p className="text-2xl font-bold">{stats.totalTokens}</p>
-            </div>
-          </div>
-        </div>
-        <div className={`p-4 rounded-lg ${
-          isDark ? 'bg-gray-700' : 'bg-gray-100'
-        }`}>
-          <div className="flex items-center">
-            <FiUser className="mr-2 text-green-500" />
-            <div>
-              <p className="text-sm opacity-75">Active Users</p>
-              <p className="text-2xl font-bold">{stats.activeUsers}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Test Notification Button */}
-      <div className="mb-6">
-        <button
-          onClick={sendTestNotification}
-          disabled={sending}
-          className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
-            sending
-              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700 text-white'
-          }`}
-        >
-          {sending ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Sending Test...
-            </>
-          ) : (
-            <>
-              <FiBell className="mr-2" />
-              Send Test Notification
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Notification Form */}
-      <div className="space-y-4">
-        {/* Title */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Notification Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={notification.title}
-            onChange={handleInputChange}
-            placeholder="Enter notification title"
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              isDark 
-                ? 'bg-gray-700 border-gray-600 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            maxLength={100}
-          />
-          <p className="text-xs opacity-75 mt-1">
-            {notification.title.length}/100 characters
-          </p>
-        </div>
-
-        {/* Body */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Notification Message
-          </label>
-          <textarea
-            name="body"
-            value={notification.body}
-            onChange={handleInputChange}
-            placeholder="Enter notification message"
-            rows={4}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              isDark 
-                ? 'bg-gray-700 border-gray-600 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            maxLength={500}
-          />
-          <p className="text-xs opacity-75 mt-1">
-            {notification.body.length}/500 characters
-          </p>
-        </div>
-
-        {/* Target Type */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Send To
-          </label>
-          <select
-            name="targetType"
-            value={notification.targetType}
-            onChange={handleInputChange}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              isDark 
-                ? 'bg-gray-700 border-gray-600 text-white' 
-                : 'bg-white border-gray-300 text-gray-900'
-            }`}
-          >
-            <option value="all">All Users</option>
-            <option value="role">By Role</option>
-            <option value="specific">Specific Users</option>
-          </select>
-        </div>
-
-        {/* Role Selection */}
-        {notification.targetType === 'role' && (
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Select Role
-            </label>
-            <select
-              name="role"
-              value={notification.role}
-              onChange={handleInputChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
-              }`}
-            >
-              <option value="user">Regular Users</option>
-              <option value="admin">Administrators</option>
-              <option value="cloud">Cloud Users</option>
-            </select>
-          </div>
-        )}
-
-        {/* Specific Users Selection */}
-        {notification.targetType === 'specific' && (
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Select Users
-            </label>
-            <div className={`max-h-40 overflow-y-auto border rounded-lg p-3 ${
-              isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'
+      {backendReady && (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
             }`}>
-              {users.map(user => (
-                <label key={user._id} className="flex items-center space-x-2 py-1">
-                  <input
-                    type="checkbox"
-                    checked={notification.targetUsers.includes(user._id)}
-                    onChange={() => handleUserSelection(user._id)}
-                    className="text-indigo-600"
-                  />
-                  <span className="text-sm">
-                    {user.name} ({user.email})
-                  </span>
-                </label>
-              ))}
+              <div className="flex items-center">
+                <FiUsers className="mr-2 text-indigo-500" />
+                <div>
+                  <p className="text-sm opacity-75">Total Registered Devices</p>
+                  <p className="text-2xl font-bold">{stats.totalTokens}</p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs opacity-75 mt-1">
-              {notification.targetUsers.length} users selected
-            </p>
+            <div className={`p-4 rounded-lg ${
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            }`}>
+              <div className="flex items-center">
+                <FiUser className="mr-2 text-green-500" />
+                <div>
+                  <p className="text-sm opacity-75">Active Users</p>
+                  <p className="text-2xl font-bold">{stats.activeUsers}</p>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Send Button */}
-        <button
-          onClick={sendNotification}
-          disabled={sending || !notification.title.trim() || !notification.body.trim()}
-          className={`w-full flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-colors ${
-            sending || !notification.title.trim() || !notification.body.trim()
-              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-          }`}
-        >
-          {sending ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Sending...
-            </>
-          ) : (
-            <>
-              <FiSend className="mr-2" />
-              Send Notification {!backendReady && '(Demo)'}
-            </>
-          )}
-        </button>
-      </div>
+          {/* Send Notification Form */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Notification Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={notification.title}
+                onChange={handleInputChange}
+                placeholder="Enter notification title..."
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Notification Message
+              </label>
+              <textarea
+                name="body"
+                value={notification.body}
+                onChange={handleInputChange}
+                placeholder="Enter notification message..."
+                rows="3"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Target Audience
+              </label>
+              <select
+                name="targetType"
+                value={notification.targetType}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  isDark 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="all">All Users</option>
+                <option value="role">By Role</option>
+                <option value="specific">Specific Users</option>
+              </select>
+            </div>
+
+            {notification.targetType === 'role' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Select Role
+                </label>
+                <select
+                  name="role"
+                  value={notification.role}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="user">Regular Users</option>
+                  <option value="admin">Administrators</option>
+                  <option value="cloud">Cloud Users</option>
+                </select>
+              </div>
+            )}
+
+            {notification.targetType === 'specific' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Select Users ({notification.targetUsers.length} selected)
+                </label>
+                {users.length > 0 ? (
+                  <div className={`max-h-40 overflow-y-auto border rounded-lg p-2 ${
+                    isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-white'
+                  }`}>
+                    {users.map(user => (
+                      <label key={user._id} className="flex items-center py-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notification.targetUsers.includes(user._id)}
+                          onChange={() => handleUserSelection(user._id)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">{user.name} ({user.email})</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`p-4 text-center border rounded-lg ${
+                    isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'
+                  }`}>
+                    <p className="text-sm opacity-75">No users available</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-4">
+              <button
+                onClick={sendNotification}
+                disabled={sending || !notification.title.trim() || !notification.body.trim() || !backendReady}
+                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {sending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <FiSend className="mr-2" />
+                    Send Notification
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={sendTestNotification}
+                disabled={sending || !backendReady}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {sending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <FiBell className="mr-2" />
+                    Test
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

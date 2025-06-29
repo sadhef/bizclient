@@ -1,6 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC7A0_RCzkkUXQU48efHdvqp4ZyFw42hgw",
@@ -12,9 +11,10 @@ const firebaseConfig = {
   measurementId: "G-ZF700C6KE4"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const messaging = getMessaging(app);
 
-export { app, messaging, analytics };
+// Initialize Firebase Cloud Messaging and get a reference to the service
+export const messaging = getMessaging(app);
+
+// VAPID key for web push
+export const VAPID_KEY = "iEFad0fTGwEuCFsUlLDXSN-9ScWYJxNoYpG7VTljRWs";
