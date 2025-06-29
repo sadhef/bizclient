@@ -36,18 +36,35 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ChatProvider } from './context/ChatContext';
 
 // Protected Route component for authentication
-const ProtectedRoute = ({ component: Component, condition, redirectPath = '/login', ...rest }) => (
-  <Route
-    {...rest}
-    render={props => {
-      if (condition) {
+const ProtectedRoute = ({ component: Component, allowedRoles = [], ...rest }) => {
+  const { currentUser, isAdmin, isCloud } = useAuth();
+  
+  return (
+    <Route
+      {...rest}
+      render={props => {
+        if (!currentUser) {
+          return <Redirect to="/login" />;
+        }
+        
+        // Check role-based access
+        if (allowedRoles.length > 0) {
+          const userRoles = [];
+          if (isAdmin) userRoles.push('admin');
+          if (isCloud) userRoles.push('cloud');
+          if (!isAdmin && !isCloud) userRoles.push('user');
+          
+          const hasAccess = allowedRoles.some(role => userRoles.includes(role));
+          if (!hasAccess) {
+            return <Redirect to="/login" />;
+          }
+        }
+        
         return <Component {...props} />;
-      } else {
-        return <Redirect to={redirectPath} />;
-      }
-    }}
-  />
-);
+      }}
+    />
+  );
+};
 
 // Default redirect component
 const DefaultRedirect = () => {
@@ -84,6 +101,9 @@ const ThemedToastContainer = () => {
       draggable
       pauseOnHover
       theme={isDark ? 'dark' : 'light'}
+      toastClassName="bg-gray-800 text-white border border-gray-700"
+      bodyClassName="text-gray-100"
+      progressClassName="bg-primary"
     />
   );
 };
@@ -93,132 +113,85 @@ const ThemedContainer = ({ children }) => {
   const { isDark } = useTheme();
   
   return (
-    <div className={isDark ? 'dark' : ''}>
+    <div className={isDark ? 'dark bg-dark min-h-screen text-white' : 'bg-gray-50 min-h-screen text-gray-900'}>
       {children}
     </div>
   );
 };
 
-// Main App Content
-const AppContent = () => {
-  const { currentUser, isAdmin, isCloud, loading } = useAuth();
-  
-  // Show loading spinner while auth is being determined
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 dark:border-indigo-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <ThemedContainer>
-      <Router>
-        <ChatProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Navbar - only show if user is logged in */}
-            {currentUser && <Navbar />}
-            
-            <Switch>
-              {/* Public routes */}
-              <Route exact path="/login" component={Login} />
-              <Route exact path="/register" component={Registration} />
-              <Route exact path="/admin-login" component={AdminLogin} />
-              <Route exact path="/cloud-login" component={CloudLogin} />
-              <Route exact path="/offline" component={OfflinePage} />
-              
-              {/* Thank you page - accessible to all authenticated users */}
-              <ProtectedRoute 
-                exact 
-                path="/thank-you" 
-                component={ThankYouPage}
-                condition={!!currentUser}
-              />
-              
-              {/* User protected routes */}
-              <ProtectedRoute 
-                exact 
-                path="/challenges" 
-                component={Challenges}
-                condition={currentUser && !isAdmin && !isCloud}
-                redirectPath="/login"
-              />
-              
-              {/* Admin protected routes */}
-              <ProtectedRoute 
-                exact 
-                path="/admin-dashboard" 
-                component={AdminDashboard}
-                condition={currentUser && isAdmin}
-                redirectPath="/admin-login"
-              />
-              <ProtectedRoute 
-                exact 
-                path="/level-manager" 
-                component={LevelManager}
-                condition={currentUser && isAdmin}
-                redirectPath="/admin-login"
-              />
-              <ProtectedRoute 
-                exact 
-                path="/level-manager/:id" 
-                component={LevelManager}
-                condition={currentUser && isAdmin}
-                redirectPath="/admin-login"
-              />
-              <ProtectedRoute 
-                exact 
-                path="/user-progress/:userId" 
-                component={UserProgressManager}
-                condition={currentUser && isAdmin}
-                redirectPath="/admin-login"
-              />
-              
-              {/* Cloud protected routes */}
-              <ProtectedRoute 
-                exact 
-                path="/cloud-dashboard" 
-                component={CloudDashboard}
-                condition={currentUser && isCloud}
-                redirectPath="/cloud-login"
-              />
-              <ProtectedRoute 
-                exact 
-                path="/support" 
-                component={SupportPage}
-                condition={currentUser && isCloud}
-                redirectPath="/cloud-login"
-              />
-              
-              {/* Root redirect */}
-              <Route exact path="/" component={DefaultRedirect} />
-              
-              {/* Catch all route - redirect to appropriate dashboard based on user type */}
-              <Route path="*" component={DefaultRedirect} />
-            </Switch>
-            
-            {/* Global components */}
-            <OfflineNotification />
-            <InstallPrompt />
-            <ThemedToastContainer />
-          </div>
-        </ChatProvider>
-      </Router>
-    </ThemedContainer>
-  );
-};
-
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <ChatProvider>
+          <Router>
+            <ThemedContainer>
+              <div className="App">
+                <Navbar />
+                <OfflineNotification />
+                <InstallPrompt />
+                
+                <Switch>
+                  {/* Public Routes */}
+                  <Route exact path="/login" component={Login} />
+                  <Route exact path="/register" component={Registration} />
+                  <Route exact path="/admin-login" component={AdminLogin} />
+                  <Route exact path="/cloud-login" component={CloudLogin} />
+                  <Route exact path="/support" component={SupportPage} />
+                  <Route exact path="/offline" component={OfflinePage} />
+                  <Route exact path="/thank-you" component={ThankYouPage} />
+                  
+                  {/* Protected Routes */}
+                  <ProtectedRoute
+                    exact
+                    path="/challenges"
+                    component={Challenges}
+                    allowedRoles={['user']}
+                  />
+                  
+                  <ProtectedRoute
+                    exact
+                    path="/admin-dashboard"
+                    component={AdminDashboard}
+                    allowedRoles={['admin']}
+                  />
+                  
+                  <ProtectedRoute
+                    exact
+                    path="/admin/levels"
+                    component={LevelManager}
+                    allowedRoles={['admin']}
+                  />
+                  
+                  <ProtectedRoute
+                    exact
+                    path="/admin/progress"
+                    component={UserProgressManager}
+                    allowedRoles={['admin']}
+                  />
+                  
+                  <ProtectedRoute
+                    exact
+                    path="/cloud-dashboard"
+                    component={CloudDashboard}
+                    allowedRoles={['cloud']}
+                  />
+                  
+                  {/* Default Route */}
+                  <Route exact path="/" component={DefaultRedirect} />
+                  
+                  {/* 404 Route */}
+                  <Route path="*" render={() => <Redirect to="/" />} />
+                </Switch>
+                
+                {/* Toast Container for notifications */}
+                <ThemedToastContainer />
+              </div>
+            </ThemedContainer>
+          </Router>
+        </ChatProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
