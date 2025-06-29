@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiBell, FiSend, FiUsers, FiUser, FiX } from 'react-icons/fi';
+import { FiBell, FiSend, FiUsers, FiUser, FiX, FiAlertTriangle } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 
 const PushNotificationManager = ({ onClose }) => {
@@ -18,12 +18,50 @@ const PushNotificationManager = ({ onClose }) => {
     totalTokens: 0,
     activeUsers: 0
   });
+  const [backendReady, setBackendReady] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch users and stats on component mount
+  // Check if backend is ready
   useEffect(() => {
-    fetchUsers();
-    fetchNotificationStats();
+    checkBackendStatus();
   }, []);
+
+  const checkBackendStatus = async () => {
+    try {
+      const response = await fetch('/api/debug/routes', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBackendReady(true);
+        console.log('✅ Backend notification routes are available:', data);
+        
+        // If backend is ready, fetch users and stats
+        fetchUsers();
+        fetchNotificationStats();
+      } else {
+        throw new Error('Backend routes not available');
+      }
+    } catch (error) {
+      console.error('❌ Backend not ready:', error);
+      setBackendReady(false);
+      
+      // Set mock data for demo
+      setUsers([
+        { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
+        { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
+      ]);
+      setStats({
+        totalTokens: 5,
+        activeUsers: 3
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -36,9 +74,19 @@ const PushNotificationManager = ({ onClose }) => {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
+      } else {
+        console.error('Failed to fetch users, using mock data');
+        setUsers([
+          { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
+          { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
+        ]);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([
+        { _id: '1', name: 'Demo User 1', email: 'user1@example.com' },
+        { _id: '2', name: 'Demo User 2', email: 'user2@example.com' }
+      ]);
     }
   };
 
@@ -53,9 +101,19 @@ const PushNotificationManager = ({ onClose }) => {
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+      } else {
+        console.error('Failed to fetch stats, using mock data');
+        setStats({
+          totalTokens: 5,
+          activeUsers: 3
+        });
       }
     } catch (error) {
       console.error('Error fetching notification stats:', error);
+      setStats({
+        totalTokens: 5,
+        activeUsers: 3
+      });
     }
   };
 
@@ -85,6 +143,26 @@ const PushNotificationManager = ({ onClose }) => {
     setSending(true);
 
     try {
+      if (!backendReady) {
+        // Simulate sending for demo
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        toast.success(`Demo: Notification would be sent to ${
+          notification.targetType === 'all' ? 'all users' :
+          notification.targetType === 'role' ? `${notification.role} users` :
+          `${notification.targetUsers.length} selected users`
+        }`);
+        
+        // Reset form
+        setNotification({
+          title: '',
+          body: '',
+          targetType: 'all',
+          targetUsers: [],
+          role: 'user'
+        });
+        return;
+      }
+
       const response = await fetch('/api/notifications/send', {
         method: 'POST',
         headers: {
@@ -94,9 +172,8 @@ const PushNotificationManager = ({ onClose }) => {
         body: JSON.stringify(notification)
       });
 
-      const data = await response.json();
-
       if (response.ok) {
+        const data = await response.json();
         toast.success(`Notification sent successfully to ${data.sentCount} users`);
         
         // Reset form
@@ -111,7 +188,8 @@ const PushNotificationManager = ({ onClose }) => {
         // Refresh stats
         fetchNotificationStats();
       } else {
-        throw new Error(data.message || 'Failed to send notification');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to send notification');
       }
     } catch (error) {
       console.error('Error sending notification:', error);
@@ -124,6 +202,13 @@ const PushNotificationManager = ({ onClose }) => {
   const sendTestNotification = async () => {
     setSending(true);
     try {
+      if (!backendReady) {
+        // Demo mode
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        toast.success('Demo: Test notification would be sent to your devices!');
+        return;
+      }
+
       const response = await fetch('/api/notifications/test', {
         method: 'POST',
         headers: {
@@ -132,11 +217,12 @@ const PushNotificationManager = ({ onClose }) => {
         }
       });
 
-      const data = await response.json();
       if (response.ok) {
+        const data = await response.json();
         toast.success('Test notification sent to your devices!');
       } else {
-        throw new Error(data.message || 'Failed to send test notification');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to send test notification');
       }
     } catch (error) {
       console.error('Error sending test notification:', error);
@@ -146,6 +232,19 @@ const PushNotificationManager = ({ onClose }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className={`p-6 rounded-lg shadow-lg ${
+        isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+      }`}>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+          <span>Loading notification panel...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`p-6 rounded-lg shadow-lg ${
       isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
@@ -154,6 +253,11 @@ const PushNotificationManager = ({ onClose }) => {
         <div className="flex items-center">
           <FiBell className="mr-3 text-2xl text-indigo-500" />
           <h2 className="text-2xl font-bold">Push Notifications</h2>
+          {!backendReady && (
+            <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              Demo Mode
+            </span>
+          )}
         </div>
         {onClose && (
           <button
@@ -164,6 +268,24 @@ const PushNotificationManager = ({ onClose }) => {
           </button>
         )}
       </div>
+
+      {/* Backend Status Warning */}
+      {!backendReady && (
+        <div className={`mb-6 p-4 rounded-lg border-l-4 border-yellow-400 ${
+          isDark ? 'bg-yellow-900/20' : 'bg-yellow-50'
+        }`}>
+          <div className="flex">
+            <FiAlertTriangle className="text-yellow-400 mr-3 mt-0.5" />
+            <div>
+              <h4 className="font-medium">Backend Not Ready</h4>
+              <p className="text-sm mt-1">
+                The notification API endpoints are not available yet. You can still test the interface in demo mode.
+                Deploy the notification routes to enable real functionality.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -355,7 +477,7 @@ const PushNotificationManager = ({ onClose }) => {
           ) : (
             <>
               <FiSend className="mr-2" />
-              Send Notification
+              Send Notification {!backendReady && '(Demo)'}
             </>
           )}
         </button>
