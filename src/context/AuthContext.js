@@ -47,12 +47,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   // Login function
   const login = async (email, password, userType = 'user') => {
     try {
-      const endpoint = userType === 'admin' ? '/auth/admin-login' : 
+      const endpoint = userType === 'admin' ? '/auth/admin/login' :
                      userType === 'cloud' ? '/auth/cloud-login' : '/auth/login';
       
       const response = await api.post(endpoint, { email, password });
@@ -90,6 +90,44 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Admin login function
+  const adminLogin = async (email, password) => {
+    try {
+      const response = await api.post('/auth/admin/login', { email, password });
+      
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Admin login error:', error);
+      throw error;
+    }
+  };
+
+  // Cloud login function
+  const cloudLogin = async (email, password) => {
+    try {
+      const response = await api.post('/auth/cloud-login', { email, password });
+      
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Cloud login error:', error);
+      throw error;
+    }
+  };
+
   // Logout function
   const logout = () => {
     localStorage.removeItem('token');
@@ -102,20 +140,24 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(prev => ({ ...prev, ...userData }));
   };
 
-  // Computed values using useMemo to prevent unnecessary re-renders
+  // Computed values
+  const isUser = currentUser?.isUser === true;
   const isAdmin = currentUser?.isAdmin === true;
   const isCloud = currentUser?.isCloud === true;
-  const isRegularUser = currentUser && !isAdmin && !isCloud;
+  const isRegularUser = currentUser && isUser && !isAdmin && !isCloud;
 
   const value = {
     currentUser,
     loading,
     isInitialized,
+    isUser,
     isAdmin,
     isCloud,
     isRegularUser,
     login,
     register,
+    adminLogin,
+    cloudLogin,
     logout,
     updateUser
   };
