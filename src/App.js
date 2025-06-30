@@ -51,7 +51,7 @@ const ProtectedRoute = ({ component: Component, condition, redirectPath = '/logi
 
 // Default redirect component
 const DefaultRedirect = () => {
-  const { currentUser, isUser, isAdmin, isCloud } = useAuth();
+  const { currentUser, isAdmin, isCloud } = useAuth();
   
   if (!currentUser) {
     return <Redirect to="/login" />;
@@ -65,11 +65,7 @@ const DefaultRedirect = () => {
     return <Redirect to="/cloud-dashboard" />;
   }
   
-  if (isUser) {
-    return <Redirect to="/challenges" />;
-  }
-  
-  return <Redirect to="/login" />;
+  return <Redirect to="/challenges" />;
 };
 
 // Themed Toast Container
@@ -105,7 +101,7 @@ const ThemedContainer = ({ children }) => {
 
 // Main App Content
 const AppContent = () => {
-  const { currentUser, isUser, isAdmin, isCloud, loading } = useAuth();
+  const { currentUser, isAdmin, isCloud, loading } = useAuth();
   
   // Show loading spinner while auth is being determined
   if (loading) {
@@ -148,7 +144,7 @@ const AppContent = () => {
                 exact 
                 path="/challenges" 
                 component={Challenges}
-                condition={currentUser && (isUser || isAdmin)}
+                condition={currentUser && !isAdmin && !isCloud}
                 redirectPath="/login"
               />
               
@@ -187,14 +183,14 @@ const AppContent = () => {
                 exact 
                 path="/cloud-dashboard" 
                 component={CloudDashboard}
-                condition={currentUser && (isCloud || isAdmin)}
+                condition={currentUser && isCloud}
                 redirectPath="/cloud-login"
               />
               <ProtectedRoute 
                 exact 
                 path="/support" 
                 component={SupportPage}
-                condition={currentUser && (isCloud || isAdmin)}
+                condition={currentUser && isCloud}
                 redirectPath="/cloud-login"
               />
               
