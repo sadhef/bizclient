@@ -6,7 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 // Auth components
 import CloudLogin from './components/Cloud/CloudLogin';
 import Registration from './components/Auth/Registration';
-import AdminLogin from './components/Admin/AdminLogin';
 import Login from './components/Auth/Login';
 
 // Challenge components
@@ -127,9 +126,10 @@ const AppContent = () => {
               {/* Public routes */}
               <Route exact path="/login" component={Login} />
               <Route exact path="/register" component={Registration} />
-              <Route exact path="/admin-login" component={AdminLogin} />
               <Route exact path="/cloud-login" component={CloudLogin} />
               <Route exact path="/offline" component={OfflinePage} />
+              <Route exact path="/" render={() => <Redirect to="/cloud-login" />} />
+
               
               {/* Thank you page - accessible to all authenticated users */}
               <ProtectedRoute 
@@ -195,10 +195,7 @@ const AppContent = () => {
               />
               
               {/* Root redirect */}
-              <Route exact path="/" component={DefaultRedirect} />
-              
-              {/* Catch all route - redirect to appropriate dashboard based on user type */}
-              <Route path="*" component={DefaultRedirect} />
+              <Route exact path="/cloud-login" component={DefaultRedirect} />
             </Switch>
             
             {/* Global components */}
