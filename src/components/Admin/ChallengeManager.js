@@ -4,6 +4,7 @@ import { api } from '../../utils/api';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../Common/LoadingSpinner';
 import ConfirmDialog from '../Common/ConfirmDialog';
+import CreateChallengeModal from './CreateChallengeModal';
 import { 
   FaPlus, 
   FaEdit, 
@@ -37,7 +38,7 @@ const ChallengeManager = () => {
 
   const fetchChallenges = async () => {
     try {
-      const response = await api.get('/challenges/admin');
+      const response = await api.get('/challenges/admin/all');
       setChallenges(response.data.challenges || []);
     } catch (error) {
       console.error('Error fetching challenges:', error);
@@ -63,7 +64,7 @@ const ChallengeManager = () => {
 
     if (statusFilter !== 'all') {
       const isActive = statusFilter === 'active';
-      filtered = filtered.filter(challenge => challenge.isActive === isActive);
+      filtered = filtered.filter(challenge => challenge.enabled === isActive);
     }
 
     setFilteredChallenges(filtered);
@@ -72,16 +73,16 @@ const ChallengeManager = () => {
   const handleToggleChallenge = async (challengeId, currentStatus) => {
     try {
       await api.patch(`/challenges/${challengeId}`, {
-        isActive: !currentStatus
+        enabled: !currentStatus
       });
       
       setChallenges(prev => prev.map(challenge => 
         challenge._id === challengeId 
-          ? { ...challenge, isActive: !challenge.isActive } 
+          ? { ...challenge, enabled: !challenge.enabled } 
           : challenge
       ));
       
-      toast.success(`Challenge ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      toast.success(`Challenge ${!currentStatus ? 'enabled' : 'disabled'} successfully`);
     } catch (error) {
       console.error('Error toggling challenge:', error);
       toast.error('Failed to update challenge status');
@@ -98,6 +99,11 @@ const ChallengeManager = () => {
       console.error('Error deleting challenge:', error);
       toast.error('Failed to delete challenge');
     }
+  };
+
+  const handleChallengeCreated = () => {
+    fetchChallenges(); // Refresh the list
+    setShowCreateModal(false);
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -244,6 +250,9 @@ const ChallengeManager = () => {
                           {challenge.title}
                         </div>
                         <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
+                          Level {challenge.levelNumber} • {challenge.category}
+                        </div>
+                        <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                           {challenge.description.length > 100 
                             ? challenge.description.substring(0, 100) + '...'
                             : challenge.description
@@ -265,10 +274,10 @@ const ChallengeManager = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => handleToggleChallenge(challenge._id, challenge.isActive)}
+                        onClick={() => handleToggleChallenge(challenge._id, challenge.enabled)}
                         className="flex items-center"
                       >
-                        {challenge.isActive ? (
+                        {challenge.enabled ? (
                           <>
                             <FaToggleOn className="h-5 w-5 text-green-600 mr-1" />
                             <span className="text-green-600 text-sm">Active</span>
@@ -321,9 +330,22 @@ const ChallengeManager = () => {
         {filteredChallenges.length === 0 && (
           <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             <p className="text-xl mb-4">No challenges found matching your criteria</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="text-blue-600 hover:text-blue-500"
+            >
+              Create your first challenge
+            </button>
           </div>
         )}
       </div>
+
+      {/* Create Challenge Modal */}
+      <CreateChallengeModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onChallengeCreated={handleChallengeCreated}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmDialog
