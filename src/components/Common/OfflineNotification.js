@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import { FaWifi, FaWifiSlash } from 'react-icons/fa';
+import { FaWifi, FaExclamationTriangle } from 'react-icons/fa';
 
 const OfflineNotification = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -44,7 +44,7 @@ const OfflineNotification = () => {
         {isOnline ? (
           <FaWifi className="h-4 w-4 mr-2" />
         ) : (
-          <FaWifiSlash className="h-4 w-4 mr-2" />
+          <FaExclamationTriangle className="h-4 w-4 mr-2" />
         )}
         <span className="text-sm font-medium">
           {isOnline ? 'Back online!' : 'You are offline. Some features may be unavailable.'}
