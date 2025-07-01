@@ -24,6 +24,7 @@ const Challenges = () => {
   const [error, setError] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [offlineData, setOfflineData] = useState(null);
 
   const history = useHistory();
   const { currentUser, logout } = useAuth();
@@ -57,177 +58,220 @@ const Challenges = () => {
         return;
       }
       
-      // Set challenge data
-      if (response.challenge) {
-        setChallenge(response.challenge);
-        
-        // Update time remaining from challenge data
-        const challengeTimeRemaining = response.challenge.timeRemaining || 3600;
-        setTimeLeft(challengeTimeRemaining);
-        
-        // Update hint state if hint was previously used
-        if (response.challenge.hintUsed) {
-          setShowHint(true);
+      // Set challenge and progress
+      setChallenge(response.challenge);
+      setProgress(response.progress);
+      setTimeLeft(response.challenge.timeRemaining);
+      
+      // Save to offline cache for use when offline
+      setOfflineData(response);
+      try {
+        localStorage.setItem('offlineChallenge', JSON.stringify({
+          data: response,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('Failed to cache challenge data offline', e);
+      }
+      
+      // Set total time limit from the response
+      if (response.challenge.totalTimeLimit) {
+        setTotalTimeLimit(response.challenge.totalTimeLimit);
+      } else if (response.progress.totalTimeLimit) {
+        setTotalTimeLimit(response.progress.totalTimeLimit);
+      }
+      
+      // If hint is already used, show it
+      if (response.challenge.hintUsed) {
+        setShowHint(true);
+      }
+    } catch (err) {
+      console.error('Error fetching challenge:', err);
+      
+      // Check if we can use offline data
+      if (!isOnline) {
+        try {
+          const cachedData = localStorage.getItem('offlineChallenge');
+          if (cachedData) {
+            const parsed = JSON.parse(cachedData);
+            setOfflineData(parsed.data);
+            setChallenge(parsed.data.challenge);
+            setProgress(parsed.data.progress);
+            setTimeLeft(parsed.data.challenge.timeRemaining);
+            
+            // Check if hint was used
+            if (parsed.data.challenge.hintUsed) {
+              setShowHint(true);
+            }
+            
+            toast.info('You are offline. Using cached challenge data.');
+          } else {
+            setError('Unable to load challenge data while offline.');
+            toast.error('Failed to load challenge in offline mode');
+          }
+        } catch (e) {
+          console.error('Error loading cached challenge data', e);
+          setError('Failed to load challenge. Please try again when online.');
         }
-      }
-      
-      // Fetch user progress
-      const progressResponse = await api.get('/progress/me');
-      if (progressResponse.progress) {
-        setProgress({
-          currentLevel: progressResponse.progress.currentLevel || 1,
-          completedLevels: progressResponse.progress.completedLevels || [],
-          timeRemaining: progressResponse.progress.timeRemaining || 3600,
-          totalTimeLimit: progressResponse.progress.totalTimeLimit || 3600
-        });
-        
-        // Update time limits
-        setTimeLeft(progressResponse.progress.timeRemaining || 3600);
-        setTotalTimeLimit(progressResponse.progress.totalTimeLimit || 3600);
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching challenge:', error);
-      
-      if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
-        logout();
-        history.push('/login');
       } else {
         setError('Failed to load challenge. Please try again.');
         toast.error('Failed to load challenge');
       }
-      
+    } finally {
       setLoading(false);
     }
-  }, [currentUser, history, logout]);
+  }, [history, currentUser, isOnline]);
 
-  // Fetch progress separately
-  const fetchProgress = useCallback(async () => {
-    try {
-      const response = await api.get('/progress/me');
-      if (response.progress) {
-        setProgress({
-          currentLevel: response.progress.currentLevel || 1,
-          completedLevels: response.progress.completedLevels || [],
-          timeRemaining: response.progress.timeRemaining || 3600,
-          totalTimeLimit: response.progress.totalTimeLimit || 3600
-        });
-        
-        // Update time limits
-        setTimeLeft(response.progress.timeRemaining || 3600);
-        setTotalTimeLimit(response.progress.totalTimeLimit || 3600);
-      }
-    } catch (error) {
-      console.error('Error fetching progress:', error);
+  // Initialize timer
+  const initializeTimer = useCallback(() => {
+    // Clear existing timer if any
+    if (intervalId) {
+      clearInterval(intervalId);
     }
-  }, []);
+    
+    // Set up new timer
+    const newIntervalId = setInterval(() => {
+      setTimeLeft((prev) => {
+        const newTime = prev - 1;
+        if (newTime <= 0) {
+          clearInterval(newIntervalId);
+          toast.info("Time's up!");
+          history.push('/thank-you');
+          return 0;
+        }
+        return newTime;
+      });
+    }, 1000);
+    
+    setIntervalId(newIntervalId);
+    
+    return () => clearInterval(newIntervalId);
+  }, [intervalId, history]);
 
-  // Timer countdown effect
+  // Check authentication and load challenge on mount
   useEffect(() => {
-    if (timeLeft > 0 && !loading && challenge) {
-      const interval = setInterval(() => {
-        setTimeLeft(prevTime => {
-          const newTime = Math.max(0, prevTime - 1);
-          
-          // If time runs out, handle expiration
-          if (newTime === 0) {
-            toast.warning('Time has expired!');
-            history.push('/thank-you');
-          }
-          
-          return newTime;
-        });
-      }, 1000);
-      
-      setIntervalId(interval);
-      
-      return () => clearInterval(interval);
-    }
-  }, [timeLeft, loading, challenge, history]);
-
-  // Initial load effect
-  useEffect(() => {
-    if (currentUser) {
-      fetchCurrentChallenge();
-    } else {
+    // Immediate redirect if not logged in
+    if (!currentUser) {
+      toast.error('Please login first');
       history.push('/login');
+      return;
     }
-  }, [currentUser, fetchCurrentChallenge, history]);
+    
+    fetchCurrentChallenge();
+    
+    // Clean up timer on unmount
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [currentUser, fetchCurrentChallenge, history, intervalId]);
+
+  // Initialize timer when challenge is loaded
+  useEffect(() => {
+    if (challenge && timeLeft > 0 && !intervalId) {
+      initializeTimer();
+    }
+  }, [challenge, timeLeft, initializeTimer, intervalId]);
 
   // Handle flag submission
-  const handleSubmitFlag = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userFlag.trim()) {
-      toast.error('Please enter a flag');
+    if (timeLeft <= 0) {
+      toast.error("Time's up! You can't submit answers anymore.");
       return;
     }
     
+    // Prevent submission while offline
     if (!isOnline) {
-      toast.error('You must be online to submit flags');
+      toast.warning('Cannot submit flags while offline. Please reconnect to the internet.');
       return;
     }
-    
-    setSubmitting(true);
     
     try {
-      const response = await api.post('/challenges/submit', { flag: userFlag });
+      setSubmitting(true);
+      
+      const response = await api.post('/challenges/submit-flag', { flag: userFlag });
       
       if (response.correct) {
-        toast.success(response.message || 'Correct! Moving to next level.');
-        setUserFlag('');
-        setShowHint(false);
-        
+        // Correct flag
         if (response.completed) {
-          // All challenges completed
+          toast.success('Congratulations! You have completed all challenges!');
           history.push('/thank-you');
         } else {
-          // Refresh to get next challenge
-          await fetchCurrentChallenge();
-          await fetchProgress();
+          toast.success('Correct flag! Moving to the next level.');
+          setUserFlag('');
+          setShowHint(false);
+          fetchCurrentChallenge(); // Fetch the next challenge
         }
       } else {
-        toast.error(response.message || 'Incorrect flag. Try again!');
-        setUserFlag('');
+        // Wrong flag
+        toast.error('Incorrect flag. Try again!');
+        
+        // Suggest hint after a few attempts
+        if (challenge.attemptCount >= 2 && !challenge.hintUsed) {
+          toast.info('Having trouble? Consider using a hint!');
+        }
       }
-    } catch (error) {
-      console.error('Error submitting flag:', error);
-      toast.error('Failed to submit flag. Please try again.');
+    } catch (err) {
+      console.error('Error submitting flag:', err);
+      toast.error('Failed to submit flag');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle hint request
-  const handleGetHint = async () => {
-    if (!challenge?.hint) {
-      toast.info('No hint available for this challenge');
-      return;
-    }
-    
+  // Request hint
+  const useHintForLevel = async () => {
+    // Prevent using hint while offline
     if (!isOnline) {
-      toast.error('You must be online to get hints');
+      toast.warning('Cannot request hints while offline. Please reconnect to the internet.');
       return;
     }
     
     try {
-      const response = await api.get('/challenges/hint');
-      if (response.hint) {
-        setShowHint(true);
-        toast.info('Hint unlocked!');
+      setLoading(true);
+      
+      const response = await api.post('/challenges/request-hint');
+      
+      setShowHint(true);
+      toast.info('Hint revealed!');
+      
+      // Update challenge with hint
+      setChallenge(prev => ({
+        ...prev,
+        hint: response.hint,
+        hintUsed: true
+      }));
+      
+      // Update offline data with hint
+      if (offlineData) {
+        const updatedOfflineData = {
+          ...offlineData,
+          challenge: {
+            ...offlineData.challenge,
+            hint: response.hint,
+            hintUsed: true
+          }
+        };
+        setOfflineData(updatedOfflineData);
         
-        // Update the local challenge state to reflect hint was used
-        setChallenge(prev => ({
-          ...prev,
-          hintUsed: true,
-          hint: response.hint
-        }));
+        // Update offline cache
+        try {
+          localStorage.setItem('offlineChallenge', JSON.stringify({
+            data: updatedOfflineData,
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          console.error('Failed to update cached challenge data', e);
+        }
       }
-    } catch (error) {
-      console.error('Error getting hint:', error);
+    } catch (err) {
+      console.error('Error requesting hint:', err);
       toast.error('Failed to get hint');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -235,45 +279,72 @@ const Challenges = () => {
   const handleLogout = () => {
     logout();
     history.push('/login');
+    toast.success('Logged out successfully');
   };
 
   // Calculate time progress percentage
   const calculateTimeProgress = () => {
-    if (!totalTimeLimit || totalTimeLimit === 0) return 0;
+    if (totalTimeLimit === 0) return 0;
     return (timeLeft / totalTimeLimit) * 100;
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading challenge...</div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-400 text-xl mb-4">{error}</div>
-          <button 
-            onClick={fetchCurrentChallenge}
-            className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
-          >
-            Retry
-          </button>
+  // Offline banner component
+  const OfflineBanner = () => (
+    <div className={`${
+      isDark ? 'bg-red-900/30 border-red-800/30' : 'bg-red-500/10 border-red-500/20'
+    } border p-4 mb-6 rounded-lg`}>
+      <div className="flex items-center">
+        <FiWifiOff className={`${isDark ? 'text-red-400' : 'text-red-400'} mr-2`} size={20} />
+        <div>
+          <h3 className={`text-lg font-medium ${isDark ? 'text-red-400' : 'text-red-500'}`}>You're Offline</h3>
+          <p className={`${isDark ? 'text-red-300' : 'text-red-400'} text-sm`}>
+            You can continue with the current challenge, but you won't be able to submit flags or request hints until you're back online.
+          </p>
         </div>
       </div>
+    </div>
+  );
+
+  // Loading state
+  if (loading && !challenge) {
+    return (
+      <div className={`min-h-screen ${
+        isDark 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+          : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+      } flex justify-center items-center`}>
+        <div className="w-16 h-16 border-4 border-violet-100 border-t-violet-400 rounded-full animate-spin"></div>
+      </div>
     );
   }
 
-  // No challenge state
-  if (!challenge) {
+  // Authentication check - redirect to login if no user
+  if (!currentUser) {
+    return null; // Return null while redirecting to avoid flash of content
+  }
+
+  // Time expired state
+  if (timeLeft <= 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="text-white text-xl">No challenge available</div>
+      <div className={`min-h-screen ${
+        isDark 
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+          : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+      } flex justify-center items-center`}>
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-2xl shadow-2xl p-8 border text-center`}>
+          <h2 className="text-3xl font-bold text-violet-50 mb-4">Time's Up!</h2>
+          <p className="text-violet-200 mb-6">Your challenge session has ended.</p>
+          <button
+            onClick={() => history.push('/thank-you')}
+            className="px-6 py-3 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white rounded-lg transition shadow-lg"
+          >
+            View Results
+          </button>
+        </div>
       </div>
     );
   }
@@ -281,54 +352,72 @@ const Challenges = () => {
   return (
     <div className={`min-h-screen ${
       isDark 
-        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900' 
-        : 'bg-gradient-to-br from-violet-100 via-purple-200 to-violet-300'
-    } p-4`}>
-      {/* Header */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="flex justify-between items-center">
-          <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            CTF Challenge
-          </h1>
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
+        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
+    } py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden`}>
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute transform -rotate-45 bg-violet-50 w-96 h-96 rounded-full -top-20 -left-20" />
+        <div className="absolute transform rotate-45 bg-violet-50 w-96 h-96 rounded-full -bottom-20 -right-20" />
+      </div>
+
+      {/* Main Content Container */}
+      <div className="max-w-3xl mx-auto relative">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <div className="relative inline-block">
+            <img
+              src="/biztras.png"
+              alt="CTF Logo"
+              className="mx-auto h-24 w-auto mb-6 drop-shadow-xl rounded-2xl"
+            />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-400 to-violet-600 opacity-50 blur rounded-2xl" />
+          </div>
           
-          <div className="flex items-center gap-4">
-            {/* Online Status Indicator */}
-            {!isOnline && (
-              <div className="flex items-center gap-2 text-yellow-400">
-                <FiWifiOff />
-                <span className="text-sm">Offline Mode</span>
+          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">
+            BizTras
+          </h2>
+          <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
+          {challenge && (
+            <p className="text-lg text-violet-200">Level {challenge.levelNumber}: {challenge.title}</p>
+          )}
+        </div>
+
+        {/* Show offline banner when not online */}
+        {!isOnline && <OfflineBanner />}
+
+        {/* Timer and Logout Bar */}
+        <div className={`backdrop-blur-lg ${
+          isDark 
+            ? 'bg-gray-800/40 border-gray-700/30' 
+            : 'bg-violet-50/10 border-violet-200/20'
+        } rounded-lg shadow-lg p-4 mb-6 border`}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <FiClock className="text-violet-200 mr-2" size={24} />
+              <div className="flex flex-col">
+                <span className="text-lg font-mono text-violet-100">
+                  Time Remaining: {' '}
+                  <span className={timeLeft < 300 ? "text-red-300 font-bold" : "text-violet-50 font-bold"}>
+                    {formatTimeRemaining(timeLeft)}
+                  </span>
+                </span>
+                <span className="text-xs text-violet-300">
+                  Total Time: {formatTimeDetailed(totalTimeLimit)}
+                </span>
               </div>
-            )}
-            
-            {/* Logout Button */}
+            </div>
             <button 
               onClick={handleLogout}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                isDark 
-                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' 
-                  : 'bg-red-500 text-white hover:bg-red-600'
-              }`}
+              className="px-4 py-2 bg-red-600/90 hover:bg-red-700 text-white rounded-lg transition flex items-center"
             >
-              <FiLogOut />
+              <FiLogOut className="mr-2" />
               Logout
             </button>
           </div>
-        </div>
-        
-        {/* Timer */}
-        <div className="mt-4">
-          <div className="flex items-center gap-2 text-white mb-2">
-            <FiClock className={timeLeft < 300 ? 'text-red-400 animate-pulse' : ''} />
-            <span className={`font-mono text-lg ${timeLeft < 300 ? 'text-red-400' : ''}`}>
-              {formatTimeRemaining(timeLeft)}
-            </span>
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              ({formatTimeDetailed(timeLeft)})
-            </span>
-          </div>
           
-          {/* Time Progress Bar */}
-          <div className={`h-2 ${isDark ? 'bg-gray-700/50' : 'bg-violet-800/50'} rounded-full overflow-hidden`}>
+          {/* Progress bar for time */}
+          <div className={`mt-2 h-2 ${isDark ? 'bg-gray-700/50' : 'bg-violet-800/50'} rounded-full overflow-hidden`}>
             <div 
               className={`h-full ${timeLeft < 300 ? 'bg-red-500' : timeLeft < 600 ? 'bg-yellow-500' : 'bg-green-500'}`}
               style={{ width: `${calculateTimeProgress()}%` }}
@@ -337,7 +426,7 @@ const Challenges = () => {
         </div>
 
         {/* Challenge Container */}
-        <div className={`mt-8 backdrop-blur-lg ${
+        <div className={`backdrop-blur-lg ${
           isDark 
             ? 'bg-gray-800/40 border-gray-700/30' 
             : 'bg-violet-50/10 border-violet-200/20'
@@ -345,8 +434,7 @@ const Challenges = () => {
           {/* Progress Bar */}
           <div className={`border-b ${isDark ? 'border-gray-700/50' : 'border-violet-300/20'}`}>
             <div className="flex">
-              {/* Completed levels */}
-              {progress.completedLevels && Array.isArray(progress.completedLevels) && progress.completedLevels.map(level => (
+              {progress.completedLevels && progress.completedLevels.map(level => (
                 <div 
                   key={level}
                   className={`flex-1 text-center py-3 ${
@@ -357,23 +445,19 @@ const Challenges = () => {
                   Level {level}
                 </div>
               ))}
-              
-              {/* Current level */}
               <div
-                className={`flex-1 text-center py-3 ${
-                  isDark ? 'bg-violet-900/30 text-violet-200' : 'bg-violet-600/30 text-violet-50'
-                }`}
+              className={`flex-1 text-center py-3 ${
+                isDark ? 'bg-violet-900/30 text-violet-200' : 'bg-violet-600/30 text-violet-50'
+              }`}
               >
                 <FiUnlock className="inline mr-1" />
-                Level {challenge?.levelNumber || progress.currentLevel}
+                Level {challenge?.levelNumber}
               </div>
               
               {/* Future levels are locked */}
-              {challenge?.totalLevels && Array.from({ 
-                length: Math.max(0, challenge.totalLevels - (challenge?.levelNumber || progress.currentLevel)) 
-              }).map((_, idx) => {
-                const futureLevel = (challenge?.levelNumber || progress.currentLevel) + idx + 1;
-                if (!progress.completedLevels?.includes(futureLevel)) {
+              {Array.from({ length: Math.max(0, challenge?.totalLevels - challenge?.levelNumber || 0) }).map((_, idx) => {
+                const futureLevel = (challenge?.levelNumber || 0) + idx + 1;
+                if (!progress.completedLevels?.includes?.(futureLevel)) {
                   return (
                     <div 
                       key={futureLevel}
@@ -392,95 +476,138 @@ const Challenges = () => {
           </div>
 
           <div className="p-8">
-            {/* Challenge Title */}
-            <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-              {challenge?.title}
-            </h2>
-            
             {/* Challenge Description */}
-            <p className={`${isDark ? 'text-violet-100' : 'text-gray-700'} mb-6 leading-relaxed`}>
+            <p className="text-violet-100 mb-6 leading-relaxed">
               {challenge?.description}
             </p>
 
             {/* Hint Box */}
-            {(showHint || challenge?.hintUsed) && challenge?.hint && (
+            {showHint && challenge?.hint && (
               <div className={`${
-                isDark 
-                  ? 'bg-yellow-900/20 border-yellow-700/30 text-yellow-200' 
-                  : 'bg-yellow-100 border-yellow-300 text-yellow-800'
-              } border rounded-lg p-4 mb-6`}>
-                <div className="flex items-start gap-2">
-                  <FiHelpCircle className="mt-1 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold mb-1">Hint:</div>
-                    <div>{challenge.hint}</div>
+                isDark ? 'bg-yellow-900/10 border-yellow-800/50' : 'bg-yellow-500/10 border-yellow-500/50'
+              } border-l-4 p-4 mb-6 rounded-r text-yellow-100`}>
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <FiHelpCircle className="h-5 w-5 text-yellow-300" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm">
+                      <strong>Hint:</strong> {challenge.hint}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Flag Submission Form */}
-            <form onSubmit={handleSubmitFlag} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className={`block text-sm font-medium mb-2 ${
-                  isDark ? 'text-violet-200' : 'text-gray-700'
-                }`}>
-                  Enter Flag:
-                </label>
-                <div className="flex gap-2">
+                <label className="block text-violet-100 font-medium mb-2">Enter Flag:</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiFlag className="h-5 w-5 text-violet-300" />
+                  </div>
                   <input
                     type="text"
                     value={userFlag}
                     onChange={(e) => setUserFlag(e.target.value)}
-                    placeholder="CTF{...}"
-                    disabled={submitting || !isOnline}
-                    className={`flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 ${
+                    className={`w-full pl-10 pr-3 py-3 ${
                       isDark 
-                        ? 'bg-gray-700/50 text-white placeholder-gray-400 focus:ring-violet-500' 
-                        : 'bg-white/80 text-gray-800 placeholder-gray-500 focus:ring-violet-400'
-                    } ${(!isOnline || submitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        ? 'bg-gray-700/50 border-gray-600/50' 
+                        : 'bg-violet-50/5 border-violet-200/20'
+                    } border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-white placeholder-violet-300`}
+                    placeholder="Enter the flag for this level..."
+                    required
                   />
-                  <button
-                    type="submit"
-                    disabled={submitting || !isOnline}
-                    className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                      isDark 
-                        ? 'bg-violet-600 hover:bg-violet-700 text-white' 
-                        : 'bg-violet-500 hover:bg-violet-600 text-white'
-                    } ${(!isOnline || submitting) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <FiFlag />
-                    {submitting ? 'Submitting...' : 'Submit'}
-                  </button>
                 </div>
               </div>
 
-              {/* Hint Button */}
-              {!showHint && !challenge?.hintUsed && challenge?.hint && (
+              <div className="flex flex-wrap gap-4">
                 <button
-                  type="button"
-                  onClick={handleGetHint}
-                  disabled={!isOnline}
-                  className={`w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
-                    isDark 
-                      ? 'bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-300 border border-yellow-600/30' 
-                      : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border border-yellow-300'
-                  } ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  type="submit"
+                  disabled={submitting || !isOnline}
+                  className="flex-grow py-3 px-6 bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 text-white rounded-lg transition shadow-lg disabled:opacity-50 relative overflow-hidden group"
                 >
-                  <FiHelpCircle />
-                  Get Hint
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-violet-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <span className="relative flex items-center justify-center">
+                    {submitting ? (
+                      <>
+                        <div className="w-5 h-5 border-t-2 border-b-2 border-violet-50 rounded-full animate-spin mr-2" />
+                        Submitting...
+                      </>
+                    ) : !isOnline ? (
+                      <>
+                        <FiWifiOff className="mr-2" />
+                        Submit (Offline)
+                      </>
+                    ) : (
+                      <>
+                        Submit Flag
+                      </>
+                    )}
+                  </span>
                 </button>
-              )}
+                
+                {!challenge?.hintUsed && (
+                  <button
+                    type="button"
+                    onClick={useHintForLevel}
+                    disabled={loading || !isOnline}
+                    className={`flex-grow flex items-center justify-center px-6 py-3 ${
+                      isDark
+                        ? 'bg-gray-700/50 border-gray-600/50 text-violet-300 hover:bg-gray-700/70'
+                        : 'bg-violet-50/10 border-violet-400/20 text-violet-200 hover:bg-violet-50/20'
+                    } border rounded-lg transition shadow-sm disabled:opacity-50`}
+                  >
+                    <FiHelpCircle className="mr-2" />
+                    {!isOnline ? 'Hint (Offline)' : 'Use Hint'}
+                  </button>
+                )}
+              </div>
             </form>
 
-            {/* Attempt Count */}
-            {challenge?.attemptCount > 0 && (
-              <div className={`mt-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Attempts: {challenge.attemptCount}
-              </div>
-            )}
+            <div className="mt-6 text-sm text-violet-300 text-right">
+              Attempts for this level: {challenge?.attemptCount || 0}
+            </div>
           </div>
         </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-6 bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Offline Sync Status */}
+        {!isOnline && localStorage.getItem('offlineQueue') && (
+          <div className={`mt-6 ${
+            isDark ? 'bg-violet-900/10 border-violet-800/30' : 'bg-violet-500/10 border-violet-500'
+          } border-l-4 p-4 rounded-r`}>
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiClock className="h-5 w-5 text-violet-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-violet-300">
+                  You have pending actions that will sync when you're back online.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Decorative bottom element */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50" />
       </div>
     </div>
   );

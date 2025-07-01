@@ -6,6 +6,7 @@ import {
   FiFlag, 
   FiPlusCircle, 
   FiHome, 
+  FiLogOut,
   FiRefreshCw,
   FiTrash2,
   FiEdit,
@@ -39,7 +40,7 @@ const AdminDashboard = () => {
   const [newTimeLimit, setNewTimeLimit] = useState(3600);
 
   const history = useHistory();
-  const { currentUser, isAdmin } = useAuth();
+  const { currentUser, isAdmin, logout } = useAuth();
   const { isDark } = useTheme();
 
   // Fetch data based on active tab
@@ -113,6 +114,12 @@ const AdminDashboard = () => {
     fetchData();
   }, [currentUser, isAdmin, fetchData, history, activeTab]);
 
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    history.push('/admin-login');
+  };
 
   // Handle deleting a user
   const handleDeleteUser = async (userId) => {
@@ -419,6 +426,12 @@ const AdminDashboard = () => {
             >
               <FiRefreshCw className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <FiLogOut className="mr-2" /> Logout
             </button>
           </div>
         </div>

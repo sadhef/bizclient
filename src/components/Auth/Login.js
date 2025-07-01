@@ -210,6 +210,11 @@ const Login = () => {
                 Register here
               </Link>
             </div>
+            <div className="text-center text-sm text-violet-200 mt-1">
+              <Link to="/admin-login" className="text-violet-300 hover:text-white">
+                Admin Login
+              </Link>
+            </div>
           </form>
         </div>
 
