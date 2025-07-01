@@ -1,224 +1,188 @@
-import React, { useState, useEffect } from 'react';
-import { useHistory, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { FaEnvelope, FaLock, FaSignInAlt, FaQuestionCircle } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { Button } from '../ui';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
-  const history = useHistory();
-  const { login, currentUser, loading, error } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const { login } = useAuth();
   const { isDark } = useTheme();
-
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [goToSupport, setGoToSupport] = useState(false);
-
-  useEffect(() => {
-    if (currentUser) {
-      if (goToSupport) {
-        history.push('/support');
-      } else {
-        history.push('/challenges');
-      }
-    }
-  }, [currentUser, history, goToSupport]);
-
-  useEffect(() => {
-    if (error) {
-      setFormError(error);
-      toast.error(error);
-    }
-  }, [error]);
+  const history = useHistory();
 
   const handleChange = (e) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
-    setFormError('');
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      setFormLoading(true);
-      await login(credentials.email, credentials.password);
-      toast.success('Login successful!');
-      // The redirect will happen in the useEffect when currentUser changes
-    } catch (err) {
-      setFormError(err.message);
-    } finally {
-      setFormLoading(false);
+    
+    if (!validateForm()) return;
+    
+    setLoading(true);
+    const result = await login(formData.email, formData.password);
+    
+    if (result.success) {
+      // Redirect based on user type and status
+      if (result.user.isAdmin) {
+        history.push('/admin');
+      } else if (result.user.status === 'approved') {
+        history.push('/dashboard');
+      } else if (result.user.status === 'pending') {
+        history.push('/pending-approval');
+      } else {
+        history.push('/unauthorized');
+      }
     }
-  };
-
-  const handleSupportLogin = async (e) => {
-    e.preventDefault();
-    try {
-      setFormLoading(true);
-      setGoToSupport(true);
-      await login(credentials.email, credentials.password);
-      toast.success('Login successful! Redirecting to support...');
-      // The redirect will happen in the useEffect when currentUser changes
-    } catch (err) {
-      setFormError(err.message);
-      setGoToSupport(false);
-    } finally {
-      setFormLoading(false);
-    }
+    setLoading(false);
   };
 
   return (
-    <div className={`min-h-screen ${
-      isDark 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-violet-900' 
-        : 'bg-gradient-to-br from-violet-900 via-violet-800 to-violet-900'
-    } py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden`}>
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute transform -rotate-45 bg-violet-50 w-96 h-96 rounded-full -top-20 -left-20" />
-        <div className="absolute transform rotate-45 bg-violet-50 w-96 h-96 rounded-full -bottom-20 -right-20" />
-      </div>
-
-      <div className="max-w-md mx-auto relative">
-        <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <img
-              src="/biztras.png"
-              alt="CTF Logo"
-              className="mx-auto h-24 w-auto mb-6 drop-shadow-xl rounded-2xl"
-            />
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-400 to-violet-600 opacity-50 blur rounded-2xl" />
-          </div>
-          
-          <h2 className="text-4xl font-bold text-violet-50 mb-2 tracking-tight">
-            BizTras Account Login
+    <div className={`min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${
+      isDark ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h2 className={`mt-6 text-3xl font-extrabold ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
+            Sign in to your account
           </h2>
-          <div className="h-1 w-20 bg-gradient-to-r from-violet-400 to-violet-600 mx-auto mb-4" />
-          <p className="text-lg text-violet-200">Sign in to your account</p>
+          <p className={`mt-2 text-sm ${
+            isDark ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Or{' '}
+            <button
+              onClick={() => history.push('/register')}
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              create a new account
+            </button>
+          </p>
         </div>
-
-        <div className={`backdrop-blur-lg ${
-          isDark 
-            ? 'bg-gray-800/40 border-gray-700/30' 
-            : 'bg-violet-50/10 border-violet-200/20'
-        } rounded-2xl shadow-2xl p-8 border relative overflow-hidden`}>
-          {/* Error Message */}
-          {formError && (
-            <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6 rounded-r">
-              <div className="flex items-center">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <p className="ml-3 text-sm text-red-300">{formError}</p>
-              </div>
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="relative group">
-              <label className="block text-sm font-medium text-violet-100 mb-2">Email <span className="text-red-300">*</span></label>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaEnvelope className="h-5 w-5 text-violet-300 group-hover:text-violet-200 transition-colors duration-200" />
+                  <FaEnvelope className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="email"
+                  id="email"
                   name="email"
-                  value={credentials.email}
+                  type="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  required
-                  className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 ${
+                  className={`appearance-none relative block w-full pl-10 pr-3 py-2 border ${
+                    errors.email 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-blue-500'
+                  } placeholder-gray-500 ${
                     isDark 
-                      ? 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-700/70' 
-                      : 'bg-violet-50/5 border-violet-200/20 hover:bg-violet-50/10'
-                  }`}
-                  placeholder="Enter your email"
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-white text-gray-900'
+                  } rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:z-10 sm:text-sm`}
+                  placeholder="Email address"
                 />
               </div>
-            </div>
-
-            <div className="relative group">
-              <label className="block text-sm font-medium text-violet-100 mb-2">Password <span className="text-red-300">*</span></label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaLock className="h-5 w-5 text-violet-300 group-hover:text-violet-200 transition-colors duration-200" />
-                </div>
-                <input
-                  type="password"
-                  name="password"
-                  value={credentials.password}
-                  onChange={handleChange}
-                  required
-                  className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg text-white placeholder-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition duration-200 ${
-                    isDark 
-                      ? 'bg-gray-700/50 border-gray-600/50 hover:bg-gray-700/70' 
-                      : 'bg-violet-50/5 border-violet-200/20 hover:bg-violet-50/10'
-                  }`}
-                  placeholder="Enter your password"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <button
-                type="submit"
-                disabled={formLoading || loading}
-                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
-              >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-violet-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <span className="relative flex items-center justify-center">
-                  {formLoading || loading ? (
-                    <>
-                      <div className="w-5 h-5 border-t-2 border-b-2 border-violet-50 rounded-full animate-spin mr-2" />
-                      Logging in...
-                    </>
-                  ) : (
-                    <>
-                      <FaSignInAlt className="mr-2" />
-                      Login
-                    </>
-                  )}
-                </span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleSupportLogin}
-                disabled={formLoading || loading}
-                className="flex-1 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition duration-200 shadow-lg relative overflow-hidden group"
-              >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-teal-50/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                <span className="relative flex items-center justify-center">
-                  {formLoading || loading ? (
-                    <>
-                      <div className="w-5 h-5 border-t-2 border-b-2 border-teal-50 rounded-full animate-spin mr-2" />
-                      Logging in...
-                    </>
-                  ) : (
-                    <>
-                      <FaQuestionCircle className="mr-2" />
-                      Go to Support
-                    </>
-                  )}
-                </span>
-              </button>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
             
-            {/* Login Link */}
-            <div className="text-center text-sm text-violet-200 mt-4">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-violet-300 hover:text-white font-medium">
-                Register here
-              </Link>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`appearance-none relative block w-full pl-10 pr-10 py-2 border ${
+                    errors.password 
+                      ? 'border-red-300 focus:border-red-500' 
+                      : 'border-gray-300 focus:border-blue-500'
+                  } placeholder-gray-500 ${
+                    isDark 
+                      ? 'bg-gray-700 text-white' 
+                      : 'bg-white text-gray-900'
+                  } rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:z-10 sm:text-sm`}
+                  placeholder="Password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <FaEye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
-            <div className="text-center text-sm text-violet-200 mt-1">
-              <Link to="/admin-login" className="text-violet-300 hover:text-white">
-                Admin Login
-              </Link>
-            </div>
-          </form>
-        </div>
+          </div>
 
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50" />
+          <div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

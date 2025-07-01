@@ -54,8 +54,14 @@
     ]
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.5.7",
-    "workbox-cli": "^7.0.0"
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.9",
+    "autoprefixer": "^10.4.14",
+    "cssnano": "^6.0.1",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.0"
   },
   "engines": {
     "node": "18.x"

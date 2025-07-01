@@ -11,22 +11,19 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Default theme is now 'light' (white) instead of 'dark'
   const [isDark, setIsDark] = useState(() => {
-    // Check localStorage first, but default to false (light theme)
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme !== null) {
-      return savedTheme === 'dark';
+    // Check localStorage first, then system preference
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      return saved === 'dark';
     }
-    // Default to light theme (white)
-    return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
-    // Save theme preference to localStorage
+    // Update localStorage and document class
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
     
-    // Apply theme to document
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -40,8 +37,8 @@ export const ThemeProvider = ({ children }) => {
 
   const value = {
     isDark,
-    toggleTheme,
-    theme: isDark ? 'dark' : 'light'
+    theme: isDark ? 'dark' : 'light',
+    toggleTheme
   };
 
   return (
