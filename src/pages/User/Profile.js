@@ -14,7 +14,7 @@ import {
   FiX,
   FiLock
 } from 'react-icons/fi';
-import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import LoadingSpinner from '../../components/UX/LoadingSpinner';
 import { toast } from 'react-toastify';
 
 const Profile = () => {

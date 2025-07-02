@@ -9,7 +9,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 
 // Components
 import Navbar from './components/Layout/Navbar';
-import LoadingSpinner from './components/UI/LoadingSpinner';
+import LoadingSpinner from './components/UX/LoadingSpinner';
 
 // Pages
 import Login from './pages/Auth/Login';

@@ -12,7 +12,7 @@ import {
   FiDownload,
   FiShare2
 } from 'react-icons/fi';
-import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import LoadingSpinner from '../../components/UX/LoadingSpinner';
 
 const ThankYouPage = () => {
   const { user } = useAuth();

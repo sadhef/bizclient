@@ -10,7 +10,7 @@ import {
   FiEye,
   FiClock
 } from 'react-icons/fi';
-import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import LoadingSpinner from '../../components/UX/LoadingSpinner';
 
 const ChallengeList = () => {
   const { user } = useAuth();
