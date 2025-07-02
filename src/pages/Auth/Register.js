@@ -86,7 +86,9 @@ const Register = () => {
       const result = await register(formData);
       
       if (result.success) {
-        history.push('/dashboard');
+        // NEW: Use the redirectTo from register result
+        const redirectPath = result.redirectTo || (result.user.isAdmin ? '/admin' : '/dashboard');
+        history.push(redirectPath);
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -276,7 +278,7 @@ const Register = () => {
         {/* Registration Notice */}
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Note:</strong> After registration, your account will need to be approved by an admin before you can access challenges.
+            <strong>Note:</strong> After registration, regular user accounts need admin approval to access challenges. Admin accounts have immediate access to the Admin Dashboard.
           </p>
         </div>
       </div>

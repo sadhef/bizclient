@@ -13,7 +13,9 @@ import {
   FiXCircle,
   FiHelpCircle,
   FiArrowRight,
-  FiPlay
+  FiPlay,
+  FiAlertTriangle,
+  FiInfo
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
@@ -30,8 +32,10 @@ const ChallengePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [challengeNotStarted, setChallengeNotStarted] = useState(false);
+  const [challengeEnded, setChallengeEnded] = useState(false); // NEW: Track if challenge ended
+  const [endReason, setEndReason] = useState(null); // NEW: Track why challenge ended
   
-  // EXACT COPY of Dashboard timer state
+  // Timer state
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
@@ -40,7 +44,7 @@ const ChallengePage = () => {
     loadChallengeData();
   }, []);
 
-  // EXACT COPY of Dashboard timer effect
+  // Timer effect
   useEffect(() => {
     let interval = null;
     
@@ -50,6 +54,9 @@ const ChallengePage = () => {
           const newTime = prevTime - 1;
           
           if (newTime <= 0) {
+            setTimerActive(false);
+            setChallengeEnded(true);
+            setEndReason('expired');
             toast.warning('Challenge time has expired!');
             setTimeout(() => history.push('/thank-you'), 1000);
             return 0;
@@ -74,7 +81,7 @@ const ChallengePage = () => {
       setChallenge(challengeResponse.data.challenge);
       setChallengeStatus(challengeResponse.data.user);
       
-      // EXACT COPY of Dashboard timer setup
+      // Timer setup
       const timeLeft = challengeResponse.data.timeRemaining || 0;
       const isActive = challengeResponse.data.isActive;
       const challengeStartTime = challengeResponse.data.user?.challengeStartTime;
@@ -83,6 +90,8 @@ const ChallengePage = () => {
       setTimerActive(isActive && challengeStartTime);
       
       setChallengeNotStarted(false);
+      setChallengeEnded(false);
+      setEndReason(null);
       
       console.log('Challenge timer initialized:', {
         timeRemaining: timeLeft,
@@ -104,7 +113,14 @@ const ChallengePage = () => {
         setTimerActive(false);
       } else if (error.response?.status === 410) {
         setTimerActive(false);
+        setChallengeEnded(true);
+        setEndReason('expired');
         history.push('/thank-you');
+      } else if (error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED') {
+        // NEW: Handle challenge already ended
+        setChallengeEnded(true);
+        setEndReason(error.response.data.reason || 'unknown');
+        setTimerActive(false);
       }
     } finally {
       setLoading(false);
@@ -114,10 +130,22 @@ const ChallengePage = () => {
   const startChallenge = async () => {
     try {
       setLoading(true);
-      await challengeAPI.startChallenge();
+      const response = await challengeAPI.startChallenge();
+      
+      if (response.data.alreadyStarted) {
+        toast.info('Challenge already in progress');
+      }
+      
       await loadChallengeData();
     } catch (error) {
       console.error('Error starting challenge:', error);
+      
+      // NEW: Handle restart prevention
+      if (error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED') {
+        setChallengeEnded(true);
+        setEndReason(error.response.data.reason);
+        toast.error(error.response.data.error);
+      }
     } finally {
       setLoading(false);
     }
@@ -147,8 +175,10 @@ const ChallengePage = () => {
       if (response.data.success) {
         setFlag('');
         
-        if (response.data.allChallengesComplete || response.data.completed) {
+        if (response.data.allChallengesComplete || response.data.completed || response.data.challengeEnded) {
           setTimerActive(false);
+          setChallengeEnded(true);
+          setEndReason('completed');
           setTimeout(() => history.push('/thank-you'), 2000);
           return;
         }
@@ -184,6 +214,8 @@ const ChallengePage = () => {
     } catch (error) {
       if (error.response?.status === 410) {
         setTimerActive(false);
+        setChallengeEnded(true);
+        setEndReason('expired');
         history.push('/thank-you');
       }
     } finally {
@@ -211,13 +243,78 @@ const ChallengePage = () => {
     return 'text-red-600 dark:text-red-400';
   };
 
-  // EXACT COPY of Dashboard debug log
-  console.log('Challenge render:', { timeRemaining, timerActive });
+  console.log('Challenge render:', { timeRemaining, timerActive, challengeEnded, endReason });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
         <LoadingSpinner message="Loading challenge..." />
+      </div>
+    );
+  }
+
+  // NEW: Handle challenge ended state
+  if (challengeEnded) {
+    return (
+      <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
+            endReason === 'completed' 
+              ? 'bg-green-100 dark:bg-green-900/30' 
+              : 'bg-red-100 dark:bg-red-900/30'
+          }`}>
+            {endReason === 'completed' ? (
+              <FiCheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+            ) : (
+              <FiXCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+            )}
+          </div>
+          
+          <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
+            {endReason === 'completed' ? 'Challenge Completed!' : 'Challenge Ended'}
+          </h2>
+          
+          <div className="text-light-secondary dark:text-dark-secondary mb-6">
+            {endReason === 'completed' 
+              ? 'Congratulations! You have completed all challenge levels.'
+              : endReason === 'expired'
+              ? 'Your challenge time has expired.'
+              : 'The challenge has ended.'
+            }
+          </div>
+
+          {/* Info about restart */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <div className="text-left">
+                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  Want to try again?
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Only administrators can reset your challenge progress. Contact an admin to restart the challenge.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => history.push('/thank-you')}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
+              <FiCheckCircle className="w-4 h-4" />
+              View Results
+            </button>
+            <button
+              onClick={() => history.push('/dashboard')}
+              className="btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <FiArrowRight className="w-4 h-4" />
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -322,6 +419,29 @@ const ChallengePage = () => {
           </div>
         </div>
 
+        {/* NEW: Warning for inactive timer */}
+        {!timerActive && timeRemaining <= 0 && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                  Challenge Time Expired
+                </h4>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
+                  Your challenge time has expired. You can no longer submit answers.
+                </p>
+                <button
+                  onClick={() => history.push('/thank-you')}
+                  className="btn-secondary text-sm"
+                >
+                  View Results
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Challenge Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -344,6 +464,7 @@ const ChallengePage = () => {
                 <button
                   onClick={() => showHint ? setShowHint(false) : loadHint()}
                   className="btn-secondary flex items-center gap-2"
+                  disabled={!timerActive}
                 >
                   {showHint ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                   {showHint ? 'Hide Hint' : 'Show Hint'}
@@ -404,13 +525,21 @@ const ChallengePage = () => {
                     </>
                   )}
                 </button>
+                
+                {/* NEW: Submission disabled warning */}
+                {!timerActive && (
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <FiXCircle className="w-4 h-4" />
+                    Submissions disabled - Challenge time expired
+                  </p>
+                )}
               </form>
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Live Timer Display - EXACT COPY from Dashboard */}
+            {/* Live Timer Display */}
             <div className="card border-2 border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
               <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4 flex items-center gap-2">
                 <FiClock className="w-5 h-5" />
@@ -483,8 +612,7 @@ const ChallengePage = () => {
                   <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
                     <span>Completed Levels</span>
                     <span>{challengeStatus?.completedLevels?.length}</span>
-                  </div>
-                  {challengeStatus?.completedLevels?.length > 0 && (
+                  </div>{challengeStatus?.completedLevels?.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
                       {challengeStatus.completedLevels.map((level) => (
                         <span
@@ -503,6 +631,22 @@ const ChallengePage = () => {
                   <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
                     <span>Total Attempts</span>
                     <span>{challengeStatus?.totalAttempts}</span>
+                  </div>
+                </div>
+
+                {/* NEW: Challenge Status */}
+                <div>
+                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                    <span>Challenge Status</span>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      timerActive 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                        : timeRemaining <= 0
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                    }`}>
+                      {timerActive ? 'Active' : timeRemaining <= 0 ? 'Expired' : 'Paused'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -529,8 +673,46 @@ const ChallengePage = () => {
                   <FiArrowRight className="w-4 h-4" />
                   Back to Dashboard
                 </button>
+
+                {/* NEW: Challenge ended actions */}
+                {!timerActive && timeRemaining <= 0 && (
+                  <>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+                      <p className="text-xs text-light-secondary dark:text-dark-secondary mb-3 text-center">
+                        Challenge time expired
+                      </p>
+                      <button
+                        onClick={() => history.push('/thank-you')}
+                        className="btn-primary w-full flex items-center gap-2"
+                      >
+                        <FiCheckCircle className="w-4 h-4" />
+                        View Results
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
+
+            {/* NEW: Restart Information */}
+            {!timerActive && (
+              <div className="card bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                      Challenge Restart Policy
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                      Once a challenge ends (completion or expiration), only administrators can reset your progress.
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                      Contact an admin if you need to restart the challenge.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -934,41 +934,6 @@ const AdminDashboard = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Monitoring Stats Summary */}
-                {monitoring.length > 0 && (
-                  <div className="card">
-                    <h4 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                      Monitoring Summary
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                          {monitoring.filter(u => u.isActive).length}
-                        </p>
-                        <p className="text-light-secondary dark:text-dark-secondary">Active Users</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {monitoring.reduce((sum, u) => sum + u.completedLevels.length, 0)}
-                        </p>
-                        <p className="text-light-secondary dark:text-dark-secondary">Total Completions</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                          {monitoring.reduce((sum, u) => sum + u.totalAttempts, 0)}
-                        </p>
-                        <p className="text-light-secondary dark:text-dark-secondary">Total Attempts</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                          {monitoring.filter(u => u.isActive && u.timeRemaining > 0).length}
-                        </p>
-                        <p className="text-light-secondary dark:text-dark-secondary">Time Remaining</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>

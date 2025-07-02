@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [token]);
 
-  // Login function
+  // Login function with admin redirect
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -87,7 +87,12 @@ export const AuthProvider = ({ children }) => {
       
       toast.success(message || 'Login successful!');
       
-      return { success: true, user: userData };
+      return { 
+        success: true, 
+        user: userData,
+        // NEW: Specify redirect path based on user role
+        redirectTo: userData.isAdmin ? '/admin' : '/dashboard'
+      };
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Login failed';
       toast.error(errorMessage);
@@ -102,7 +107,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
+  // Register function with admin redirect
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -116,7 +121,12 @@ export const AuthProvider = ({ children }) => {
       
       toast.success(message || 'Registration successful!');
       
-      return { success: true, user: newUser };
+      return { 
+        success: true, 
+        user: newUser,
+        // NEW: Specify redirect path based on user role (though new users won't be admin)
+        redirectTo: newUser.isAdmin ? '/admin' : '/dashboard'
+      };
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Registration failed';
       toast.error(errorMessage);
@@ -216,6 +226,25 @@ export const AuthProvider = ({ children }) => {
     return user && (user.isApproved || user.isAdmin);
   };
 
+  // NEW: Get appropriate home route for user
+  const getHomeRoute = () => {
+    if (!user) return '/login';
+    return user.isAdmin ? '/admin' : '/dashboard';
+  };
+
+  // NEW: Check if current route is valid for user role
+  const isValidRouteForUser = (pathname) => {
+    if (!user) return false;
+    
+    if (user.isAdmin) {
+      // Admin should only access admin routes
+      return pathname.startsWith('/admin') || pathname === '/';
+    } else {
+      // Users should not access admin routes
+      return !pathname.startsWith('/admin');
+    }
+  };
+
   const value = {
     user,
     token,
@@ -230,6 +259,8 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isApproved,
     canAccessChallenges,
+    getHomeRoute,        // NEW
+    isValidRouteForUser, // NEW
     api // Export api instance for other components
   };
 

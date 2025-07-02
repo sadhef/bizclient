@@ -60,6 +60,9 @@ api.interceptors.response.use(
             toast.error('Admin access required.');
           } else if (data.code === 'CHALLENGE_INACTIVE') {
             toast.warning('Challenge is not currently active.');
+          } else if (data.code === 'CHALLENGE_ALREADY_ENDED') {
+            // NEW: Handle challenge already ended
+            toast.error(data.error);
           }
           break;
           
@@ -136,8 +139,20 @@ export const adminAPI = {
   resetUser: (userId) => 
     api.put(`/admin/users/${userId}/reset`),
     
+  // NEW: Get user reset history
+  getUserResetHistory: (userId) =>
+    api.get(`/admin/users/${userId}/reset-history`),
+    
+  // NEW: Force end user challenge
+  forceEndChallenge: (userId, reason) =>
+    api.put(`/admin/users/${userId}/force-end`, { reason }),
+    
   bulkApproveUsers: (userIds) =>
     api.put('/admin/users/bulk-approve', { userIds }),
+    
+  // NEW: Bulk reset users
+  bulkResetUsers: (userIds) =>
+    api.put('/admin/users/bulk-reset', { userIds }),
     
   getConfig: () => 
     api.get('/admin/config'),
@@ -183,6 +198,10 @@ export const challengeAPI = {
   getStatus: () => 
     api.get('/challenge/status'),
     
+  // NEW: Check if user can start challenge
+  getCanStart: () =>
+    api.get('/challenge/can-start'),
+    
   getHint: () => 
     api.get('/challenge/hint'),
     
@@ -227,6 +246,27 @@ export const isNetworkError = (error) => {
 
 export const getErrorCode = (error) => {
   return error.response?.data?.code || null;
+};
+
+// NEW: Check if error indicates challenge already ended
+export const isChallengeEndedError = (error) => {
+  return error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED';
+};
+
+// NEW: Check if error indicates user cannot restart
+export const isRestartPreventedError = (error) => {
+  const code = error.response?.data?.code;
+  return code === 'CHALLENGE_ALREADY_ENDED' || 
+         code === 'CHALLENGE_COMPLETED' || 
+         code === 'CHALLENGE_EXPIRED';
+};
+
+// NEW: Get challenge end reason from error
+export const getChallengeEndReason = (error) => {
+  if (error.response?.data?.reason) {
+    return error.response.data.reason;
+  }
+  return null;
 };
 
 export default api;

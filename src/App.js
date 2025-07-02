@@ -23,7 +23,7 @@ import Profile from './pages/User/Profile';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
-const ProtectedRoute = ({ children, adminOnly = false, approvedOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, approvedOnly = false, excludeAdmin = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -36,6 +36,11 @@ const ProtectedRoute = ({ children, adminOnly = false, approvedOnly = false }) =
 
   if (adminOnly && !user.isAdmin) {
     return <Redirect to="/dashboard" />;
+  }
+
+  // NEW: Exclude admin from certain routes
+  if (excludeAdmin && user.isAdmin) {
+    return <Redirect to="/admin" />;
   }
 
   if (approvedOnly && !user.isApproved && !user.isAdmin) {
@@ -87,39 +92,40 @@ const AppContent = () => {
             </PublicRoute>
           </Route>
 
-          {/* Protected Routes */}
-          <Route path="/dashboard">
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          </Route>
-
+          {/* Admin Only Routes */}
           <Route path="/admin">
             <ProtectedRoute adminOnly>
               <AdminDashboard />
             </ProtectedRoute>
           </Route>
 
+          {/* User Only Routes (Exclude Admin) */}
+          <Route path="/dashboard">
+            <ProtectedRoute excludeAdmin>
+              <Dashboard />
+            </ProtectedRoute>
+          </Route>
+
           <Route path="/challenges">
-            <ProtectedRoute approvedOnly>
+            <ProtectedRoute approvedOnly excludeAdmin>
               <ChallengeList />
             </ProtectedRoute>
           </Route>
 
           <Route path="/challenge">
-            <ProtectedRoute approvedOnly>
+            <ProtectedRoute approvedOnly excludeAdmin>
               <ChallengePage />
             </ProtectedRoute>
           </Route>
 
           <Route path="/profile">
-            <ProtectedRoute>
+            <ProtectedRoute excludeAdmin>
               <Profile />
             </ProtectedRoute>
           </Route>
 
           <Route path="/thank-you">
-            <ProtectedRoute>
+            <ProtectedRoute excludeAdmin>
               <ThankYouPage />
             </ProtectedRoute>
           </Route>

@@ -73,15 +73,12 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
             {isAdmin() ? (
-              <>
-                <NavLink to="/admin" icon={FiSettings}>
-                  Admin Dashboard
-                </NavLink>
-                <NavLink to="/dashboard" icon={FiHome}>
-                  Dashboard
-                </NavLink>
-              </>
+              /* Admin Navigation - Only Admin Dashboard */
+              <NavLink to="/admin" icon={FiSettings}>
+                Admin Dashboard
+              </NavLink>
             ) : (
+              /* User Navigation */
               <>
                 <NavLink to="/dashboard" icon={FiHome}>
                   Dashboard
@@ -149,14 +146,17 @@ const Navbar = () => {
                     )}
                   </div>
                   
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <FiUser className="w-4 h-4" />
-                    Profile
-                  </Link>
+                  {/* Profile Link - Only for non-admin users */}
+                  {!isAdmin() && (
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <FiUser className="w-4 h-4" />
+                      Profile
+                    </Link>
+                  )}
                   
                   <button
                     onClick={handleLogout}
@@ -184,22 +184,16 @@ const Navbar = () => {
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
             <div className="flex flex-col gap-2">
               {isAdmin() ? (
-                <>
-                  <NavLink 
-                    to="/admin" 
-                    icon={FiSettings}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Admin Dashboard
-                  </NavLink>
-                  <NavLink 
-                    to="/dashboard" 
-                    icon={FiHome}
-                    onClick={() => setIsMenuOpen(false)}>
-                    Dashboard
-                  </NavLink>
-                </>
+                /* Admin Mobile Navigation - Only Admin Dashboard */
+                <NavLink 
+                  to="/admin" 
+                  icon={FiSettings}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </NavLink>
               ) : (
+                /* User Mobile Navigation */
                 <>
                   <NavLink 
                     to="/dashboard" 

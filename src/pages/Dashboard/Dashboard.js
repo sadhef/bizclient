@@ -12,15 +12,19 @@ import {
   FiPause,
   FiCheckCircle,
   FiAlertCircle,
-  FiInfo
+  FiInfo,
+  FiXCircle,
+  FiRefreshCw
 } from 'react-icons/fi';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 const Dashboard = () => {
   const { user, isAdmin, isApproved } = useAuth();
   const history = useHistory();
   const [challengeStatus, setChallengeStatus] = useState(null);
   const [challengeInfo, setChallengeInfo] = useState(null);
+  const [canStartInfo, setCanStartInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   
   // Simple timer state
@@ -41,7 +45,9 @@ const Dashboard = () => {
           const newTime = prevTime - 1;
           
           if (newTime <= 0) {
-            history.push('/thank-you');
+            setTimerActive(false);
+            toast.warning('Challenge time has expired!');
+            setTimeout(() => history.push('/thank-you'), 1000);
             return 0;
           }
           
@@ -65,19 +71,31 @@ const Dashboard = () => {
       
       // Load challenge status for approved users
       if (isApproved() || isAdmin()) {
-        const statusResponse = await challengeAPI.getStatus();
-        setChallengeStatus(statusResponse.data);
-        
-        // Set timer values
-        const timeLeft = statusResponse.data.timeRemaining || 0;
-        setTimeRemaining(timeLeft);
-        setTimerActive(statusResponse.data.isActive && statusResponse.data.hasStarted);
-        
-        console.log('Dashboard timer initialized:', {
-          timeRemaining: timeLeft,
-          isActive: statusResponse.data.isActive,
-          hasStarted: statusResponse.data.hasStarted
-        });
+        try {
+          const statusResponse = await challengeAPI.getStatus();
+          setChallengeStatus(statusResponse.data);
+          
+          // Set timer values
+          const timeLeft = statusResponse.data.timeRemaining || 0;
+          setTimeRemaining(timeLeft);
+          setTimerActive(statusResponse.data.isActive && statusResponse.data.hasStarted);
+          
+          console.log('Dashboard timer initialized:', {
+            timeRemaining: timeLeft,
+            isActive: statusResponse.data.isActive,
+            hasStarted: statusResponse.data.hasStarted
+          });
+        } catch (error) {
+          console.error('Error loading challenge status:', error);
+        }
+
+        // NEW: Check if user can start challenge
+        try {
+          const canStartResponse = await challengeAPI.getCanStart();
+          setCanStartInfo(canStartResponse.data);
+        } catch (error) {
+          console.error('Error checking start eligibility:', error);
+        }
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -89,11 +107,30 @@ const Dashboard = () => {
   const startChallenge = async () => {
     try {
       setLoading(true);
-      await challengeAPI.startChallenge();
+      const response = await challengeAPI.startChallenge();
+      
+      if (response.data.alreadyStarted) {
+        toast.info('Challenge already in progress');
+      } else {
+        toast.success('Challenge started successfully!');
+      }
+      
       await loadDashboardData();
       history.push('/challenge');
     } catch (error) {
       console.error('Error starting challenge:', error);
+      
+      // Handle specific error cases
+      if (error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED') {
+        setCanStartInfo({
+          canStart: false,
+          reason: error.response.data.error,
+          hasStarted: true,
+          isCompleted: error.response.data.reason === 'completed',
+          isExpired: error.response.data.reason === 'expired'
+        });
+        toast.error(error.response.data.error);
+      }
     } finally {
       setLoading(false);
     }
@@ -119,7 +156,38 @@ const Dashboard = () => {
     return 'text-red-600 dark:text-red-400';
   };
 
-  console.log('Dashboard render:', { timeRemaining, timerActive });
+  // NEW: Get challenge end reason display
+  const getChallengeEndInfo = () => {
+    if (!challengeStatus) return null;
+    
+    if (challengeStatus.isCompleted) {
+      return {
+        icon: FiCheckCircle,
+        color: 'text-green-600 dark:text-green-400',
+        bgColor: 'bg-green-100 dark:bg-green-900/30',
+        borderColor: 'border-green-200 dark:border-green-800',
+        title: 'Challenge Completed!',
+        message: 'You have successfully completed all challenge levels.',
+        canRestart: false
+      };
+    }
+    
+    if (challengeStatus.isExpired) {
+      return {
+        icon: FiXCircle,
+        color: 'text-red-600 dark:text-red-400',
+        bgColor: 'bg-red-100 dark:bg-red-900/30',
+        borderColor: 'border-red-200 dark:border-red-800',
+        title: 'Challenge Expired',
+        message: 'Your challenge time has expired.',
+        canRestart: false
+      };
+    }
+    
+    return null;
+  };
+
+  console.log('Dashboard render:', { timeRemaining, timerActive, challengeStatus, canStartInfo });
 
   if (loading) {
     return (
@@ -128,6 +196,8 @@ const Dashboard = () => {
       </div>
     );
   }
+
+  const challengeEndInfo = getChallengeEndInfo();
 
   return (
     <div className="min-h-screen bg-light-primary dark:bg-dark-primary p-6">
@@ -141,6 +211,7 @@ const Dashboard = () => {
             {isAdmin() ? 'Admin Dashboard - Manage your CTF platform' : 'Ready to take on the challenge?'}
           </p>
         </div>
+
 
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -189,7 +260,6 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</p>
                   <div className="flex items-center gap-2">
-                    {/* Force re-render with timestamp key */}
                     <p className={`text-lg font-semibold ${getTimeColor()}`} key={`time-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
                       {formatTime(timeRemaining)}
                     </p>
@@ -267,19 +337,32 @@ const Dashboard = () => {
                     The challenge is currently not active. Please check back later.
                   </p>
                 </div>
-              ) : challengeStatus?.isCompleted ? (
-                /* Challenge Completed */
+              ) : challengeStatus?.isCompleted || challengeStatus?.isExpired ? (
+                /* Challenge Completed or Expired - Cannot Restart */
                 <div className="text-center py-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-4">
-                    <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                    challengeStatus.isCompleted 
+                      ? 'bg-green-100 dark:bg-green-900/30' 
+                      : 'bg-red-100 dark:bg-red-900/30'
+                  }`}>
+                    {challengeStatus.isCompleted ? (
+                      <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <FiXCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                    )}
                   </div>
                   <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-2">
-                    Challenge Completed!
+                    {challengeStatus.isCompleted ? 'Challenge Completed!' : 'Challenge Expired'}
                   </h3>
                   <p className="text-light-secondary dark:text-dark-secondary mb-4">
-                    Congratulations! You have successfully completed all challenge levels.
+                    {challengeStatus.isCompleted 
+                      ? 'Congratulations! You have successfully completed all challenge levels.'
+                      : 'Your challenge time has expired.'
+                    }
                   </p>
-                  <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                  
+                  {/* Challenge Summary */}
+                  <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-6">
                     <div className="text-center">
                       <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
                         {challengeStatus?.completedLevels?.length || 0}
@@ -295,6 +378,26 @@ const Dashboard = () => {
                       <p className="text-sm text-light-secondary dark:text-dark-secondary">
                         Total Attempts
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Restart Information */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                          Want to try again?
+                        </h4>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                          Only administrators can reset your challenge progress. Contact an admin to restart the challenge.
+                        </p>
+                        {challengeStatus.resetCount > 0 && (
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
+                            This account has been reset {challengeStatus.resetCount} time{challengeStatus.resetCount !== 1 ? 's' : ''}.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -327,7 +430,6 @@ const Dashboard = () => {
                           <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">Time Remaining</p>
                           <div className={`text-2xl font-bold ${getTimeColor()} flex items-center gap-2`}>
                             <FiClock className="w-5 h-5" />
-                            {/* Live countdown with forced re-render */}
                             <span key={`main-timer-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
                               {formatTime(timeRemaining)}
                             </span>
@@ -386,6 +488,32 @@ const Dashboard = () => {
                   >
                     {timerActive ? 'Continue Challenge' : 'Challenge Expired'}
                   </button>
+                </div>
+              ) : canStartInfo && !canStartInfo.canStart ? (
+                /* Cannot Start - Already Ended */
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
+                    <FiXCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-2">
+                    Cannot Start Challenge
+                  </h3>
+                  <p className="text-light-secondary dark:text-dark-secondary mb-4">
+                    {canStartInfo.reason}
+                  </p>
+                  <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <FiRefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400 mt-0.5" />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Need a reset?
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          Contact an administrator to reset your challenge progress and try again.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 /* Ready to Start */
@@ -459,7 +587,6 @@ const Dashboard = () => {
                     <FiClock className="w-5 h-5" />
                     Live Timer
                   </h3>
-                  {/* Large live countdown display */}
                   <div className={`text-4xl font-bold ${getTimeColor()} mb-3`} key={`widget-timer-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
                     {formatTime(timeRemaining)}
                   </div>
@@ -530,7 +657,7 @@ const Dashboard = () => {
                   >
                     View All Challenges
                   </button>
-                  {challengeStatus?.hasStarted && (
+                  {challengeStatus?.hasStarted && challengeStatus?.isActive && (
                     <button
                       onClick={() => history.push('/challenge')}
                       className="btn-secondary w-full"
