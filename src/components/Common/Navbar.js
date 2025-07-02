@@ -1,210 +1,245 @@
 import React, { useState } from 'react';
-import { Link, useHistory, useLocation } from 'react-router-dom';
+import { Link, useLocation, useHistory } from 'react-router-dom';
+import {
+  FiFlag,
+  FiUser,
+  FiLogIn,
+  FiLogOut,
+  FiUserPlus,
+  FiShield,
+  FiMenu,
+  FiX,
+  FiCloudLightning,
+  FiHelpCircle
+} from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../../context/ThemeContext';
-import { FaSun, FaMoon, FaUser, FaSignOutAlt, FaBars, FaTimes, FaCog } from 'react-icons/fa';
+import { useChat } from '../../context/ChatContext';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  
-  const { currentUser, isAdmin, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
-  const history = useHistory();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const history = useHistory();
+  const { currentUser, isAdmin, isCloud, logout } = useAuth();
+  const { isDark } = useTheme();
+  const { unreadCount } = useChat();
 
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
   const handleLogout = () => {
     logout();
     history.push('/login');
-    setShowUserMenu(false);
+    closeMenu();
   };
 
-  const isActivePath = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path);
+  const isActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
   };
-
-  const navLinks = isAdmin ? [
-    { path: '/admin', label: 'Dashboard', exact: true },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/challenges', label: 'Challenges' }
-  ] : [
-    { path: '/dashboard', label: 'Challenges', exact: true },
-    { path: '/profile', label: 'Profile' }
-  ];
 
   return (
-    <nav className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow-lg border-b ${
-      isDark ? 'border-gray-700' : 'border-gray-200'
-    }`}>
+    <nav className={`${isDark ? 'bg-dark-primary/80 shadow-lg' : 'bg-violet-900/80'} backdrop-blur-md text-white sticky top-0 z-50`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Logo and Navigation */}
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center">
-                <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <span className="text-white font-bold text-lg">C</span>
-                </div>
-                <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Challenge Platform
-                </span>
-              </Link>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-8">
-              {navLinks.map((link) => (
+        <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center space-x-4">
+            <Link
+              to={currentUser ? (isAdmin ? '/admin-dashboard' : isCloud ? '/cloud-dashboard' : '/challenges') : '/login'}
+              className="text-2xl font-bold text-violet-100 hover:text-white"
+            >
+              BizTras
+            </Link>
+
+            <div className="hidden sm:flex space-x-3">
+              {!currentUser && (
+                <>
+                  <Link
+                    to="/login"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/login') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
+                    }`}
+                  >
+                    <FiLogIn className="mr-1" /> Login
+                  </Link>
+                  <Link
+                    to="/cloud-login"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/cloud-login') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
+                    }`}
+                  >
+                    <FiCloudLightning className="mr-1" /> Cloud Login
+                  </Link>
+                </>
+              )}
+              
+              {currentUser && !isAdmin && !isCloud && (
                 <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActivePath(link.path)
-                      ? isDark 
-                        ? 'bg-gray-700 text-white' 
-                        : 'bg-gray-100 text-gray-900'
-                      : isDark
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  to="/challenges"
+                  className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                    isActive('/challenges') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
                   }`}
                 >
-                  {link.label}
+                  <FiFlag className="mr-1" /> Challenges
                 </Link>
-              ))}
+              )}
+
+              {currentUser && isAdmin && (
+                <>
+                  <Link
+                    to="/admin-dashboard"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/admin-dashboard') ? 'bg-violet-700 text-white' : 'hover:bg-violet-700/40 text-violet-300'
+                    }`}
+                  >
+                    <FiShield className="mr-1" /> Dashboard
+                  </Link>
+                </>
+              )}
+
+              {currentUser && isCloud && (
+                <>
+                  <Link
+                    to="/cloud-dashboard"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/cloud-dashboard') ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700/40 text-indigo-300'
+                    }`}
+                  >
+                    <FiCloudLightning className="mr-1" /> Cloud Dashboard
+                  </Link>
+                  <Link
+                    to="/support"
+                    className={`flex items-center px-3 py-2 text-sm rounded-md font-medium ${
+                      isActive('/support') ? 'bg-purple-700 text-white' : 'hover:bg-purple-700/40 text-purple-300'
+                    }`}
+                  >
+                    <FiHelpCircle className="mr-1" /> Support
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Right side items */}
           <div className="flex items-center space-x-4">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-full transition-colors ${
-                isDark 
-                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              aria-label="Toggle theme"
-            >
-              {isDark ? <FaSun className="h-5 w-5" /> : <FaMoon className="h-5 w-5" />}
-            </button>
-
-            {/* User Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`flex items-center space-x-2 p-2 rounded-full transition-colors ${
-                  isDark 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <FaUser className="h-4 w-4 text-white" />
-                </div>
-                <span className={`hidden md:block text-sm font-medium ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {currentUser?.name}
+            <ThemeToggle />
+            
+            {currentUser && (
+              <div className="flex items-center space-x-3">
+                <span className="hidden sm:block text-sm text-violet-200">
+                  Welcome, {currentUser.name}
                 </span>
-              </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-3 py-2 text-sm rounded-md font-medium hover:bg-violet-700/40 text-violet-300"
+                >
+                  <FiLogOut className="mr-1" /> Logout
+                </button>
+              </div>
+            )}
 
-              {/* User Dropdown */}
-              {showUserMenu && (
-                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${
-                  isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <div className={`px-4 py-2 text-sm border-b ${
-                    isDark ? 'text-gray-300 border-gray-700' : 'text-gray-600 border-gray-200'
-                  }`}>
-                    <p className="font-medium">{currentUser?.name}</p>
-                    <p className="text-xs">{currentUser?.email}</p>
-                    {isAdmin && (
-                      <span className="inline-block mt-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                  
+            {/* Mobile menu button */}
+            <button
+              onClick={toggleMenu}
+              className="sm:hidden flex items-center justify-center p-2 rounded-md text-violet-200 hover:text-white hover:bg-violet-700/40 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            >
+              {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {isMenuOpen && (
+          <div className="sm:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {!currentUser && (
+                <>
                   <Link
-                    to="/profile"
-                    onClick={() => setShowUserMenu(false)}
-                    className={`block px-4 py-2 text-sm transition-colors ${
-                      isDark 
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'
+                    to="/login"
+                    onClick={closeMenu}
+                    className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                      isActive('/login') ? 'bg-violet-700 text-white' : 'text-violet-300 hover:bg-violet-700/40'
                     }`}
                   >
-                    <FaCog className="inline h-4 w-4 mr-2" />
-                    Profile Settings
+                    <FiLogIn className="mr-2" /> Login
                   </Link>
-                  
+                  <Link
+                    to="/cloud-login"
+                    onClick={closeMenu}
+                    className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                      isActive('/cloud-login') ? 'bg-indigo-700 text-white' : 'text-indigo-300 hover:bg-indigo-700/40'
+                    }`}
+                  >
+                    <FiCloudLightning className="mr-2" /> Cloud Login
+                  </Link>
+                </>
+              )}
+
+              {currentUser && !isAdmin && !isCloud && (
+                <Link
+                  to="/challenges"
+                  onClick={closeMenu}
+                  className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                    isActive('/challenges') ? 'bg-violet-700 text-white' : 'text-violet-300 hover:bg-violet-700/40'
+                  }`}
+                >
+                  <FiFlag className="mr-2" /> Challenges
+                </Link>
+              )}
+
+              {currentUser && isAdmin && (
+                <>
+                  <Link
+                    to="/admin-dashboard"
+                    onClick={closeMenu}
+                    className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                      isActive('/admin-dashboard') ? 'bg-violet-700 text-white' : 'text-violet-300 hover:bg-violet-700/40'
+                    }`}
+                  >
+                    <FiShield className="mr-2" /> Dashboard
+                  </Link>
+                </>
+              )}
+
+              {currentUser && isCloud && (
+                <>
+                  <Link
+                    to="/cloud-dashboard"
+                    onClick={closeMenu}
+                    className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                      isActive('/cloud-dashboard') ? 'bg-indigo-700 text-white' : 'text-indigo-300 hover:bg-indigo-700/40'
+                    }`}
+                  >
+                    <FiCloudLightning className="mr-2" /> Cloud Dashboard
+                  </Link>
+                  <Link
+                    to="/support"
+                    onClick={closeMenu}
+                    className={`flex items-center px-3 py-2 text-base rounded-md font-medium ${
+                      isActive('/support') ? 'bg-purple-700 text-white' : 'text-purple-300 hover:bg-purple-700/40'
+                    }`}
+                  >
+                    <FiHelpCircle className="mr-2" /> Support
+                  </Link>
+                </>
+              )}
+
+              {currentUser && (
+                <div className="border-t border-violet-600 pt-4 mt-4">
+                  <div className="px-3 py-2">
+                    <div className="text-base font-medium text-white">{currentUser.name}</div>
+                    <div className="text-sm text-violet-300">{currentUser.email}</div>
+                  </div>
                   <button
                     onClick={handleLogout}
-                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                      isDark 
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className="flex items-center w-full px-3 py-2 text-base rounded-md font-medium text-violet-300 hover:bg-violet-700/40"
                   >
-                    <FaSignOutAlt className="inline h-4 w-4 mr-2" />
-                    Sign out
+                    <FiLogOut className="mr-2" /> Logout
                   </button>
                 </div>
               )}
             </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`p-2 rounded-md transition-colors ${
-                  isDark 
-                    ? 'text-gray-300 hover:bg-gray-700 hover:text-white' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                {isOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden">
-            <div className={`px-2 pt-2 pb-3 space-y-1 border-t ${
-              isDark ? 'border-gray-700' : 'border-gray-200'
-            }`}>
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActivePath(link.path)
-                      ? isDark 
-                        ? 'bg-gray-700 text-white' 
-                        : 'bg-gray-100 text-gray-900'
-                      : isDark
-                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
           </div>
         )}
       </div>
-
-      {/* Click outside to close user menu */}
-      {showUserMenu && (
-        <div 
-          className="fixed inset-0 z-0" 
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
     </nav>
   );
 };

@@ -1,101 +1,119 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
-import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Set up API token
+  // Initialize auth state on mount
   useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (token) {
-        try {
-          const response = await api.get('/auth/me');
-          const user = response.data.user;
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Set the token in API headers
+          api.setToken(token);
           
-          setCurrentUser(user);
-          setIsAdmin(user.isAdmin || false);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          logout();
+          // Verify token and get user data
+          const response = await api.get('/auth/me');
+          if (response && response.user) {
+            setCurrentUser(response.user);
+          } else {
+            // Invalid token, clear it
+            localStorage.removeItem('token');
+            api.setToken(null);
+          }
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Clear invalid token
+        localStorage.removeItem('token');
+        api.setToken(null);
+      } finally {
+        setLoading(false);
+        setIsInitialized(true);
       }
-      setLoading(false);
     };
 
-    checkAuth();
-  }, [token]);
+    initializeAuth();
+  }, []); // Empty dependency array - only run once on mount
 
-  const login = async (email, password) => {
+  // Login function
+  const login = async (email, password, userType = 'user') => {
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const { token: newToken, user } = response.data;
+      const endpoint = userType === 'admin' ? '/auth/admin-login' : 
+                     userType === 'cloud' ? '/auth/cloud-login' : '/auth/login';
       
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setCurrentUser(user);
-      setIsAdmin(user.isAdmin || false);
+      const response = await api.post(endpoint, { email, password });
       
-      // Update last login
-      user.lastLogin = new Date();
-      
-      toast.success(`Welcome ${user.isAdmin ? 'Admin' : ''} ${user.name}!`);
-      return { success: true, user };
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
-      return { success: false, message };
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
+  // Register function
   const register = async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
-      toast.success('Registration successful! Please wait for admin approval.');
-      return { success: true };
+      
+      if (response && response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        api.setToken(response.token);
+        setCurrentUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
-      toast.error(message);
-      return { success: false, message };
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 
+  // Logout function
   const logout = () => {
     localStorage.removeItem('token');
-    setToken(null);
+    api.setToken(null);
     setCurrentUser(null);
-    setIsAdmin(false);
-    delete api.defaults.headers.common['Authorization'];
-    toast.info('Logged out successfully');
   };
 
-  const updateUser = (updatedUser) => {
-    setCurrentUser(updatedUser);
-    setIsAdmin(updatedUser.isAdmin || false);
+  // Update user function
+  const updateUser = (userData) => {
+    setCurrentUser(prev => ({ ...prev, ...userData }));
   };
+
+  // Computed values using useMemo to prevent unnecessary re-renders
+  const isAdmin = currentUser?.isAdmin === true;
+  const isCloud = currentUser?.isCloud === true;
+  const isRegularUser = currentUser && !isAdmin && !isCloud;
 
   const value = {
     currentUser,
-    isAdmin,
     loading,
+    isInitialized,
+    isAdmin,
+    isCloud,
+    isRegularUser,
     login,
     register,
     logout,
