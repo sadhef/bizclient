@@ -13,7 +13,7 @@ import {
   FiXCircle,
   FiHelpCircle,
   FiArrowRight,
-  FiAward
+  FiPlay
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
@@ -30,22 +30,20 @@ const ChallengePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [submissions, setSubmissions] = useState([]);
+  const [challengeNotStarted, setChallengeNotStarted] = useState(false);
 
   useEffect(() => {
     loadChallenge();
     loadSubmissions();
   }, []);
 
-  // Timer countdown
   useEffect(() => {
     let interval;
     if (timeRemaining > 0 && challengeStatus?.isActive) {
       interval = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
-            // Time expired, redirect to thank you page
-            toast.error('Time expired! Redirecting...');
-            setTimeout(() => history.push('/thank-you'), 2000);
+            history.push('/thank-you');
             return 0;
           }
           return prev - 1;
@@ -58,21 +56,15 @@ const ChallengePage = () => {
   const loadChallenge = async () => {
     try {
       setLoading(true);
-      
-      // Get current challenge
       const challengeResponse = await challengeAPI.getCurrentChallenge();
       setChallenge(challengeResponse.data.challenge);
       setChallengeStatus(challengeResponse.data.user);
       setTimeRemaining(challengeResponse.data.timeRemaining);
-      
+      setChallengeNotStarted(false);
     } catch (error) {
-      console.error('Error loading challenge:', error);
-      if (error.response?.status === 400) {
-        // Challenge not started, redirect to dashboard
-        toast.warning('Please start the challenge first');
-        history.push('/dashboard');
+      if (error.response?.status === 400 && error.response?.data?.code === 'CHALLENGE_NOT_STARTED') {
+        setChallengeNotStarted(true);
       } else if (error.response?.status === 410) {
-        // Time expired
         history.push('/thank-you');
       }
     } finally {
@@ -89,6 +81,18 @@ const ChallengePage = () => {
     }
   };
 
+  const startChallenge = async () => {
+    try {
+      setLoading(true);
+      await challengeAPI.startChallenge();
+      await loadChallenge();
+    } catch (error) {
+      console.error('Error starting challenge:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadHint = async () => {
     try {
       const response = await challengeAPI.getHint();
@@ -96,7 +100,6 @@ const ChallengePage = () => {
       setShowHint(true);
     } catch (error) {
       console.error('Error loading hint:', error);
-      toast.error('Failed to load hint');
     }
   };
 
@@ -104,7 +107,6 @@ const ChallengePage = () => {
     e.preventDefault();
     
     if (!flag.trim()) {
-      toast.error('Please enter a flag');
       return;
     }
 
@@ -113,28 +115,40 @@ const ChallengePage = () => {
       const response = await challengeAPI.submitFlag(flag.trim());
       
       if (response.data.success) {
-        toast.success(response.data.message);
         setFlag('');
         
-        if (response.data.completed) {
-          // Challenge completed
+        if (response.data.allChallengesComplete || response.data.completed) {
           setTimeout(() => history.push('/thank-you'), 2000);
-        } else if (response.data.hasNextLevel) {
-          // Move to next level
-          setTimeout(() => {
-            loadChallenge();
-            loadSubmissions();
-          }, 1500);
+          return;
         }
-      } else {
-        toast.error(response.data.message);
+        
+        if (response.data.moveToNextLevel || response.data.levelProgression || response.data.hasNextLevel) {
+          setShowHint(false);
+          setHint('');
+          
+          setChallengeStatus(prev => ({
+            ...prev,
+            currentLevel: response.data.currentLevel,
+            completedLevels: response.data.completedLevels,
+            totalAttempts: response.data.totalAttempts
+          }));
+          
+          setTimeRemaining(response.data.timeRemaining);
+          
+          setTimeout(async () => {
+            await loadChallenge();
+            await loadSubmissions();
+          }, 1000);
+          
+          return;
+        }
       }
       
-      // Reload submissions
-      loadSubmissions();
+      setTimeout(() => {
+        loadSubmissions();
+      }, 500);
       
     } catch (error) {
-      console.error('Error submitting flag:', error);
       if (error.response?.status === 410) {
         history.push('/thank-you');
       }
@@ -171,6 +185,41 @@ const ChallengePage = () => {
     );
   }
 
+  if (challengeNotStarted) {
+    return (
+      <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-full mb-6">
+            <FiPlay className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
+            Ready to Start?
+          </h2>
+          <p className="text-light-secondary dark:text-dark-secondary mb-6">
+            You need to start the challenge first to access the levels.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={startChallenge}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+              disabled={loading}
+            >
+              <FiPlay className="w-4 h-4" />
+              {loading ? 'Starting...' : 'Start Challenge'}
+            </button>
+            <button
+              onClick={() => history.push('/dashboard')}
+              className="btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <FiArrowRight className="w-4 h-4" />
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!challenge) {
     return (
       <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center">
@@ -178,9 +227,6 @@ const ChallengePage = () => {
           <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
             No Challenge Available
           </h2>
-          <p className="text-light-secondary dark:text-dark-secondary mb-6">
-            Please start a challenge from the dashboard
-          </p>
           <button
             onClick={() => history.push('/dashboard')}
             className="btn-primary"
@@ -214,29 +260,14 @@ const ChallengePage = () => {
             </div>
           </div>
 
-          {/* Challenge Info */}
           <div className="flex items-center gap-6 text-sm text-light-secondary dark:text-dark-secondary">
             <div className="flex items-center gap-2">
               <FiTarget className="w-4 h-4" />
               <span>Level {challenge.level}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                challenge.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                challenge.difficulty === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-              }`}>
-                {challenge.difficulty}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded">
-                {challenge.category}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FiAward className="w-4 h-4" />
-              <span>{challenge.points} points</span>
+              <FiFlag className="w-4 h-4" />
+              <span>Attempts: {challengeStatus?.totalAttempts}</span>
             </div>
           </div>
         </div>
@@ -276,7 +307,7 @@ const ChallengePage = () => {
                   <div className="flex items-start gap-3">
                     <FiHelpCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
                     <p className="text-yellow-800 dark:text-yellow-200">
-                      {hint || 'No hint available for this challenge.'}
+                      {hint}
                     </p>
                   </div>
                 </div>
@@ -302,8 +333,9 @@ const ChallengePage = () => {
                       value={flag}
                       onChange={(e) => setFlag(e.target.value)}
                       className="input pl-10"
-                      placeholder="BizTras{your_flag_here}"
+                      placeholder="Enter your answer..."
                       disabled={submitting}
+                      autoComplete="off"
                     />
                   </div>
                 </div>
@@ -320,7 +352,7 @@ const ChallengePage = () => {
                   ) : (
                     <>
                       <FiSend className="w-4 h-4" />
-                      Submit Flag
+                      Submit Answer
                     </>
                   )}
                 </button>
@@ -339,16 +371,16 @@ const ChallengePage = () => {
                 <div>
                   <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
                     <span>Current Level</span>
-                    <span>{challengeStatus.currentLevel}</span>
+                    <span>{challengeStatus?.currentLevel}</span>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
                     <span>Completed Levels</span>
-                    <span>{challengeStatus.completedLevels.length}</span>
+                    <span>{challengeStatus?.completedLevels?.length}</span>
                   </div>
-                  {challengeStatus.completedLevels.length > 0 && (
+                  {challengeStatus?.completedLevels?.length > 0 && (
                     <div className="flex gap-1 flex-wrap">
                       {challengeStatus.completedLevels.map((level) => (
                         <span
@@ -366,25 +398,7 @@ const ChallengePage = () => {
                 <div>
                   <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
                     <span>Total Attempts</span>
-                    <span>{challengeStatus.totalAttempts}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
-                    <span>Time Remaining</span>
-                    <span className={getTimeColor()}>{formatTime(timeRemaining)}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        timeRemaining > 300 ? 'bg-green-500' :
-                        timeRemaining > 60 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ 
-                        width: `${Math.max(0, Math.min(100, (timeRemaining / (60 * 60)) * 100))}%` 
-                      }}
-                    />
+                    <span>{challengeStatus?.totalAttempts}</span>
                   </div>
                 </div>
               </div>
@@ -449,31 +463,6 @@ const ChallengePage = () => {
                   <FiArrowRight className="w-4 h-4" />
                   Back to Dashboard
                 </button>
-              </div>
-            </div>
-
-            {/* Challenge Tips */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Tips
-              </h3>
-              <div className="space-y-3 text-sm text-light-secondary dark:text-dark-secondary">
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                  <p>Flags usually follow the format: BizTras{'{flag_content}'}</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                  <p>Read the challenge description carefully</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                  <p>Use hints if you're stuck</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-violet-600 dark:bg-violet-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                  <p>Check your spelling and formatting</p>
-                </div>
               </div>
             </div>
           </div>

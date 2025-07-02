@@ -13,7 +13,6 @@ import {
   FiRefreshCw,
   FiPlus,
   FiEdit3,
-  FiEye,
   FiSave,
   FiX
 } from 'react-icons/fi';
@@ -36,10 +35,7 @@ const AdminDashboard = () => {
     title: '',
     description: '',
     hint: '',
-    flag: '',
-    difficulty: 'Medium',
-    category: 'Web',
-    points: 100
+    flag: ''
   });
 
   // Get tab from URL params
@@ -59,7 +55,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     let interval;
     if (activeTab === 'monitoring') {
-      interval = setInterval(loadMonitoringData, 5000); // Refresh every 5 seconds
+      interval = setInterval(loadMonitoringData, 5000);
     }
     return () => clearInterval(interval);
   }, [activeTab]);
@@ -196,10 +192,7 @@ const AdminDashboard = () => {
         title: '',
         description: '',
         hint: '',
-        flag: '',
-        difficulty: 'Medium',
-        category: 'Web',
-        points: 100
+        flag: ''
       });
       loadChallenges();
     } catch (error) {
@@ -227,10 +220,7 @@ const AdminDashboard = () => {
         title: challenge.title,
         description: challenge.description,
         hint: challenge.hint || '',
-        flag: challenge.flag,
-        difficulty: challenge.difficulty,
-        category: challenge.category,
-        points: challenge.points
+        flag: challenge.flag
       });
     } else {
       setEditingChallenge(null);
@@ -239,10 +229,7 @@ const AdminDashboard = () => {
         title: '',
         description: '',
         hint: '',
-        flag: '',
-        difficulty: 'Medium',
-        category: 'Web',
-        points: 100
+        flag: ''
       });
     }
     setShowChallengeModal(true);
@@ -365,7 +352,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Charts would go here - Level completion stats, etc. */}
+                {/* Level Stats */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="card">
                     <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
@@ -452,7 +439,8 @@ const AdminDashboard = () => {
                                 {user.username}
                               </p>
                               <p className="text-sm text-light-secondary dark:text-dark-secondary">
-                                {user.email}</p>
+                                {user.email}
+                              </p>
                             </div>
                           </td>
                           <td className="py-3 px-4">
@@ -538,16 +526,6 @@ const AdminDashboard = () => {
                             <span className="px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium rounded">
                               Level {challenge.level}
                             </span>
-                            <span className={`px-2 py-1 text-xs font-medium rounded ${
-                              challenge.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                              challenge.difficulty === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                              'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                            }`}>
-                              {challenge.difficulty}
-                            </span>
-                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded">
-                              {challenge.category}
-                            </span>
                           </div>
                           <h4 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-2">
                             {challenge.title}
@@ -555,10 +533,6 @@ const AdminDashboard = () => {
                           <p className="text-light-secondary dark:text-dark-secondary text-sm mb-2">
                             {challenge.description}
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-light-secondary dark:text-dark-secondary">
-                            <span>Points: {challenge.points}</span>
-                            <span>Solves: {challenge.solveCount}</span>
-                          </div>
                         </div>
                         <div className="flex gap-2 ml-4">
                           <button
@@ -764,8 +738,7 @@ const AdminDashboard = () => {
                                 {user.submissions.slice(-5).map((submission, index) => (
                                   <span
                                     key={index}
-                                    className={`px-2 py-1 text-xs rounded ${
-                                      submission.isCorrect
+                                    className={`px-2 py-1 text-xs rounded ${submission.isCorrect
                                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                                         : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                                     }`}
@@ -810,52 +783,22 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
-                        Level
-                      </label>
-                      <input
-                        type="number"
-                        value={challengeForm.level}
-                        onChange={(e) => setChallengeForm({...challengeForm, level: parseInt(e.target.value)})}
-                        className="input"
-                        min="1"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
-                        Difficulty
-                      </label>
-                      <select
-                        value={challengeForm.difficulty}
-                        onChange={(e) => setChallengeForm({...challengeForm, difficulty: e.target.value})}
-                        className="input"
-                      >
-                        <option value="Easy">Easy</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Hard">Hard</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
-                        Category
-                      </label>
-                      <select
-                        value={challengeForm.category}
-                        onChange={(e) => setChallengeForm({...challengeForm, category: e.target.value})}
-                        className="input"
-                      >
-                        <option value="Web">Web</option>
-                        <option value="Crypto">Crypto</option>
-                        <option value="Forensics">Forensics</option>
-                        <option value="Reverse">Reverse</option>
-                        <option value="Pwn">Pwn</option>
-                        <option value="Misc">Misc</option>
-                      </select>
-                    </div>
+                  {/* Level */}
+                  <div>
+                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                      Level
+                    </label>
+                    <input
+                      type="number"
+                      value={challengeForm.level}
+                      onChange={(e) => setChallengeForm({...challengeForm, level: parseInt(e.target.value)})}
+                      className="input"
+                      min="1"
+                      placeholder="1"
+                    />
                   </div>
 
+                  {/* Title */}
                   <div>
                     <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
                       Title
@@ -869,6 +812,7 @@ const AdminDashboard = () => {
                     />
                   </div>
 
+                  {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
                       Description
@@ -882,6 +826,7 @@ const AdminDashboard = () => {
                     />
                   </div>
 
+                  {/* Hint */}
                   <div>
                     <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
                       Hint (Optional)
@@ -895,6 +840,7 @@ const AdminDashboard = () => {
                     />
                   </div>
 
+                  {/* Flag */}
                   <div>
                     <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
                       Flag
@@ -905,19 +851,6 @@ const AdminDashboard = () => {
                       onChange={(e) => setChallengeForm({...challengeForm, flag: e.target.value})}
                       className="input"
                       placeholder="BizTras{flag_content}"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
-                      Points
-                    </label>
-                    <input
-                      type="number"
-                      value={challengeForm.points}
-                      onChange={(e) => setChallengeForm({...challengeForm, points: parseInt(e.target.value)})}
-                      className="input"
-                      min="0"
                     />
                   </div>
                 </div>
