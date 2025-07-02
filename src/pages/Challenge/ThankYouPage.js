@@ -191,36 +191,6 @@ const ThankYouPage = () => {
           </div>
         </div>
 
-        {/* Achievement Badge */}
-        {userStats?.isCompleted && (
-          <div className="card text-center mb-12 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20 border-violet-200 dark:border-violet-800">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4">
-              <FiAward className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-xl font-bold text-light-primary dark:text-dark-primary mb-2">
-              CTF Champion!
-            </h3>
-            <p className="text-light-secondary dark:text-dark-secondary mb-4">
-              You've successfully conquered all challenges in the BizTras CTF!
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={downloadCertificate}
-                className="btn-primary flex items-center gap-2"
-              >
-                <FiDownload className="w-4 h-4" />
-                Download Certificate
-              </button>
-              <button
-                onClick={shareResults}
-                className="btn-secondary flex items-center gap-2"
-              >
-                <FiShare2 className="w-4 h-4" />
-                Share Results
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Leaderboard */}
         {leaderboard.length > 0 && (
@@ -300,19 +270,6 @@ const ThankYouPage = () => {
               </button>
             )}
           </div>
-        </div>
-
-        {/* Feedback Section */}
-        <div className="card text-center">
-          <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-            Help Us Improve
-          </h3>
-          <p className="text-light-secondary dark:text-dark-secondary mb-4">
-            Your feedback is valuable to us. Let us know how we can make the CTF experience even better!
-          </p>
-          <button className="btn-secondary">
-            Provide Feedback
-          </button>
         </div>
       </div>
     </div>

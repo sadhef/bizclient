@@ -31,17 +31,16 @@ const ChallengePage = () => {
   const [submissions, setSubmissions] = useState([]);
   const [challengeNotStarted, setChallengeNotStarted] = useState(false);
   
-  // Simple timer state
+  // EXACT COPY of Dashboard timer state
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
   // Load challenge data
   useEffect(() => {
-    loadChallenge();
-    loadSubmissions();
+    loadChallengeData();
   }, []);
 
-  // Simple timer effect - this will count down every second
+  // EXACT COPY of Dashboard timer effect
   useEffect(() => {
     let interval = null;
     
@@ -50,7 +49,6 @@ const ChallengePage = () => {
         setTimeRemaining(prevTime => {
           const newTime = prevTime - 1;
           
-          // Auto redirect when time expires
           if (newTime <= 0) {
             toast.warning('Challenge time has expired!');
             setTimeout(() => history.push('/thank-you'), 1000);
@@ -67,29 +65,45 @@ const ChallengePage = () => {
     };
   }, [timerActive, timeRemaining, history]);
 
-  const loadChallenge = async () => {
+  const loadChallengeData = async () => {
     try {
       setLoading(true);
+      
+      // Load challenge
       const challengeResponse = await challengeAPI.getCurrentChallenge();
       setChallenge(challengeResponse.data.challenge);
       setChallengeStatus(challengeResponse.data.user);
       
-      // Set timer values
+      // EXACT COPY of Dashboard timer setup
       const timeLeft = challengeResponse.data.timeRemaining || 0;
+      const isActive = challengeResponse.data.isActive;
+      const challengeStartTime = challengeResponse.data.user?.challengeStartTime;
+      
       setTimeRemaining(timeLeft);
-      setTimerActive(challengeResponse.data.user?.isActive || false);
+      setTimerActive(isActive && challengeStartTime);
       
       setChallengeNotStarted(false);
       
-      console.log('Challenge loaded:', {
+      console.log('Challenge timer initialized:', {
         timeRemaining: timeLeft,
-        isActive: challengeResponse.data.user?.isActive,
-        challenge: challengeResponse.data.challenge?.title
+        isActive,
+        hasStarted: !!challengeStartTime
       });
+
+      // Load submissions
+      try {
+        const submissionsResponse = await challengeAPI.getSubmissions();
+        setSubmissions(submissionsResponse.data.submissions);
+      } catch (error) {
+        console.error('Error loading submissions:', error);
+      }
+      
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.code === 'CHALLENGE_NOT_STARTED') {
         setChallengeNotStarted(true);
+        setTimerActive(false);
       } else if (error.response?.status === 410) {
+        setTimerActive(false);
         history.push('/thank-you');
       }
     } finally {
@@ -97,20 +111,11 @@ const ChallengePage = () => {
     }
   };
 
-  const loadSubmissions = async () => {
-    try {
-      const response = await challengeAPI.getSubmissions();
-      setSubmissions(response.data.submissions);
-    } catch (error) {
-      console.error('Error loading submissions:', error);
-    }
-  };
-
   const startChallenge = async () => {
     try {
       setLoading(true);
       await challengeAPI.startChallenge();
-      await loadChallenge();
+      await loadChallengeData();
     } catch (error) {
       console.error('Error starting challenge:', error);
     } finally {
@@ -143,6 +148,7 @@ const ChallengePage = () => {
         setFlag('');
         
         if (response.data.allChallengesComplete || response.data.completed) {
+          setTimerActive(false);
           setTimeout(() => history.push('/thank-you'), 2000);
           return;
         }
@@ -158,25 +164,26 @@ const ChallengePage = () => {
             totalAttempts: response.data.totalAttempts
           }));
           
-          // Update timer
+          // Update timer with new time remaining
           const newTimeRemaining = response.data.timeRemaining || 0;
           setTimeRemaining(newTimeRemaining);
           
           setTimeout(async () => {
-            await loadChallenge();
-            await loadSubmissions();
+            await loadChallengeData();
           }, 1000);
           
           return;
         }
       }
       
-      setTimeout(() => {
-        loadSubmissions();
+      setTimeout(async () => {
+        const submissionsResponse = await challengeAPI.getSubmissions();
+        setSubmissions(submissionsResponse.data.submissions);
       }, 500);
       
     } catch (error) {
       if (error.response?.status === 410) {
+        setTimerActive(false);
         history.push('/thank-you');
       }
     } finally {
@@ -204,8 +211,8 @@ const ChallengePage = () => {
     return 'text-red-600 dark:text-red-400';
   };
 
-  // Debug log
-  console.log('Current timer state:', { timeRemaining, timerActive, challengeActive: challengeStatus?.isActive });
+  // EXACT COPY of Dashboard debug log
+  console.log('Challenge render:', { timeRemaining, timerActive });
 
   if (loading) {
     return (
@@ -225,9 +232,9 @@ const ChallengePage = () => {
           <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
             Ready to Start?
           </h2>
-          <p className="text-light-secondary dark:text-dark-secondary mb-6">
+          <div className="text-light-secondary dark:text-dark-secondary mb-6">
             You need to start the challenge first to access the levels.
-          </p>
+          </div>
           <div className="space-y-3">
             <button
               onClick={startChallenge}
@@ -282,11 +289,10 @@ const ChallengePage = () => {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</p>
+                <div className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</div>
                 <div className={`text-lg font-bold ${getTimeColor()} flex items-center gap-2`}>
                   <FiClock className="w-5 h-5" />
-                  {/* Force re-render with timestamp key */}
-                  <span key={`header-${timeRemaining}-${Date.now()}`}>
+                  <span>
                     {formatTime(timeRemaining)}
                   </span>
                   {timeRemaining <= 60 && timeRemaining > 0 && (
@@ -324,10 +330,8 @@ const ChallengePage = () => {
               <h2 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
                 Challenge Description
               </h2>
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="text-light-secondary dark:text-dark-secondary whitespace-pre-wrap">
-                  {challenge.description}
-                </p>
+              <div className="text-light-secondary dark:text-dark-secondary whitespace-pre-wrap">
+                {challenge.description}
               </div>
             </div>
 
@@ -350,9 +354,9 @@ const ChallengePage = () => {
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <FiHelpCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-yellow-800 dark:text-yellow-200">
+                    <div className="text-yellow-800 dark:text-yellow-200">
                       {hint}
-                    </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -406,19 +410,22 @@ const ChallengePage = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Live Time Display */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Challenge Timer
+            {/* Live Timer Display - EXACT COPY from Dashboard */}
+            <div className="card border-2 border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
+              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4 flex items-center gap-2">
+                <FiClock className="w-5 h-5" />
+                Live Challenge Timer
               </h3>
               <div className="text-center">
-                {/* Main timer display with forced re-render */}
-                <div className={`text-3xl font-bold ${getTimeColor()} mb-2`} key={`sidebar-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
+                {/* Large timer display */}
+                <div className={`text-4xl font-bold ${getTimeColor()} mb-3`}>
                   {formatTime(timeRemaining)}
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                
+                {/* Linear progress bar */}
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-3 rounded-full transition-all duration-1000 ${
                       timeRemaining > 300 ? 'bg-green-500' :
                       timeRemaining > 60 ? 'bg-yellow-500' :
                       'bg-red-500'
@@ -428,19 +435,34 @@ const ChallengePage = () => {
                     }}
                   />
                 </div>
-                <p className="text-xs text-light-secondary dark:text-dark-secondary flex items-center justify-center gap-1">
+
+                <div className="text-xs text-light-secondary dark:text-dark-secondary flex items-center justify-center gap-1 mb-2">
                   {timerActive ? (
                     <>
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      Challenge Active
+                      Live Timer Active
                     </>
                   ) : (
                     <>
                       <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      Challenge Inactive
+                      Timer Stopped
                     </>
                   )}
-                </p>
+                </div>
+
+                {timeRemaining <= 60 && timeRemaining > 0 && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2 mt-3">
+                    <div className="text-xs text-red-700 dark:text-red-300 font-medium animate-pulse">
+                      ⚠️ Time running out!
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-700">
+                  <div className="text-xs text-violet-600 dark:text-violet-400">
+                    ⚡ Updates every second
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -486,44 +508,6 @@ const ChallengePage = () => {
               </div>
             </div>
 
-            {/* Recent Submissions */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Recent Submissions
-              </h3>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {submissions.length > 0 ? (
-                  submissions.slice(0, 10).map((submission, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        submission.isCorrect
-                          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                          : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {submission.isCorrect ? (
-                          <FiCheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <FiXCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        )}
-                        <span className="text-sm font-medium">
-                          Level {submission.level}
-                        </span>
-                      </div>
-                      <span className="text-xs text-light-secondary dark:text-dark-secondary">
-                        {new Date(submission.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-light-secondary dark:text-dark-secondary text-center py-4">
-                    No submissions yet
-                  </p>
-                )}
-              </div>
-            </div>
 
             {/* Quick Actions */}
             <div className="card">
