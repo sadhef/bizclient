@@ -22,29 +22,38 @@ const Dashboard = () => {
   const [challengeStatus, setChallengeStatus] = useState(null);
   const [challengeInfo, setChallengeInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Simple timer state
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
-  // Timer for countdown
+  // Simple timer effect
   useEffect(() => {
-    let interval;
-    if (challengeStatus?.timeRemaining > 0 && challengeStatus?.isActive) {
+    let interval = null;
+    
+    if (timerActive && timeRemaining > 0) {
       interval = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            // Time expired, redirect to thank you page
+        setTimeRemaining(prevTime => {
+          const newTime = prevTime - 1;
+          
+          if (newTime <= 0) {
             history.push('/thank-you');
             return 0;
           }
-          return prev - 1;
+          
+          return newTime;
         });
       }, 1000);
     }
-    return () => clearInterval(interval);
-  }, [challengeStatus, history]);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeRemaining, history]);
 
   const loadDashboardData = async () => {
     try {
@@ -58,7 +67,17 @@ const Dashboard = () => {
       if (isApproved() || isAdmin()) {
         const statusResponse = await challengeAPI.getStatus();
         setChallengeStatus(statusResponse.data);
-        setTimeRemaining(statusResponse.data.timeRemaining || 0);
+        
+        // Set timer values
+        const timeLeft = statusResponse.data.timeRemaining || 0;
+        setTimeRemaining(timeLeft);
+        setTimerActive(statusResponse.data.isActive && statusResponse.data.hasStarted);
+        
+        console.log('Dashboard timer initialized:', {
+          timeRemaining: timeLeft,
+          isActive: statusResponse.data.isActive,
+          hasStarted: statusResponse.data.hasStarted
+        });
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -93,6 +112,14 @@ const Dashboard = () => {
       return `${secs}s`;
     }
   };
+
+  const getTimeColor = () => {
+    if (timeRemaining > 300) return 'text-green-600 dark:text-green-400';
+    if (timeRemaining > 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  console.log('Dashboard render:', { timeRemaining, timerActive });
 
   if (loading) {
     return (
@@ -161,13 +188,15 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</p>
-                  <p className={`text-lg font-semibold ${
-                    timeRemaining > 300 ? 'text-green-600 dark:text-green-400' :
-                    timeRemaining > 60 ? 'text-yellow-600 dark:text-yellow-400' :
-                    'text-red-600 dark:text-red-400'
-                  }`}>
-                    {formatTime(timeRemaining)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    {/* Force re-render with timestamp key */}
+                    <p className={`text-lg font-semibold ${getTimeColor()}`} key={`time-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
+                      {formatTime(timeRemaining)}
+                    </p>
+                    {timerActive && timeRemaining > 0 && (
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    )}
+                  </div>
                 </div>
                 <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30">
                   <FiClock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -282,13 +311,54 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      challengeStatus.isActive 
+                      timerActive
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                     }`}>
-                      {challengeStatus.isActive ? 'Active' : 'Expired'}
+                      {timerActive ? 'Active' : 'Expired'}
                     </div>
                   </div>
+
+                  {/* Live Timer Display */}
+                  {timerActive && timeRemaining > 0 && (
+                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">Time Remaining</p>
+                          <div className={`text-2xl font-bold ${getTimeColor()} flex items-center gap-2`}>
+                            <FiClock className="w-5 h-5" />
+                            {/* Live countdown with forced re-render */}
+                            <span key={`main-timer-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
+                              {formatTime(timeRemaining)}
+                            </span>
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="w-16 h-16 relative">
+                            <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                              <path
+                                className="text-gray-300 dark:text-gray-600"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                fill="none"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                              <path
+                                className={timeRemaining > 300 ? 'text-green-500' : timeRemaining > 60 ? 'text-yellow-500' : 'text-red-500'}
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                fill="none"
+                                strokeLinecap="round"
+                                strokeDasharray={`${Math.max(0, (timeRemaining / 3600) * 100)}, 100`}
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Progress Bar */}
                   <div className="mb-6">
@@ -312,9 +382,9 @@ const Dashboard = () => {
                   <button
                     onClick={() => history.push('/challenge')}
                     className="btn-primary w-full"
-                    disabled={!challengeStatus.isActive}
+                    disabled={!timerActive}
                   >
-                    {challengeStatus.isActive ? 'Continue Challenge' : 'Challenge Expired'}
+                    {timerActive ? 'Continue Challenge' : 'Challenge Expired'}
                   </button>
                 </div>
               ) : (
@@ -380,6 +450,43 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+
+            {/* Real-time Timer Widget for Active Challenges */}
+            {challengeStatus?.hasStarted && timerActive && timeRemaining > 0 && (
+              <div className="card border-2 border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-3 flex items-center justify-center gap-2">
+                    <FiClock className="w-5 h-5" />
+                    Live Timer
+                  </h3>
+                  {/* Large live countdown display */}
+                  <div className={`text-4xl font-bold ${getTimeColor()} mb-3`} key={`widget-timer-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
+                    {formatTime(timeRemaining)}
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-1000 ${
+                        timeRemaining > 300 ? 'bg-green-500' :
+                        timeRemaining > 60 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.max(0, Math.min(100, (timeRemaining / 3600) * 100))}%` 
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-light-secondary dark:text-dark-secondary flex items-center justify-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Live Countdown Active
+                  </p>
+                  <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-700">
+                    <p className="text-xs text-violet-600 dark:text-violet-400">
+                      ⚡ Updates every second
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Quick Actions for Admins */}
             {isAdmin() && (

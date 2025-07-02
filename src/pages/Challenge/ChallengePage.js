@@ -28,30 +28,44 @@ const ChallengePage = () => {
   const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(0);
   const [submissions, setSubmissions] = useState([]);
   const [challengeNotStarted, setChallengeNotStarted] = useState(false);
+  
+  // Simple timer state
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
 
+  // Load challenge data
   useEffect(() => {
     loadChallenge();
     loadSubmissions();
   }, []);
 
+  // Simple timer effect - this will count down every second
   useEffect(() => {
-    let interval;
-    if (timeRemaining > 0 && challengeStatus?.isActive) {
+    let interval = null;
+    
+    if (timerActive && timeRemaining > 0) {
       interval = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            history.push('/thank-you');
+        setTimeRemaining(prevTime => {
+          const newTime = prevTime - 1;
+          
+          // Auto redirect when time expires
+          if (newTime <= 0) {
+            toast.warning('Challenge time has expired!');
+            setTimeout(() => history.push('/thank-you'), 1000);
             return 0;
           }
-          return prev - 1;
+          
+          return newTime;
         });
       }, 1000);
     }
-    return () => clearInterval(interval);
-  }, [timeRemaining, challengeStatus, history]);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerActive, timeRemaining, history]);
 
   const loadChallenge = async () => {
     try {
@@ -59,8 +73,19 @@ const ChallengePage = () => {
       const challengeResponse = await challengeAPI.getCurrentChallenge();
       setChallenge(challengeResponse.data.challenge);
       setChallengeStatus(challengeResponse.data.user);
-      setTimeRemaining(challengeResponse.data.timeRemaining);
+      
+      // Set timer values
+      const timeLeft = challengeResponse.data.timeRemaining || 0;
+      setTimeRemaining(timeLeft);
+      setTimerActive(challengeResponse.data.user?.isActive || false);
+      
       setChallengeNotStarted(false);
+      
+      console.log('Challenge loaded:', {
+        timeRemaining: timeLeft,
+        isActive: challengeResponse.data.user?.isActive,
+        challenge: challengeResponse.data.challenge?.title
+      });
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.code === 'CHALLENGE_NOT_STARTED') {
         setChallengeNotStarted(true);
@@ -133,7 +158,9 @@ const ChallengePage = () => {
             totalAttempts: response.data.totalAttempts
           }));
           
-          setTimeRemaining(response.data.timeRemaining);
+          // Update timer
+          const newTimeRemaining = response.data.timeRemaining || 0;
+          setTimeRemaining(newTimeRemaining);
           
           setTimeout(async () => {
             await loadChallenge();
@@ -176,6 +203,9 @@ const ChallengePage = () => {
     if (timeRemaining > 60) return 'text-yellow-600 dark:text-yellow-400';
     return 'text-red-600 dark:text-red-400';
   };
+
+  // Debug log
+  console.log('Current timer state:', { timeRemaining, timerActive, challengeActive: challengeStatus?.isActive });
 
   if (loading) {
     return (
@@ -253,9 +283,19 @@ const ChallengePage = () => {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</p>
-                <p className={`text-lg font-bold ${getTimeColor()}`}>
-                  {formatTime(timeRemaining)}
-                </p>
+                <div className={`text-lg font-bold ${getTimeColor()} flex items-center gap-2`}>
+                  <FiClock className="w-5 h-5" />
+                  {/* Force re-render with timestamp key */}
+                  <span key={`header-${timeRemaining}-${Date.now()}`}>
+                    {formatTime(timeRemaining)}
+                  </span>
+                  {timeRemaining <= 60 && timeRemaining > 0 && (
+                    <span className="animate-pulse text-red-500">⚠️</span>
+                  )}
+                  {timerActive && timeRemaining > 0 && (
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -268,6 +308,10 @@ const ChallengePage = () => {
             <div className="flex items-center gap-2">
               <FiFlag className="w-4 h-4" />
               <span>Attempts: {challengeStatus?.totalAttempts}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${timerActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <span>{timerActive ? 'Active' : 'Inactive'}</span>
             </div>
           </div>
         </div>
@@ -334,14 +378,14 @@ const ChallengePage = () => {
                       onChange={(e) => setFlag(e.target.value)}
                       className="input pl-10"
                       placeholder="Enter your answer..."
-                      disabled={submitting}
+                      disabled={submitting || !timerActive}
                       autoComplete="off"
                     />
                   </div>
                 </div>
                 <button
                   type="submit"
-                  disabled={submitting || !flag.trim()}
+                  disabled={submitting || !flag.trim() || !timerActive}
                   className="btn-primary flex items-center gap-2"
                 >
                   {submitting ? (
@@ -362,6 +406,44 @@ const ChallengePage = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Live Time Display */}
+            <div className="card">
+              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+                Challenge Timer
+              </h3>
+              <div className="text-center">
+                {/* Main timer display with forced re-render */}
+                <div className={`text-3xl font-bold ${getTimeColor()} mb-2`} key={`sidebar-${timeRemaining}-${Math.floor(Date.now()/1000)}`}>
+                  {formatTime(timeRemaining)}
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      timeRemaining > 300 ? 'bg-green-500' :
+                      timeRemaining > 60 ? 'bg-yellow-500' :
+                      'bg-red-500'
+                    }`}
+                    style={{ 
+                      width: `${Math.max(0, Math.min(100, (timeRemaining / 3600) * 100))}%` 
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-light-secondary dark:text-dark-secondary flex items-center justify-center gap-1">
+                  {timerActive ? (
+                    <>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Challenge Active
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      Challenge Inactive
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
             {/* Progress */}
             <div className="card">
               <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
 import { 
@@ -14,7 +14,8 @@ import {
   FiPlus,
   FiEdit3,
   FiSave,
-  FiX
+  FiX,
+  FiClock
 } from 'react-icons/fi';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import { toast } from 'react-toastify';
@@ -38,6 +39,16 @@ const AdminDashboard = () => {
     flag: ''
   });
 
+  // Live monitoring timer states
+  const [monitoringTimeRemaining, setMonitoringTimeRemaining] = useState({});
+  const monitoringIntervalRef = useRef(null);
+  const monitoringDataRef = useRef([]);
+
+  // Update monitoring data ref
+  useEffect(() => {
+    monitoringDataRef.current = monitoring;
+  }, [monitoring]);
+
   // Get tab from URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -51,14 +62,81 @@ const AdminDashboard = () => {
     loadDashboardData();
   }, [activeTab]);
 
-  // Auto-refresh monitoring data
+  // Update monitoring timers
+  const updateMonitoringTimers = useCallback(() => {
+    const currentData = monitoringDataRef.current;
+    
+    if (currentData.length === 0) return;
+
+    setMonitoringTimeRemaining(prev => {
+      const updated = { ...prev };
+      let hasActiveUsers = false;
+
+      currentData.forEach(user => {
+        if (user.isActive && user.timeRemaining > 0) {
+          hasActiveUsers = true;
+          const currentTime = updated[user.id] !== undefined ? updated[user.id] : user.timeRemaining;
+          const newTime = Math.max(0, currentTime - 1);
+          updated[user.id] = newTime;
+        }
+      });
+
+      if (!hasActiveUsers && monitoringIntervalRef.current) {
+        clearInterval(monitoringIntervalRef.current);
+      }
+
+      return updated;
+    });
+  }, []);
+
+  // Start monitoring timer
+  const startMonitoringTimer = useCallback(() => {
+    if (monitoringIntervalRef.current) {
+      clearInterval(monitoringIntervalRef.current);
+    }
+
+    // Initialize time remaining for all users
+    const initialTimes = {};
+    monitoring.forEach(user => {
+      if (user.isActive && user.timeRemaining > 0) {
+        initialTimes[user.id] = user.timeRemaining;
+      }
+    });
+    setMonitoringTimeRemaining(initialTimes);
+
+    monitoringIntervalRef.current = setInterval(updateMonitoringTimers, 1000);
+  }, [monitoring, updateMonitoringTimers]);
+
+  // Auto-refresh monitoring data and start live timers
   useEffect(() => {
     let interval;
     if (activeTab === 'monitoring') {
       interval = setInterval(loadMonitoringData, 5000);
+      
+      // Start the timer for live countdown
+      startMonitoringTimer();
+    } else {
+      if (monitoringIntervalRef.current) {
+        clearInterval(monitoringIntervalRef.current);
+      }
     }
-    return () => clearInterval(interval);
-  }, [activeTab]);
+    
+    return () => {
+      if (interval) clearInterval(interval);
+      if (monitoringIntervalRef.current) {
+        clearInterval(monitoringIntervalRef.current);
+      }
+    };
+  }, [activeTab, startMonitoringTimer]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (monitoringIntervalRef.current) {
+        clearInterval(monitoringIntervalRef.current);
+      }
+    };
+  }, []);
 
   const loadDashboardData = async () => {
     try {
@@ -114,6 +192,13 @@ const AdminDashboard = () => {
     try {
       const response = await adminAPI.getMonitoring();
       setMonitoring(response.data);
+      
+      // Update monitoring times when new data is loaded
+      if (activeTab === 'monitoring') {
+        setTimeout(() => {
+          startMonitoringTimer();
+        }, 100);
+      }
     } catch (error) {
       console.error('Error loading monitoring data:', error);
     }
@@ -247,6 +332,12 @@ const AdminDashboard = () => {
     } else {
       return `${secs}s`;
     }
+  };
+
+  const getTimeColor = (time) => {
+    if (time > 300) return 'text-green-600 dark:text-green-400';
+    if (time > 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   const tabs = [
@@ -667,99 +758,217 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Monitoring Tab */}
+            {/* Monitoring Tab - UPDATED WITH LIVE COUNTDOWN */}
             {activeTab === 'monitoring' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
                     Live User Monitoring
                   </h3>
-                  <div className="flex items-center gap-2 text-sm text-light-secondary dark:text-dark-secondary">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Auto-refreshing every 5 seconds
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-sm text-light-secondary dark:text-dark-secondary">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Auto-refreshing every 5 seconds
+                    </div>
+                    <button
+                      onClick={loadMonitoringData}
+                      className="btn-secondary flex items-center gap-2"
+                    >
+                      <FiRefreshCw className="w-4 h-4" />
+                      Refresh Now
+                    </button>
                   </div>
                 </div>
 
                 <div className="grid gap-4">
-                  {monitoring.map((user) => (
-                    <div key={user.id} className="card">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="font-semibold text-light-primary dark:text-dark-primary">
-                              {user.username}
-                            </h4>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              user.isActive
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                            }`}>
-                              {user.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <p className="text-light-secondary dark:text-dark-secondary">Current Level</p>
-                              <p className="font-medium text-light-primary dark:text-dark-primary">
-                                {user.currentLevel}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-light-secondary dark:text-dark-secondary">Completed</p>
-                              <p className="font-medium text-light-primary dark:text-dark-primary">
-                                {user.completedLevels.length} levels
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-light-secondary dark:text-dark-secondary">Attempts</p>
-                              <p className="font-medium text-light-primary dark:text-dark-primary">
-                                {user.totalAttempts}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-light-secondary dark:text-dark-secondary">Time Remaining</p>
-                              <p className={`font-medium ${
-                                user.timeRemaining > 300 ? 'text-green-600 dark:text-green-400' :
-                                user.timeRemaining > 60 ? 'text-yellow-600 dark:text-yellow-400' :
-                                'text-red-600 dark:text-red-400'
-                              }`}>
-                                {user.isActive ? formatTime(user.timeRemaining) : 'N/A'}
-                              </p>
-                            </div>
-                          </div>
+                  {monitoring.map((user) => {
+                    // Use live countdown time if available, otherwise use original time
+                    const displayTimeRemaining = user.isActive && monitoringTimeRemaining[user.id] !== undefined 
+                      ? monitoringTimeRemaining[user.id] 
+                      : user.timeRemaining;
 
-                          {user.submissions && user.submissions.length > 0 && (
-                            <div className="mt-4">
-                              <p className="text-sm text-light-secondary dark:text-dark-secondary mb-2">
-                                Recent Submissions:
-                              </p>
-                              <div className="flex gap-2 flex-wrap">
-                                {user.submissions.slice(-5).map((submission, index) => (
-                                  <span
-                                    key={index}
-                                    className={`px-2 py-1 text-xs rounded ${submission.isCorrect
-                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                    }`}
-                                  >
-                                    L{submission.level}: {submission.isCorrect ? '✓' : '✗'}
-                                  </span>
-                                ))}
+                    return (
+                      <div key={user.id} className="card">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-semibold text-light-primary dark:text-dark-primary">
+                                {user.username}
+                              </h4>
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
+                                user.isActive
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                              }`}>
+                                {user.isActive && (
+                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                )}
+                                {user.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              <span className="text-xs text-light-secondary dark:text-dark-secondary">
+                                {user.email}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                              <div>
+                                <p className="text-light-secondary dark:text-dark-secondary">Current Level</p>
+                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                  {user.currentLevel}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-light-secondary dark:text-dark-secondary">Completed</p>
+                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                  {user.completedLevels.length} levels
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-light-secondary dark:text-dark-secondary">Attempts</p>
+                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                  {user.totalAttempts}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-light-secondary dark:text-dark-secondary">Time Remaining</p>
+                                <div className="flex items-center gap-1">
+                                  <p className={`font-medium ${
+                                    user.isActive ? getTimeColor(displayTimeRemaining) : 'text-gray-500 dark:text-gray-400'
+                                  }`}>
+                                    {user.isActive ? formatTime(displayTimeRemaining) : 'N/A'}
+                                  </p>
+                                  {user.isActive && displayTimeRemaining > 0 && (
+                                    <FiClock className={`w-3 h-3 ${getTimeColor(displayTimeRemaining)}`} />
+                                  )}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-light-secondary dark:text-dark-secondary">Last Activity</p>
+                                <p className="font-medium text-light-primary dark:text-dark-primary text-xs">
+                                  {user.lastActivity ? new Date(user.lastActivity).toLocaleTimeString() : 'N/A'}
+                                </p>
                               </div>
                             </div>
-                          )}
+
+                            {/* Time Progress Bar for Active Users */}
+                            {user.isActive && displayTimeRemaining > 0 && (
+                              <div className="mt-3">
+                                <div className="flex justify-between text-xs text-light-secondary dark:text-dark-secondary mb-1">
+                                  <span>Time Progress</span>
+                                  <span>{Math.round((displayTimeRemaining / 3600) * 100)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                  <div 
+                                    className={`h-1.5 rounded-full transition-all duration-1000 ${
+                                      displayTimeRemaining > 300 ? 'bg-green-500' :
+                                      displayTimeRemaining > 60 ? 'bg-yellow-500' :
+                                      'bg-red-500'
+                                    }`}
+                                    style={{ 
+                                      width: `${Math.max(0, Math.min(100, (displayTimeRemaining / 3600) * 100))}%` 
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {user.submissions && user.submissions.length > 0 && (
+                              <div className="mt-4">
+                                <p className="text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                                  Recent Submissions:
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {user.submissions.slice(-5).map((submission, index) => (
+                                    <span
+                                      key={index}
+                                      className={`px-2 py-1 text-xs rounded flex items-center gap-1 ${submission.isCorrect
+                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                      }`}
+                                    >
+                                      L{submission.level}: {submission.isCorrect ? '✓' : '✗'}
+                                      <span className="text-xs opacity-60">
+                                        {new Date(submission.timestamp).toLocaleTimeString()}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Challenge Status */}
+                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-4">
+                                  <span className="text-light-secondary dark:text-dark-secondary">
+                                    Started: {user.challengeStartTime ? new Date(user.challengeStartTime).toLocaleTimeString() : 'N/A'}
+                                  </span>
+                                  {user.challengeEndTime && (
+                                    <span className="text-light-secondary dark:text-dark-secondary">
+                                      Ends: {new Date(user.challengeEndTime).toLocaleTimeString()}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleResetUser(user.id)}
+                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                    title="Reset Progress"
+                                  >
+                                    <FiRefreshCw className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   
                   {monitoring.length === 0 && (
                     <div className="text-center py-8 text-light-secondary dark:text-dark-secondary">
-                      No active users to monitor
+                      <FiMonitor className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No active users to monitor</p>
+                      <p className="text-sm">Users will appear here when they start challenges</p>
                     </div>
                   )}
                 </div>
+
+                {/* Monitoring Stats Summary */}
+                {monitoring.length > 0 && (
+                  <div className="card">
+                    <h4 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+                      Monitoring Summary
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {monitoring.filter(u => u.isActive).length}
+                        </p>
+                        <p className="text-light-secondary dark:text-dark-secondary">Active Users</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {monitoring.reduce((sum, u) => sum + u.completedLevels.length, 0)}
+                        </p>
+                        <p className="text-light-secondary dark:text-dark-secondary">Total Completions</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                          {monitoring.reduce((sum, u) => sum + u.totalAttempts, 0)}
+                        </p>
+                        <p className="text-light-secondary dark:text-dark-secondary">Total Attempts</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                          {monitoring.filter(u => u.isActive && u.timeRemaining > 0).length}
+                        </p>
+                        <p className="text-light-secondary dark:text-dark-secondary">Time Remaining</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
