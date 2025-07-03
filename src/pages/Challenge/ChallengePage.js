@@ -15,7 +15,11 @@ import {
   FiArrowRight,
   FiPlay,
   FiAlertTriangle,
-  FiInfo
+  FiInfo,
+  FiZap,
+  FiShield,
+  FiCode,
+  FiActivity
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
@@ -32,8 +36,8 @@ const ChallengePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [challengeNotStarted, setChallengeNotStarted] = useState(false);
-  const [challengeEnded, setChallengeEnded] = useState(false); // NEW: Track if challenge ended
-  const [endReason, setEndReason] = useState(null); // NEW: Track why challenge ended
+  const [challengeEnded, setChallengeEnded] = useState(false);
+  const [endReason, setEndReason] = useState(null);
   
   // Timer state
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -76,12 +80,10 @@ const ChallengePage = () => {
     try {
       setLoading(true);
       
-      // Load challenge
       const challengeResponse = await challengeAPI.getCurrentChallenge();
       setChallenge(challengeResponse.data.challenge);
       setChallengeStatus(challengeResponse.data.user);
       
-      // Timer setup
       const timeLeft = challengeResponse.data.timeRemaining || 0;
       const isActive = challengeResponse.data.isActive;
       const challengeStartTime = challengeResponse.data.user?.challengeStartTime;
@@ -92,14 +94,7 @@ const ChallengePage = () => {
       setChallengeNotStarted(false);
       setChallengeEnded(false);
       setEndReason(null);
-      
-      console.log('Challenge timer initialized:', {
-        timeRemaining: timeLeft,
-        isActive,
-        hasStarted: !!challengeStartTime
-      });
 
-      // Load submissions
       try {
         const submissionsResponse = await challengeAPI.getSubmissions();
         setSubmissions(submissionsResponse.data.submissions);
@@ -117,7 +112,6 @@ const ChallengePage = () => {
         setEndReason('expired');
         history.push('/thank-you');
       } else if (error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED') {
-        // NEW: Handle challenge already ended
         setChallengeEnded(true);
         setEndReason(error.response.data.reason || 'unknown');
         setTimerActive(false);
@@ -140,7 +134,6 @@ const ChallengePage = () => {
     } catch (error) {
       console.error('Error starting challenge:', error);
       
-      // NEW: Handle restart prevention
       if (error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED') {
         setChallengeEnded(true);
         setEndReason(error.response.data.reason);
@@ -194,7 +187,6 @@ const ChallengePage = () => {
             totalAttempts: response.data.totalAttempts
           }));
           
-          // Update timer with new time remaining
           const newTimeRemaining = response.data.timeRemaining || 0;
           setTimeRemaining(newTimeRemaining);
           
@@ -238,43 +230,41 @@ const ChallengePage = () => {
   };
 
   const getTimeColor = () => {
-    if (timeRemaining > 300) return 'text-green-600 dark:text-green-400';
-    if (timeRemaining > 60) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (timeRemaining > 300) return 'text-green-500 dark:text-green-400';
+    if (timeRemaining > 60) return 'text-yellow-500 dark:text-yellow-400';
+    return 'text-red-500 dark:text-red-400';
   };
-
-  console.log('Challenge render:', { timeRemaining, timerActive, challengeEnded, endReason });
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
+      <div className="min-h-screen bg-white dark:bg-black">
         <LoadingSpinner message="Loading challenge..." />
       </div>
     );
   }
 
-  // NEW: Handle challenge ended state
+  // Challenge ended state
   if (challengeEnded) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center p-6">
-        <div className="text-center max-w-md">
-          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center p-6">
+        <div className="text-center max-w-lg">
+          <div className={`inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-8 ${
             endReason === 'completed' 
               ? 'bg-green-100 dark:bg-green-900/30' 
               : 'bg-red-100 dark:bg-red-900/30'
           }`}>
             {endReason === 'completed' ? (
-              <FiCheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+              <FiCheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
             ) : (
-              <FiXCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+              <FiXCircle className="w-12 h-12 text-red-600 dark:text-red-400" />
             )}
           </div>
           
-          <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
+          <h2 className="text-3xl font-black text-black dark:text-white mb-6">
             {endReason === 'completed' ? 'Challenge Completed!' : 'Challenge Ended'}
           </h2>
           
-          <div className="text-light-secondary dark:text-dark-secondary mb-6">
+          <div className="text-xl text-gray-600 dark:text-gray-400 mb-8">
             {endReason === 'completed' 
               ? 'Congratulations! You have completed all challenge levels.'
               : endReason === 'expired'
@@ -283,12 +273,11 @@ const ChallengePage = () => {
             }
           </div>
 
-          {/* Info about restart */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-3">
-              <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <FiInfo className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
               <div className="text-left">
-                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                <h4 className="font-bold text-blue-800 dark:text-blue-200 mb-2">
                   Want to try again?
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -298,19 +287,19 @@ const ChallengePage = () => {
             </div>
           </div>
           
-          <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => history.push('/thank-you')}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-professional-primary flex items-center justify-center gap-2"
             >
-              <FiCheckCircle className="w-4 h-4" />
+              <FiCheckCircle className="w-5 h-5" />
               View Results
             </button>
             <button
               onClick={() => history.push('/dashboard')}
-              className="btn-secondary w-full flex items-center justify-center gap-2"
+              className="btn-professional-secondary flex items-center justify-center gap-2"
             >
-              <FiArrowRight className="w-4 h-4" />
+              <FiArrowRight className="w-5 h-5" />
               Back to Dashboard
             </button>
           </div>
@@ -319,33 +308,34 @@ const ChallengePage = () => {
     );
   }
 
+  // Challenge not started state
   if (challengeNotStarted) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-600 rounded-full mb-6">
-            <FiPlay className="w-10 h-10 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center max-w-lg">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-3xl mb-8">
+            <FiPlay className="w-12 h-12 text-white dark:text-black" />
           </div>
-          <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
+          <h2 className="text-3xl font-black text-black dark:text-white mb-6">
             Ready to Start?
           </h2>
-          <div className="text-light-secondary dark:text-dark-secondary mb-6">
+          <div className="text-xl text-gray-600 dark:text-gray-400 mb-8">
             You need to start the challenge first to access the levels.
           </div>
-          <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={startChallenge}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-professional-primary flex items-center justify-center gap-2"
               disabled={loading}
             >
-              <FiPlay className="w-4 h-4" />
+              <FiPlay className="w-5 h-5" />
               {loading ? 'Starting...' : 'Start Challenge'}
             </button>
             <button
               onClick={() => history.push('/dashboard')}
-              className="btn-secondary w-full flex items-center justify-center gap-2"
+              className="btn-professional-secondary flex items-center justify-center gap-2"
             >
-              <FiArrowRight className="w-4 h-4" />
+              <FiArrowRight className="w-5 h-5" />
               Back to Dashboard
             </button>
           </div>
@@ -354,16 +344,17 @@ const ChallengePage = () => {
     );
   }
 
+  // No challenge available
   if (!challenge) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-light-primary dark:text-dark-primary mb-4">
+          <h2 className="text-3xl font-black text-black dark:text-white mb-6">
             No Challenge Available
           </h2>
           <button
             onClick={() => history.push('/dashboard')}
-            className="btn-primary"
+            className="btn-professional-primary"
           >
             Go to Dashboard
           </button>
@@ -373,67 +364,69 @@ const ChallengePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <FiTarget className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-              <h1 className="text-2xl font-bold text-light-primary dark:text-dark-primary">
-                {challenge.title}
-              </h1>
-            </div>
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-sm text-light-secondary dark:text-dark-secondary">Time Remaining</div>
-                <div className={`text-lg font-bold ${getTimeColor()} flex items-center gap-2`}>
-                  <FiClock className="w-5 h-5" />
-                  <span>
-                    {formatTime(timeRemaining)}
-                  </span>
-                  {timeRemaining <= 60 && timeRemaining > 0 && (
-                    <span className="animate-pulse text-red-500">⚠️</span>
-                  )}
-                  {timerActive && timeRemaining > 0 && (
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  )}
-                </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-2xl flex items-center justify-center">
+                <FiTarget className="w-8 h-8 text-white dark:text-black" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-black dark:text-white leading-none">
+                  {challenge.title}
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-400">
+                  Level {challenge.level} Challenge
+                </p>
+              </div>
+            </div>
+            
+            {/* Timer display */}
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Time Remaining</div>
+              <div className={`text-2xl font-black ${getTimeColor()} flex items-center gap-2`}>
+                <FiClock className="w-6 h-6" />
+                <span>{formatTime(timeRemaining)}</span>
+                {timeRemaining <= 60 && timeRemaining > 0 && (
+                  <span className="animate-pulse text-red-500">⚠️</span>
+                )}
+                {timerActive && timeRemaining > 0 && (
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-sm text-light-secondary dark:text-dark-secondary">
+          {/* Status indicators */}
+          <div className="flex flex-wrap items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <FiTarget className="w-4 h-4" />
-              <span>Level {challenge.level}</span>
+              <FiTarget className="w-4 h-4 text-blue-500" />
+              <span className="text-gray-600 dark:text-gray-400">Level {challenge.level}</span>
             </div>
             <div className="flex items-center gap-2">
-              <FiFlag className="w-4 h-4" />
-              <span>Attempts: {challengeStatus?.totalAttempts}</span>
+              <FiFlag className="w-4 h-4 text-purple-500" />
+              <span className="text-gray-600 dark:text-gray-400">Attempts: {challengeStatus?.totalAttempts}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${timerActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-              <span>{timerActive ? 'Active' : 'Inactive'}</span>
+              <span className="text-gray-600 dark:text-gray-400">{timerActive ? 'Active' : 'Inactive'}</span>
             </div>
           </div>
         </div>
 
-        {/* NEW: Warning for inactive timer */}
+        {/* Warning for inactive timer */}
         {!timerActive && timeRemaining <= 0 && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <div className="flex items-start gap-3">
-              <FiAlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+          <div className="mb-8">
+            <div className="alert-error">
+              <FiAlertTriangle className="w-6 h-6 flex-shrink-0" />
               <div>
-                <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
-                  Challenge Time Expired
-                </h4>
-                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                  Your challenge time has expired. You can no longer submit answers.
-                </p>
+                <h4 className="font-bold mb-2">Challenge Time Expired</h4>
+                <p className="mb-3">Your challenge time has expired. You can no longer submit answers.</p>
                 <button
                   onClick={() => history.push('/thank-you')}
-                  className="btn-secondary text-sm"
+                  className="btn-professional-secondary text-sm"
                 >
                   View Results
                 </button>
@@ -442,28 +435,36 @@ const ChallengePage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Main Challenge Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-8">
             {/* Challenge Description */}
-            <div className="card">
-              <h2 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Challenge Description
-              </h2>
-              <div className="text-light-secondary dark:text-dark-secondary whitespace-pre-wrap">
-                {challenge.description}
+            <div className="card-enhanced">
+              <div className="flex items-center gap-3 mb-6">
+                <FiCode className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+                <h2 className="text-xl font-bold text-black dark:text-white">
+                  Challenge Description
+                </h2>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                <pre className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                  {challenge.description}
+                </pre>
               </div>
             </div>
 
             {/* Hint Section */}
-            <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
-                  Hint
-                </h2>
+            <div className="card-enhanced">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <FiHelpCircle className="w-6 h-6 text-yellow-500 dark:text-yellow-400" />
+                  <h2 className="text-xl font-bold text-black dark:text-white">
+                    Hint
+                  </h2>
+                </div>
                 <button
                   onClick={() => showHint ? setShowHint(false) : loadHint()}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-professional-secondary flex items-center gap-2"
                   disabled={!timerActive}
                 >
                   {showHint ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
@@ -471,62 +472,72 @@ const ChallengePage = () => {
                 </button>
               </div>
               
-              {showHint && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <FiHelpCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <div className="text-yellow-800 dark:text-yellow-200">
-                      {hint}
-                    </div>
+              {showHint ? (
+                <div className="alert-warning">
+                  <FiHelpCircle className="w-6 h-6 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h4 className="font-bold mb-2">Hint</h4>
+                    <p>{hint}</p>
                   </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <FiHelpCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Click "Show Hint" to reveal a helpful clue</p>
                 </div>
               )}
             </div>
 
             {/* Flag Submission */}
-            <div className="card">
-              <h2 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Submit Flag
-              </h2>
-              <form onSubmit={submitFlag} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
-                    Flag
-                  </label>
+            <div className="card-enhanced">
+              <div className="flex items-center gap-3 mb-6">
+                <FiFlag className="w-6 h-6 text-green-500 dark:text-green-400" />
+                <h2 className="text-xl font-bold text-black dark:text-white">
+                  Submit Flag
+                </h2>
+              </div>
+              
+              <form onSubmit={submitFlag} className="space-y-6">
+                <div className="form-group">
+                  <label className="form-label">Your Answer</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <FiFlag className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                       type="text"
                       value={flag}
                       onChange={(e) => setFlag(e.target.value)}
-                      className="input pl-10"
-                      placeholder="Enter your answer..."
+                      className="input-professional pl-12"
+                      placeholder="Enter your flag or answer..."
                       disabled={submitting || !timerActive}
                       autoComplete="off"
                     />
                   </div>
+                  <p className="form-help">
+                    Enter the flag you discovered or your answer to the challenge
+                  </p>
                 </div>
+                
                 <button
                   type="submit"
                   disabled={submitting || !flag.trim() || !timerActive}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-professional-primary group relative overflow-hidden"
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                   {submitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Submitting...
+                      <div className="loading-spinner relative z-10" />
+                      <span className="relative z-10">Submitting...</span>
                     </>
                   ) : (
                     <>
-                      <FiSend className="w-4 h-4" />
-                      Submit Answer
+                      <FiSend className="w-5 h-5 relative z-10" />
+                      <span className="relative z-10">Submit Answer</span>
                     </>
                   )}
                 </button>
                 
-                {/* NEW: Submission disabled warning */}
                 {!timerActive && (
                   <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
                     <FiXCircle className="w-4 h-4" />
@@ -539,106 +550,123 @@ const ChallengePage = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Live Timer Display */}
-            <div className="card border-2 border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4 flex items-center gap-2">
-                <FiClock className="w-5 h-5" />
-                Live Challenge Timer
-              </h3>
-              <div className="text-center">
-                {/* Large timer display */}
-                <div className={`text-4xl font-bold ${getTimeColor()} mb-3`}>
-                  {formatTime(timeRemaining)}
-                </div>
-                
-                {/* Linear progress bar */}
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-3">
-                  <div 
-                    className={`h-3 rounded-full transition-all duration-1000 ${
-                      timeRemaining > 300 ? 'bg-green-500' :
-                      timeRemaining > 60 ? 'bg-yellow-500' :
-                      'bg-red-500'
-                    }`}
-                    style={{ 
-                      width: `${Math.max(0, Math.min(100, (timeRemaining / 3600) * 100))}%` 
-                    }}
-                  />
-                </div>
+            {/* Live Timer Widget */}
+            {challengeStatus?.hasStarted && timerActive && timeRemaining > 0 && (
+              <div className="card-enhanced bg-gradient-to-br from-black to-gray-800 dark:from-white dark:to-gray-200 text-white dark:text-black">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <FiClock className="w-6 h-6" />
+                    <h3 className="text-lg font-bold">Live Timer</h3>
+                  </div>
+                  
+                  {/* Large timer display */}
+                  <div className={`text-4xl font-black mb-4 ${
+                    timeRemaining > 300 ? 'text-white dark:text-black' :
+                    timeRemaining > 60 ? 'text-yellow-300 dark:text-yellow-600' :
+                    'text-red-300 dark:text-red-600'
+                  }`}>
+                    {formatTime(timeRemaining)}
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="w-full bg-white/20 dark:bg-black/20 rounded-full h-3 mb-4">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-1000 ${
+                        timeRemaining > 300 ? 'bg-white dark:bg-black' :
+                        timeRemaining > 60 ? 'bg-yellow-300 dark:bg-yellow-600' :
+                        'bg-red-300 dark:bg-red-600'
+                      }`}
+                      style={{ 
+                        width: `${Math.max(0, Math.min(100, (timeRemaining / 3600) * 100))}%` 
+                      }}
+                    />
+                  </div>
 
-                <div className="text-xs text-light-secondary dark:text-dark-secondary flex items-center justify-center gap-1 mb-2">
-                  {timerActive ? (
-                    <>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      Live Timer Active
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      Timer Stopped
-                    </>
-                  )}
-                </div>
+                  <div className="flex items-center justify-center gap-2 text-sm opacity-80">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    <span>Live Updates</span>
+                  </div>
 
-                {timeRemaining <= 60 && timeRemaining > 0 && (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2 mt-3">
-                    <div className="text-xs text-red-700 dark:text-red-300 font-medium animate-pulse">
-                      ⚠️ Time running out!
+                  {timeRemaining <= 300 && timeRemaining > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/20 dark:border-black/20">
+                      <div className="text-sm font-medium animate-pulse">
+                        {timeRemaining <= 60 ? '⚠️ Final Minute!' : '⏰ Time Running Low!'}
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                <div className="mt-3 pt-3 border-t border-violet-200 dark:border-violet-700">
-                  <div className="text-xs text-violet-600 dark:text-violet-400">
-                    ⚡ Updates every second
-                  </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Progress */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Your Progress
-              </h3>
-              <div className="space-y-4">
+            {/* Progress Tracker */}
+            <div className="card-enhanced">
+              <div className="flex items-center gap-3 mb-6">
+                <FiActivity className="w-6 h-6 text-violet-500 dark:text-violet-400" />
+                <h3 className="text-lg font-bold text-black dark:text-white">
+                  Your Progress
+                </h3>
+              </div>
+              
+              <div className="space-y-6">
                 <div>
-                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                  <div className="flex justify-between text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                     <span>Current Level</span>
-                    <span>{challengeStatus?.currentLevel}</span>
+                    <span>Level {challengeStatus?.currentLevel}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                      <FiTarget className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Currently working on level {challengeStatus?.currentLevel}
+                    </span>
                   </div>
                 </div>
                 
                 <div>
-                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                  <div className="flex justify-between text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                     <span>Completed Levels</span>
-                    <span>{challengeStatus?.completedLevels?.length}</span>
-                  </div>{challengeStatus?.completedLevels?.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
+                    <span>{challengeStatus?.completedLevels?.length || 0}</span>
+                  </div>
+                  {challengeStatus?.completedLevels?.length > 0 ? (
+                    <div className="flex gap-2 flex-wrap">
                       {challengeStatus.completedLevels.map((level) => (
-                        <span
+                        <div
                           key={level}
-                          className="inline-flex items-center px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded"
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg font-medium"
                         >
-                          <FiCheckCircle className="w-3 h-3 mr-1" />
+                          <FiCheckCircle className="w-3 h-3" />
                           Level {level}
-                        </span>
+                        </div>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      No levels completed yet
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                  <div className="flex justify-between text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                     <span>Total Attempts</span>
-                    <span>{challengeStatus?.totalAttempts}</span>
+                    <span>{challengeStatus?.totalAttempts || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                      <FiFlag className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {challengeStatus?.totalAttempts === 0 ? 'No attempts yet' : 
+                       `${challengeStatus?.totalAttempts} submission${challengeStatus?.totalAttempts !== 1 ? 's' : ''} made`}
+                    </span>
                   </div>
                 </div>
 
-                {/* NEW: Challenge Status */}
                 <div>
-                  <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
+                  <div className="flex justify-between text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                     <span>Challenge Status</span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
                       timerActive 
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : timeRemaining <= 0
@@ -652,38 +680,88 @@ const ChallengePage = () => {
               </div>
             </div>
 
+            {/* Recent Submissions */}
+            {submissions.length > 0 && (
+              <div className="card-enhanced">
+                <div className="flex items-center gap-3 mb-6">
+                  <FiZap className="w-6 h-6 text-orange-500 dark:text-orange-400" />
+                  <h3 className="text-lg font-bold text-black dark:text-white">
+                    Recent Submissions
+                  </h3>
+                </div>
+                
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {submissions.slice(0, 5).map((submission, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-3 rounded-xl ${
+                        submission.isCorrect
+                          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          submission.isCorrect ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+                        }`}>
+                          {submission.isCorrect ? (
+                            <FiCheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <FiXCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            Level {submission.level}
+                          </p>
+                          <p className={`text-xs ${
+                            submission.isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                          }`}>
+                            {submission.isCorrect ? 'Correct' : 'Incorrect'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(submission.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quick Actions */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+            <div className="card-enhanced">
+              <h3 className="text-lg font-bold text-black dark:text-white mb-6">
                 Quick Actions
               </h3>
               <div className="space-y-3">
                 <button
                   onClick={() => history.push('/challenges')}
-                  className="btn-secondary w-full flex items-center gap-2"
+                  className="btn-professional-secondary w-full justify-start"
                 >
                   <FiTarget className="w-4 h-4" />
                   View All Challenges
                 </button>
+                
                 <button
                   onClick={() => history.push('/dashboard')}
-                  className="btn-secondary w-full flex items-center gap-2"
+                  className="btn-professional-secondary w-full justify-start"
                 >
                   <FiArrowRight className="w-4 h-4" />
                   Back to Dashboard
                 </button>
 
-                {/* NEW: Challenge ended actions */}
+                {/* Challenge ended actions */}
                 {!timerActive && timeRemaining <= 0 && (
                   <>
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-                      <p className="text-xs text-light-secondary dark:text-dark-secondary mb-3 text-center">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">
                         Challenge time expired
                       </p>
                       <button
                         onClick={() => history.push('/thank-you')}
-                        className="btn-primary w-full flex items-center gap-2"
+                        className="btn-professional-primary w-full justify-center"
                       >
                         <FiCheckCircle className="w-4 h-4" />
                         View Results
@@ -694,19 +772,37 @@ const ChallengePage = () => {
               </div>
             </div>
 
-            {/* NEW: Restart Information */}
+            {/* Help & Information */}
+            <div className="card-enhanced bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                <FiInfo className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-bold text-blue-800 dark:text-blue-200 mb-2">
+                    Challenge Tips
+                  </h4>
+                  <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Read the description carefully for clues</li>
+                    <li>• Use hints when you're stuck</li>
+                    <li>• Take your time to analyze the problem</li>
+                    <li>• Try different approaches if needed</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Restart Information */}
             {!timerActive && (
-              <div className="card bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <div className="card-enhanced bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
                 <div className="flex items-start gap-3">
-                  <FiInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <FiShield className="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
                       Challenge Restart Policy
                     </h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                       Once a challenge ends (completion or expiration), only administrators can reset your progress.
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Contact an admin if you need to restart the challenge.
                     </p>
                   </div>
