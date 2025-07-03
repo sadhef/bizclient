@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiLoader, FiShield, FiArrowRight } from 'react-icons/fi';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -61,7 +61,6 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        // NEW: Use the redirectTo from login result
         const redirectPath = result.redirectTo || (result.user.isAdmin ? '/admin' : '/dashboard');
         history.push(redirectPath);
       }
@@ -73,31 +72,35 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-black/5 dark:bg-white/5 rounded-full blur-xl animate-float" />
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-black/5 dark:bg-white/5 rounded-full blur-2xl animate-float" style={{animationDelay: '3s'}} />
+        </div>
+
         {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl mb-4">
-            <span className="text-white font-bold text-2xl">BT</span>
+        <div className="text-center mb-8 relative z-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-3xl mb-6 shadow-professional-lg">
+            <span className="text-white dark:text-black font-black text-3xl">BT</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-black text-black dark:text-white mb-3 leading-none">
             Welcome Back
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Sign in to continue to BizTras CTF
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Sign in to continue your <span className="font-semibold text-black dark:text-white">cybersecurity journey</span>
           </p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className="card-enhanced relative z-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiMail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -105,25 +108,21 @@ const Login = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`input pl-10 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Enter your email"
                   disabled={loading}
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.email}
-                </p>
+                <p className="form-error">{errors.email}</p>
               )}
             </div>
 
             {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
+            <div className="form-group">
+              <label className="form-label">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiLock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -131,61 +130,101 @@ const Login = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`input pl-10 pr-10 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 pr-12 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Enter your password"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   disabled={loading}
                 >
                   {showPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.password}
-                </p>
+                <p className="form-error">{errors.password}</p>
               )}
             </div>
 
             {/* Submit Button */}
-            <button type="submit"
+            <button
+              type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-professional-primary w-full group relative overflow-hidden"
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               {loading ? (
                 <>
-                  <FiLoader className="w-4 h-4 animate-spin" />
-                  Signing In...
+                  <FiLoader className="w-5 h-5 animate-spin relative z-10" />
+                  <span className="relative z-10">Signing In...</span>
                 </>
               ) : (
-                'Sign In'
+                <>
+                  <FiShield className="w-5 h-5 relative z-10" />
+                  <span className="relative z-10">Sign In</span>
+                  <FiArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
             </button>
           </form>
 
           {/* Register Link */}
+          <div className="mt-8 text-center">
+            <div className="divider-text">
+              <span>Don't have an account?</span>
+            </div>
+            <Link
+              to="/register"
+              className="btn-professional-secondary w-full mt-4 group"
+            >
+              <span>Create Account</span>
+              <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Back to Home */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
-              >
-                Sign up here
-              </Link>
-            </p>
+            <Link
+              to="/"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
+            >
+              ← Back to Homepage
+            </Link>
           </div>
         </div>
 
+        {/* Security Notice */}
+        <div className="mt-8 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full">
+            <FiShield className="w-4 h-4 text-green-500" />
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Secure login protected by industry-standard encryption
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Custom animation styles */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-20px) rotate(5deg);
+          }
+        }
+
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };

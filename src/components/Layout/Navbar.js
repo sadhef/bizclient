@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -12,7 +12,11 @@ import {
   FiHome,
   FiTarget,
   FiSettings,
-  FiAward
+  FiAward,
+  FiChevronDown,
+  FiActivity,
+  FiShield,
+  FiZap
 } from 'react-icons/fi';
 
 const Navbar = () => {
@@ -22,6 +26,28 @@ const Navbar = () => {
   const history = useHistory();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setIsMenuOpen(false);
+      setIsProfileMenuOpen(false);
+    };
+    if (isMenuOpen || isProfileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isMenuOpen, isProfileMenuOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -34,96 +60,141 @@ const Navbar = () => {
     return location.pathname === path || location.pathname.startsWith(path);
   };
 
-  // Check if current page is homepage, login, or register
   const isPublicPage = ['/', '/login', '/register'].includes(location.pathname);
   const isHomepage = location.pathname === '/';
 
-  const NavLink = ({ to, children, icon: Icon, onClick }) => (
+  const NavLink = ({ to, children, icon: Icon, onClick, className = "" }) => (
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg ${
-        isActive(to)
-          ? 'bg-gray-100 dark:bg-gray-700 text-black dark:text-white'
-          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-      }`}
+      className={`nav-link group relative ${isActive(to) ? 'active' : ''} ${className}`}
     >
-      {Icon && <Icon className="w-4 h-4" />}
-      {children}
+      {Icon && <Icon className="w-4 h-4 transition-transform group-hover:scale-110" />}
+      <span className="relative z-10">{children}</span>
+      {isActive(to) && (
+        <div className="absolute inset-0 bg-black dark:bg-white text-white dark:text-black rounded-lg -z-10" />
+      )}
     </Link>
   );
 
-  // For homepage when user is not authenticated, show minimal navbar
+  // Homepage navbar when not authenticated
   if (isHomepage && !isAuthenticated()) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 dark:bg-black/10 backdrop-blur-md">
+      <nav className={`nav-professional transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-black/95 shadow-professional' : 'bg-white/70 dark:bg-black/70'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-black dark:bg-white flex items-center justify-center">
-                <span className="text-white dark:text-black font-bold text-sm">BT</span>
+            <Link to="/" className="flex items-center gap-4 group">
+              <div className="relative">
+                <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                  <span className="text-white dark:text-black font-black text-lg">BT</span>
+                </div>
+                <div className="absolute inset-0 bg-black/20 dark:bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-sm" />
               </div>
-              <span className="text-xl font-black text-black dark:text-white">
-                BIZTRAS CTF
-              </span>
+              <div className="hidden sm:block">
+                <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
+                  BIZTRAS CTF
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                  Cybersecurity Excellence
+                </div>
+              </div>
             </Link>
 
-            {/* Right side - Theme toggle and auth buttons */}
-            <div className="flex items-center gap-3">
-              {/* Theme Toggle */}
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
+              <div className="flex items-center gap-6">
+                <a href="#features" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Features
+                </a>
+                <a href="#testimonials" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Testimonials
+                </a>
+                <a href="#contact" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Contact
+                </a>
+              </div>
+
+              {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-black dark:text-white hover:bg-white/20 dark:hover:bg-black/20 transition-colors duration-200"
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all duration-200 group"
                 aria-label="Toggle theme"
               >
-                {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+                {isDark ? (
+                  <FiSun className="w-5 h-5 text-yellow-500 group-hover:scale-110 transition-transform" />
+                ) : (
+                  <FiMoon className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform" />
+                )}
               </button>
 
-              {/* Auth Buttons */}
-              <div className="hidden sm:flex items-center gap-3">
+              {/* Auth buttons */}
+              <div className="flex items-center gap-4">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-black dark:text-white hover:bg-white/20 dark:hover:bg-black/20 rounded-lg transition-colors"
+                  className="btn-professional-ghost"
                 >
-                  Login
+                  Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 text-sm font-bold bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase tracking-wider rounded-lg"
+                  className="btn-professional-primary group"
                 >
-                  Register
+                  <FiZap className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  Get Started
                 </Link>
               </div>
+            </div>
 
-              {/* Mobile Menu Button */}
+            {/* Mobile menu button */}
+            <div className="lg:hidden flex items-center gap-4">
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="sm:hidden p-2 rounded-lg text-black dark:text-white hover:bg-white/20 dark:hover:bg-black/20"
+                onClick={toggleTheme}
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+              >
+                {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
               >
                 {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile menu */}
           {isMenuOpen && (
-            <div className="sm:hidden bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-white/20 dark:border-black/20 py-4">
-              <div className="flex flex-col gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-black dark:text-white hover:bg-white/20 dark:hover:bg-black/20 rounded-lg transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="px-4 py-2 text-sm font-bold bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase tracking-wider rounded-lg mx-4"
-                >
-                  Register
-                </Link>
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+              <div className="px-4 py-6 space-y-4">
+                <a href="#features" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Features
+                </a>
+                <a href="#testimonials" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Testimonials
+                </a>
+                <a href="#contact" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
+                  Contact
+                </a>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-3">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="btn-professional-ghost w-full"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="btn-professional-primary w-full"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               </div>
             </div>
           )}
@@ -132,89 +203,87 @@ const Navbar = () => {
     );
   }
 
-  // For login/register pages, show simple navbar with theme toggle
+  // Auth pages navbar
   if ((location.pathname === '/login' || location.pathname === '/register') && !isAuthenticated()) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+      <nav className="nav-professional">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-black dark:bg-white flex items-center justify-center">
-                <span className="text-white dark:text-black font-bold text-sm">BT</span>
+            <Link to="/" className="flex items-center gap-4 group">
+              <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                <span className="text-white dark:text-black font-black text-lg">BT</span>
               </div>
-              <span className="text-xl font-black text-black dark:text-white">
-                BIZTRAS CTF
-              </span>
+              <div className="hidden sm:block">
+                <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
+                  BIZTRAS CTF
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                  Cybersecurity Excellence
+                </div>
+              </div>
             </Link>
 
-            {/* Right side - Theme toggle and nav links */}
-            <div className="flex items-center gap-3">
-              {/* Theme Toggle */}
+            {/* Right side */}
+            <div className="flex items-center gap-4">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                aria-label="Toggle theme"
+                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
               >
                 {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
               </button>
 
-              {/* Navigation Links */}
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-4">
                 {location.pathname === '/login' ? (
-                  <Link
-                    to="/register"
-                    className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    Don't have an account? <span className="font-bold">Register</span>
+                  <Link to="/register" className="btn-professional-secondary">
+                    Create Account
                   </Link>
                 ) : (
-                  <Link
-                    to="/login"
-                    className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    Already have an account? <span className="font-bold">Login</span>
+                  <Link to="/login" className="btn-professional-secondary">
+                    Sign In
                   </Link>
                 )}
               </div>
 
-              {/* Mobile Menu Button */}
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="sm:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="sm:hidden w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
               >
                 {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile menu for auth pages */}
           {isMenuOpen && (
-            <div className="sm:hidden border-t border-gray-200 dark:border-gray-700 py-4">
-              <div className="flex flex-col gap-2">
+            <div className="sm:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+              <div className="px-4 py-6 space-y-4">
                 {location.pathname === '/login' ? (
                   <Link
                     to="/register"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors rounded-lg"
+                    className="btn-professional-secondary w-full"
                   >
-                    Don't have an account? Register
+                    Create Account
                   </Link>
                 ) : (
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors rounded-lg"
+                    className="btn-professional-secondary w-full"
                   >
-                    Already have an account? Login
+                    Sign In
                   </Link>
                 )}
                 <Link
                   to="/"
                   onClick={() => setIsMenuOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors rounded-lg"
+                  className="btn-professional-ghost w-full"
                 >
-                  Back to Homepage
+                  Back to Home
                 </Link>
               </div>
             </div>
@@ -224,34 +293,50 @@ const Navbar = () => {
     );
   }
 
-  // Regular authenticated navbar (existing functionality)
+  // Authenticated user navbar
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+    <nav className={`nav-professional transition-all duration-300 ${scrolled ? 'shadow-professional-lg' : ''}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link to={isAuthenticated() ? (user?.isAdmin ? '/admin' : '/dashboard') : '/'} className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-black dark:bg-white flex items-center justify-center">
-                <span className="text-white dark:text-black font-bold text-sm">BT</span>
+          <Link 
+            to={isAuthenticated() ? (user?.isAdmin ? '/admin' : '/dashboard') : '/'} 
+            className="flex items-center gap-4 group"
+          >
+            <div className="relative">
+              <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                <span className="text-white dark:text-black font-black text-lg">BT</span>
               </div>
-              <span className="text-xl font-black text-black dark:text-white">
+              <div className="absolute inset-0 bg-black/20 dark:bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-sm" />
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
                 BIZTRAS CTF
-              </span>
-            </Link>
-          </div>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                {isAdmin() ? 'Admin Portal' : 'Challenge Platform'}
+              </div>
+            </div>
+          </Link>
 
-          {/* Desktop Navigation - Only show if authenticated */}
+          {/* Desktop Navigation */}
           {isAuthenticated() && (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-6">
               {isAdmin() ? (
                 /* Admin Navigation */
-                <NavLink to="/admin" icon={FiSettings}>
-                  Admin Dashboard
-                </NavLink>
+                <div className="flex items-center gap-2">
+                  <NavLink to="/admin" icon={FiSettings}>
+                    Dashboard
+                  </NavLink>
+                  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+                  <div className="flex items-center gap-1 px-3 py-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                    <FiShield className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Admin Mode</span>
+                  </div>
+                </div>
               ) : (
                 /* User Navigation */
-                <>
+                <div className="flex items-center gap-2">
                   <NavLink to="/dashboard" icon={FiHome}>
                     Dashboard
                   </NavLink>
@@ -261,172 +346,289 @@ const Navbar = () => {
                         Challenges
                       </NavLink>
                       <NavLink to="/challenge" icon={FiAward}>
-                        Current Challenge
+                        Current
                       </NavLink>
                     </>
                   )}
-                </>
+                  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+                  {user?.isApproved ? (
+                    <div className="flex items-center gap-1 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <FiActivity className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">Active</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <FiZap className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Pending</span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
 
-          {/* Right side buttons */}
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
+          {/* Right side actions */}
+          <div className="flex items-center gap-4">
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all duration-200 group"
               aria-label="Toggle theme"
             >
-              {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+              {isDark ? (
+                <FiSun className="w-5 h-5 text-yellow-500 group-hover:scale-110 group-hover:rotate-12 transition-all duration-200" />
+              ) : (
+                <FiMoon className="w-5 h-5 text-gray-600 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-200" />
+              )}
             </button>
 
-            {/* Auth Buttons or Profile Menu */}
-            {isAuthenticated() ? (
-              /* Profile Menu */
+            {/* Profile menu */}
+            {isAuthenticated() && (
               <div className="relative">
                 <button
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsProfileMenuOpen(!isProfileMenuOpen);
+                  }}
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group"
                 >
-                  <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
-                    <span className="text-white dark:text-black text-sm font-bold">
-                      {user?.username?.charAt(0).toUpperCase()}
-                    </span>
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                      <span className="text-white dark:text-black text-sm font-bold">
+                        {user?.username?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    {user?.isAdmin && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                        <FiShield className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
                   </div>
-                  <span className="hidden sm:block text-sm font-medium text-black dark:text-white">
-                    {user?.username}
-                  </span>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-sm font-semibold text-black dark:text-white">
+                      {user?.username}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {user?.isAdmin ? 'Administrator' : user?.isApproved ? 'Active User' : 'Pending Approval'}
+                    </div>
+                  </div>
+                  <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Profile Dropdown */}
+                {/* Profile dropdown */}
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1">
-                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                      <p className="text-sm font-medium text-black dark:text-white">
+                  <div className="dropdown-menu animate-scale-in">
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+                      <div className="font-semibold text-black dark:text-white">
                         {user?.username}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {user?.email}
-                      </p>
-                      {user?.isAdmin && (
-                        <span className="inline-block mt-1 px-2 py-1 text-xs bg-black dark:bg-white text-white dark:text-black rounded font-medium">
-                          Admin
-                        </span>
-                      )}
-                      {!user?.isApproved && !user?.isAdmin && (
-                        <span className="inline-block mt-1 px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded">
-                          Pending Approval
-                        </span>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        {user?.isAdmin && (
+                          <span className="badge-error">
+                            <FiShield className="w-3 h-3" />
+                            Admin
+                          </span>
+                        )}
+                        {user?.isApproved || user?.isAdmin ? (
+                          <span className="badge-success">
+                            <FiActivity className="w-3 h-3" />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="badge-warning">
+                            <FiZap className="w-3 h-3" />
+                            Pending
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    
-                    {/* Profile Link - Only for non-admin users */}
-                    {!isAdmin() && (
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+
+                    {/* Menu items */}
+                    <div className="py-1">
+                      {!isAdmin() && (
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="dropdown-item"
+                        >
+                          <FiUser className="w-4 h-4" />
+                          My Profile
+                        </Link>
+                      )}
+                      
+                      {isAdmin() && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="dropdown-item"
+                        >
+                          <FiSettings className="w-4 h-4" />
+                          Admin Dashboard
+                        </Link>
+                      )}
+                      
+                      <div className="dropdown-divider" />
+                      
+                      <button
+                        onClick={handleLogout}
+                        className="dropdown-item text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
                       >
-                        <FiUser className="w-4 h-4" />
-                        Profile
-                      </Link>
-                    )}
-                    
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <FiLogOut className="w-4 h-4" />
-                      Logout
-                    </button>
+                        <FiLogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            ) : (
-              /* Auth Buttons for non-authenticated users - only show if not on public pages */
-              !isPublicPage && (
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/login"
-                    className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="px-4 py-2 text-sm font-bold bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors uppercase tracking-wider"
-                  >
-                    Register
-                  </Link>
-                </div>
-              )
             )}
 
-            {/* Mobile Menu Button - Only show if authenticated */}
+            {/* Mobile menu button */}
             {isAuthenticated() && (
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                className="lg:hidden w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
               >
                 {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
               </button>
             )}
+
+            {/* Auth buttons for non-authenticated users */}
+            {!isAuthenticated() && !isPublicPage && (
+              <div className="hidden sm:flex items-center gap-4">
+                <Link to="/login" className="btn-professional-ghost">
+                  Sign In
+                </Link>
+                <Link to="/register" className="btn-professional-primary">
+                  Get Started
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Mobile Navigation - Only show if authenticated */}
+        {/* Mobile navigation menu */}
         {isAuthenticated() && isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
-            <div className="flex flex-col gap-2">
-              {isAdmin() ? (
-                /* Admin Mobile Navigation */
-                <NavLink 
-                  to="/admin" 
-                  icon={FiSettings}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Admin Dashboard
-                </NavLink>
-              ) : (
-                /* User Mobile Navigation */
-                <>
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+            <div className="px-4 py-6">
+              {/* User info on mobile */}
+              <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-200 dark:border-gray-800">
+                <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-xl flex items-center justify-center">
+                  <span className="text-white dark:text-black font-bold">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div className="font-semibold text-black dark:text-white">
+                    {user?.username}
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation links */}
+              <div className="space-y-2">
+                {isAdmin() ? (
                   <NavLink 
-                    to="/dashboard" 
-                    icon={FiHome}
+                    to="/admin" 
+                    icon={FiSettings}
                     onClick={() => setIsMenuOpen(false)}
+                    className="w-full justify-start"
                   >
-                    Dashboard
+                    Admin Dashboard
                   </NavLink>
-                  {user?.isApproved && (
-                    <>
-                      <NavLink 
-                        to="/challenges" 
-                        icon={FiTarget}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Challenges
-                      </NavLink>
-                      <NavLink 
-                        to="/challenge" 
-                        icon={FiAward}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Current Challenge
-                      </NavLink>
-                    </>
+                ) : (
+                  <>
+                    <NavLink 
+                      to="/dashboard" 
+                      icon={FiHome}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full justify-start"
+                    >
+                      Dashboard
+                    </NavLink>
+                    {user?.isApproved && (
+                      <>
+                        <NavLink 
+                          to="/challenges" 
+                          icon={FiTarget}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="w-full justify-start"
+                        >
+                          Challenges
+                        </NavLink>
+                        <NavLink 
+                          to="/challenge" 
+                          icon={FiAward}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="w-full justify-start"
+                        >
+                          Current Challenge
+                        </NavLink>
+                        <NavLink 
+                          to="/profile" 
+                          icon={FiUser}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="w-full justify-start"
+                        >
+                          My Profile
+                        </NavLink>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Status indicator on mobile */}
+              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Status</div>
+                  {user?.isAdmin ? (
+                    <span className="badge-error">
+                      <FiShield className="w-3 h-3" />
+                      Administrator
+                    </span>
+                  ) : user?.isApproved ? (
+                    <span className="badge-success">
+                      <FiActivity className="w-3 h-3" />
+                      Active User
+                    </span>
+                  ) : (
+                    <span className="badge-warning">
+                      <FiZap className="w-3 h-3" />
+                      Pending Approval
+                    </span>
                   )}
-                </>
-              )}
+                </div>
+              </div>
+
+              {/* Logout button */}
+              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors font-medium"
+                >
+                  <FiLogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Click outside to close menus */}
+      {/* Backdrop for mobile menus */}
       {(isMenuOpen || isProfileMenuOpen) && (
-        <div
-          className="fixed inset-0 z-40"
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => {
             setIsMenuOpen(false);
             setIsProfileMenuOpen(false);

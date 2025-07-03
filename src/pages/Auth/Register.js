@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiLoader, FiShield, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,9 +14,21 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const { register } = useAuth();
   const history = useHistory();
+
+  const calculatePasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 6) strength += 1;
+    if (password.length >= 10) strength += 1;
+    if (/[A-Z]/.test(password)) strength += 1;
+    if (/[a-z]/.test(password)) strength += 1;
+    if (/[0-9]/.test(password)) strength += 1;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+    return strength;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,6 +36,11 @@ const Register = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Calculate password strength
+    if (name === 'password') {
+      setPasswordStrength(calculatePasswordStrength(value));
+    }
     
     // Clear error when user starts typing
     if (errors[name]) {
@@ -86,7 +103,6 @@ const Register = () => {
       const result = await register(formData);
       
       if (result.success) {
-        // NEW: Use the redirectTo from register result
         const redirectPath = result.redirectTo || (result.user.isAdmin ? '/admin' : '/dashboard');
         history.push(redirectPath);
       }
@@ -97,32 +113,48 @@ const Register = () => {
     }
   };
 
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength <= 2) return 'bg-red-500';
+    if (passwordStrength <= 4) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const getPasswordStrengthText = () => {
+    if (passwordStrength <= 2) return 'Weak';
+    if (passwordStrength <= 4) return 'Medium';
+    return 'Strong';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-10 w-32 h-32 bg-black/5 dark:bg-white/5 rounded-full blur-xl animate-float" />
+          <div className="absolute bottom-32 left-10 w-40 h-40 bg-black/5 dark:bg-white/5 rounded-full blur-2xl animate-float" style={{animationDelay: '2s'}} />
+        </div>
+
         {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl mb-4">
-            <span className="text-white font-bold text-2xl">BT</span>
+        <div className="text-center mb-8 relative z-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-3xl mb-6 shadow-professional-lg">
+            <span className="text-white dark:text-black font-black text-3xl">BT</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-black text-black dark:text-white mb-3 leading-none">
             Join BizTras CTF
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Create your account to start the challenge
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Create your account to start the <span className="font-semibold text-black dark:text-white">ultimate challenge</span>
           </p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className="card-enhanced relative z-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Username
-              </label>
+            <div className="form-group">
+              <label className="form-label">Username</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiUser className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -130,25 +162,26 @@ const Register = () => {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className={`input pl-10 ${errors.username ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 ${errors.username ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Choose a username"
                   disabled={loading}
                 />
+                {formData.username && !errors.username && (
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <FiCheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.username && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.username}
-                </p>
+                <p className="form-error">{errors.username}</p>
               )}
             </div>
 
             {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
+            <div className="form-group">
+              <label className="form-label">Email Address</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiMail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -156,25 +189,26 @@ const Register = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`input pl-10 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 ${errors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Enter your email"
                   disabled={loading}
                 />
+                {formData.email && !errors.email && /\S+@\S+\.\S+/.test(formData.email) && (
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <FiCheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.email}
-                </p>
+                <p className="form-error">{errors.email}</p>
               )}
             </div>
 
             {/* Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
+            <div className="form-group">
+              <label className="form-label">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiLock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -182,37 +216,57 @@ const Register = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`input pl-10 pr-10 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 pr-12 ${errors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Create a password"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   disabled={loading}
                 >
                   {showPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   )}
                 </button>
               </div>
+              
+              {/* Password Strength Indicator */}
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                        style={{ width: `${(passwordStrength / 6) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      passwordStrength <= 2 ? 'text-red-500' :
+                      passwordStrength <= 4 ? 'text-yellow-500' : 'text-green-500'
+                    }`}>
+                      {getPasswordStrengthText()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Use 6+ characters with letters, numbers, and symbols
+                  </p>
+                </div>
+              )}
+              
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.password}
-                </p>
+                <p className="form-error">{errors.password}</p>
               )}
             </div>
 
             {/* Confirm Password Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
-              </label>
+            <div className="form-group">
+              <label className="form-label">Confirm Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiLock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -220,27 +274,30 @@ const Register = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`input pl-10 pr-10 ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  className={`input-professional pl-12 pr-12 ${errors.confirmPassword ? 'border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Confirm your password"
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   disabled={loading}
                 >
                   {showConfirmPassword ? (
-                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   ) : (
-                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <FiEye className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
                   )}
                 </button>
+                {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                  <div className="absolute inset-y-0 right-12 pr-4 flex items-center">
+                    <FiCheckCircle className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.confirmPassword}
-                </p>
+                <p className="form-error">{errors.confirmPassword}</p>
               )}
             </div>
 
@@ -248,33 +305,99 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+              className="btn-professional-primary w-full group relative overflow-hidden"
             >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               {loading ? (
                 <>
-                  <FiLoader className="w-4 h-4 animate-spin" />
-                  Creating Account...
+                  <FiLoader className="w-5 h-5 animate-spin relative z-10" />
+                  <span className="relative z-10">Creating Account...</span>
                 </>
               ) : (
-                'Create Account'
+                <>
+                  <FiShield className="w-5 h-5 relative z-10" />
+                  <span className="relative z-10">Create Account</span>
+                  <FiArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
             </button>
           </form>
 
           {/* Login Link */}
+          <div className="mt-8 text-center">
+            <div className="divider-text">
+              <span>Already have an account?</span>
+            </div>
+            <Link
+              to="/login"
+              className="btn-professional-secondary w-full mt-4 group"
+            >
+              <span>Sign In</span>
+              <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Back to Home */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400 dark:hover:text-violet-300"
-              >
-                Sign in here
-              </Link>
-            </p>
+            <Link
+              to="/"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
+            >
+              ← Back to Homepage
+            </Link>
+          </div>
+        </div>
+
+        {/* Security Features */}
+        <div className="mt-8 space-y-4 relative z-10">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full">
+              <FiShield className="w-4 h-4 text-green-500" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Account security protected by advanced encryption
+              </span>
+            </div>
+          </div>
+
+          {/* Features grid */}
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <FiCheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Free to join</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <FiShield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Secure platform</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                <FiUser className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Expert community</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Custom animation styles */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-20px) rotate(-5deg);
+          }
+        }
+
+        .animate-float {
+          animation: float 8s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };

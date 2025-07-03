@@ -1,330 +1,429 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  FiShield, 
-  FiTarget, 
-  FiUsers, 
-  FiTrendingUp, 
   FiPlay, 
   FiArrowRight,
-  FiCode,
   FiLock,
   FiAward,
   FiGithub,
   FiLinkedin,
   FiTwitter,
   FiMail,
-  FiGlobe
+  FiGlobe,
+  FiStar,
+  FiZap,
+  FiCheckCircle,
+  FiClock,
+  FiUsers,
+  FiTarget,
+  FiCode,
+  FiActivity
 } from 'react-icons/fi';
 
 const Homepage = () => {
   const { isAuthenticated, user } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  const features = [
-    {
-      icon: FiShield,
-      title: 'Secure Challenges',
-      description: 'Advanced cybersecurity challenges designed to test your skills in real-world scenarios.'
-    },
-    {
-      icon: FiTarget,
-      title: 'Progressive Levels',
-      description: 'Multi-level challenges that increase in difficulty as you advance through the platform.'
-    },
-    {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const stats = [
+    { 
+      number: '10,000+', 
+      label: 'Active Security Professionals',
       icon: FiUsers,
-      title: 'Team Competition',
-      description: 'Compete with other security enthusiasts and climb the leaderboard rankings.'
+      description: 'Join thousands of cybersecurity experts'
     },
-    {
-      icon: FiTrendingUp,
-      title: 'Skill Development',
-      description: 'Enhance your penetration testing and vulnerability assessment capabilities.'
+    { 
+      number: '500+', 
+      label: 'Security Challenges',
+      icon: FiTarget,
+      description: 'Comprehensive challenge library'
+    },
+    { 
+      number: '50+', 
+      label: 'Skill Categories',
+      icon: FiCode,
+      description: 'From web security to cryptography'
+    },
+    { 
+      number: '99.9%', 
+      label: 'Platform Uptime',
+      icon: FiActivity,
+      description: 'Reliable 24/7 availability'
     }
   ];
 
-  const stats = [
-    { number: '500+', label: 'Security Challenges' },
-    { number: '10K+', label: 'Active Users' },
-    { number: '50+', label: 'Skill Categories' },
-    { number: '99%', label: 'Success Rate' }
-  ];
+  if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white overflow-hidden">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-transparent to-gray-900"></div>
-          <div className="absolute top-0 left-0 w-full h-full">
-            <div className="grid grid-cols-12 gap-4 h-full opacity-20">
+      <section className="relative min-h-screen flex items-center justify-center">
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900" />
+          <div className="absolute inset-0 opacity-30">
+            <div className="grid grid-cols-12 h-full">
               {Array.from({ length: 144 }).map((_, i) => (
                 <div 
                   key={i} 
-                  className="border border-gray-300 dark:border-gray-700"
+                  className="border border-gray-200/20 dark:border-gray-800/20 transition-all duration-1000"
                   style={{
-                    animationDelay: `${i * 0.1}s`,
-                    animation: 'fadeInScale 2s ease-in-out infinite alternate'
+                    animationDelay: `${i * 0.05}s`,
+                    animation: 'fadeIn 2s ease-in-out infinite alternate'
                   }}
-                ></div>
+                />
               ))}
             </div>
           </div>
+          
+          {/* Floating elements */}
+          <div className="absolute top-20 left-10 w-32 h-32 bg-black/5 dark:bg-white/5 rounded-full blur-xl animate-float" />
+          <div className="absolute top-40 right-20 w-24 h-24 bg-black/10 dark:bg-white/10 rounded-full blur-lg animate-float" style={{animationDelay: '2s'}} />
+          <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-black/5 dark:bg-white/5 rounded-full blur-2xl animate-float" style={{animationDelay: '4s'}} />
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
-          <div className="text-center">
-            {/* Main Heading */}
-            <div className="mb-8">
-              <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-black to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                  CAPTURE
-                </span>
-                <br />
-                <span className="text-black dark:text-white">THE FLAG</span>
-              </h1>
-              <div className="w-32 h-1 bg-black dark:bg-white mx-auto mb-6"></div>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Master cybersecurity through hands-on challenges. Test your skills, 
-                learn new techniques, and compete with the best in the field.
-              </p>
+        {/* Hero content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="animate-fade-in-up">
+            {/* Hero badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full mb-8">
+              <FiStar className="w-4 h-4 text-black dark:text-white" />
+              <span className="text-sm font-medium">Trusted by 10,000+ Security Professionals</span>
             </div>
 
+            {/* Main headline */}
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 leading-none tracking-tighter">
+              <span className="block bg-gradient-to-r from-black via-gray-800 to-black dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent">
+                MASTER
+              </span>
+              <span className="block text-black dark:text-white">
+                CYBERSECURITY
+              </span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-xl md:text-2xl lg:text-3xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed font-light">
+              Challenge yourself with real-world security scenarios. 
+              <span className="text-black dark:text-white font-medium"> Learn. Practice. Excel.</span>
+            </p>
+
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
               {isAuthenticated() ? (
                 <Link
                   to={user?.isAdmin ? '/admin' : '/dashboard'}
-                  className="group bg-black dark:bg-white text-white dark:text-black px-8 py-4 text-lg font-bold uppercase tracking-wider hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center gap-3"
+                  className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
                 >
-                  <FiPlay className="w-5 h-5" />
-                  Enter Platform
-                  <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <FiPlay className="w-6 h-6 relative z-10" />
+                  <span className="relative z-10">Enter Platform</span>
+                  <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
                 </Link>
               ) : (
                 <>
                   <Link
                     to="/register"
-                    className="group bg-black dark:bg-white text-white dark:text-black px-8 py-4 text-lg font-bold uppercase tracking-wider hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center gap-3"
+                    className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
                   >
-                    <FiPlay className="w-5 h-5" />
-                    Start Challenge
-                    <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                    <FiZap className="w-6 h-6 relative z-10" />
+                    <span className="relative z-10">Start Challenge</span>
+                    <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/login"
-                    className="group border-2 border-black dark:border-white text-black dark:text-white px-8 py-4 text-lg font-bold uppercase tracking-wider hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all duration-300 flex items-center gap-3"
+                    className="group inline-flex items-center gap-3 px-12 py-6 border-2 border-black dark:border-white text-black dark:text-white text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-none"
                   >
-                    <FiLock className="w-5 h-5" />
-                    Login
+                    <FiLock className="w-6 h-6" />
+                    <span>Sign In</span>
                   </Link>
                 </>
               )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="text-3xl md:text-4xl font-black text-black dark:text-white mb-2 group-hover:scale-110 transition-transform duration-300">
-                    {stat.number}
+            {/* Hero stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+              {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <div 
+                    key={index} 
+                    className="group text-center"
+                    style={{animationDelay: `${index * 0.2}s`}}
+                  >
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl mb-4 group-hover:scale-110 transition-all duration-300">
+                      <Icon className="w-8 h-8 text-black dark:text-white" />
+                    </div>
+                    <div className="text-3xl md:text-4xl font-black text-black dark:text-white mb-2 group-hover:scale-105 transition-transform duration-300">
+                      {stat.number}
+                    </div>
+                    <div className="text-sm md:text-base text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wider mb-2">
+                      {stat.label}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      {stat.description}
+                    </div>
                   </div>
-                  <div className="text-sm md:text-base text-gray-600 dark:text-gray-400 uppercase tracking-wider font-medium">
-                    {stat.label}
-                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-0.5 h-16 bg-black dark:bg-white" />
+            <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Scroll</div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-32 bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-black relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute top-20 left-20 w-64 h-64 bg-black/5 dark:bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-black/5 dark:bg-white/5 rounded-full blur-3xl" />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full mb-8">
+            <FiZap className="w-4 h-4" />
+            <span className="text-sm font-medium uppercase tracking-wider">Ready to Excel?</span>
+          </div>
+
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-black dark:text-white mb-8 leading-none">
+            START YOUR
+            <br />
+            <span className="bg-gradient-to-r from-gray-600 to-black dark:from-gray-400 dark:to-white bg-clip-text text-transparent">
+              JOURNEY TODAY
+            </span>
+          </h2>
+
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed max-w-3xl mx-auto">
+            Join the elite community of cybersecurity professionals. 
+            <span className="text-black dark:text-white font-semibold"> Master real-world challenges. Advance your career.</span>
+          </p>
+
+          {!isAuthenticated() && (
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <Link
+                to="/register"
+                className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-xl font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <FiAward className="w-6 h-6 relative z-10" />
+                <span className="relative z-10">Get Started Free</span>
+                <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              
+              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <FiCheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Free to start</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiCheckCircle className="w-4 h-4 text-green-500" />
+                  <span>No credit card</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiCheckCircle className="w-4 h-4 text-green-500" />
+                  <span>Instant access</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Trust indicators */}
+          <div className="mt-16 pt-16 border-t border-gray-200 dark:border-gray-800">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 uppercase tracking-wider font-medium">
+              Trusted by professionals at
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-12 opacity-60">
+              {['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'Tesla'].map((company, index) => (
+                <div key={index} className="text-lg font-bold text-gray-400 dark:text-gray-600">
+                  {company}
                 </div>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="w-1 h-16 bg-black dark:bg-white"></div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-6">
-              WHY BIZTRAS CTF?
-            </h2>
-            <div className="w-24 h-1 bg-black dark:bg-white mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Experience the most comprehensive cybersecurity challenge platform 
-              designed for security professionals and enthusiasts.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div 
-                  key={index} 
-                  className="group bg-white dark:bg-black border-2 border-gray-200 dark:border-gray-800 p-8 hover:border-black dark:hover:border-white transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-2"
-                >
-                  <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-black dark:bg-white text-white dark:text-black mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Icon className="w-8 h-8" />
-                    </div>
-                    <h3 className="text-xl font-bold text-black dark:text-white mb-4 uppercase tracking-wide">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </section>
 
-
-      {/* CTA Section */}
-      <section className="py-24 bg-black dark:bg-white text-white dark:text-black">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-black mb-6">
-            READY TO TAKE THE CHALLENGE?
-          </h2>
-          <div className="w-32 h-1 bg-white dark:bg-black mx-auto mb-8"></div>
-          <p className="text-xl mb-12 text-gray-300 dark:text-gray-700">
-            Join thousands of security professionals who have enhanced their skills through our platform.
-          </p>
-          {!isAuthenticated() && (
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-3 bg-white dark:bg-black text-black dark:text-white px-12 py-4 text-xl font-bold uppercase tracking-wider hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-300 transform hover:scale-105"
-            >
-              <FiAward className="w-6 h-6" />
-              Get Started Now
-              <FiArrowRight className="w-6 h-6" />
-            </Link>
-          )}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white dark:bg-black border-t-4 border-black dark:border-white">
+      {/* Simple Footer */}
+      <footer className="bg-black dark:bg-white text-white dark:text-black border-t-4 border-white dark:border-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center">
-                  <span className="text-white dark:text-black font-black text-xl">BT</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {/* Brand section */}
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-white dark:bg-black flex items-center justify-center rounded-none">
+                  <span className="text-black dark:text-white font-black text-2xl">BT</span>
                 </div>
-                <span className="text-2xl font-black text-black dark:text-white">BIZTRAS CTF</span>
+                <div>
+                  <div className="text-2xl font-black tracking-tighter">BIZTRAS CTF</div>
+                  <div className="text-sm text-gray-400 dark:text-gray-600 uppercase tracking-wider">Cybersecurity Excellence</div>
+                </div>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md leading-relaxed">
-                The premier cybersecurity challenge platform for security professionals, 
-                students, and enthusiasts worldwide. Master your skills through hands-on experience.
+              
+              <p className="text-gray-300 dark:text-gray-700 text-base leading-relaxed mb-6 max-w-md">
+                The world's premier cybersecurity challenge platform. Master real-world security scenarios and advance your career in cybersecurity.
               </p>
+              
+              {/* Social links */}
               <div className="flex gap-4">
-                <a 
-                  href="#" 
-                  className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-                >
-                  <FiGithub className="w-5 h-5" />
-                </a>
-                <a 
-                  href="#" 
-                  className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-                >
-                  <FiTwitter className="w-5 h-5" />
-                </a>
-                <a 
-                  href="#" 
-                  className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-                >
-                  <FiLinkedin className="w-5 h-5" />
-                </a>
+                {[
+                  { icon: FiGithub, href: '#', label: 'GitHub' },
+                  { icon: FiLinkedin, href: '#', label: 'LinkedIn' },
+                  { icon: FiTwitter, href: '#', label: 'Twitter' },
+                  { icon: FiMail, href: '#', label: 'Email' }
+                ].map((social, index) => {
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={index}
+                      href={social.href}
+                      aria-label={social.label}
+                      className="w-12 h-12 bg-white/10 dark:bg-black/10 flex items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 transition-colors duration-200 group"
+                    >
+                      <Icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-lg font-bold text-black dark:text-white mb-6 uppercase tracking-wider">
-                Quick Links
-              </h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link to="/register" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                    Register
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                    Contact
-                  </a>
-                </li>
+              <h3 className="text-lg font-bold mb-6 uppercase tracking-wider">Platform</h3>
+              <ul className="space-y-4">
+                {[
+                  { label: 'Sign Up', href: '/register' },
+                  { label: 'Sign In', href: '/login' },
+                  { label: 'About Us', href: '#' },
+                  { label: 'Contact', href: '#' }
+                ].map((link, index) => (
+                  <li key={index}>
+                    {link.href.startsWith('/') ? (
+                      <Link 
+                        to={link.href} 
+                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors duration-200 font-medium"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a 
+                        href={link.href} 
+                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors duration-200 font-medium"
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Contact */}
+            {/* Contact & Support */}
             <div>
-              <h3 className="text-lg font-bold text-black dark:text-white mb-6 uppercase tracking-wider">
-                Contact Us
-              </h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-3">
-                  <FiMail className="w-5 h-5 text-black dark:text-white" />
-                  <span className="text-gray-600 dark:text-gray-400">contact@biztrastech.com</span>
+              <h3 className="text-lg font-bold mb-6 uppercase tracking-wider">Support</h3>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <FiMail className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
+                  <div>
+                    <div className="text-sm text-gray-400 dark:text-gray-600">Email</div>
+                    <div className="font-medium">support@biztrastech.com</div>
+                  </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <FiGlobe className="w-5 h-5 text-black dark:text-white" />
-                  <span className="text-gray-600 dark:text-gray-400">www.biztrastech.com</span>
+                <li className="flex items-start gap-3">
+                  <FiGlobe className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
+                  <div>
+                    <div className="text-sm text-gray-400 dark:text-gray-600">Website</div>
+                    <div className="font-medium">www.biztrastech.com</div>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <FiClock className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
+                  <div>
+                    <div className="text-sm text-gray-400 dark:text-gray-600">Support Hours</div>
+                    <div className="font-medium">24/7 Available</div>
+                  </div>
                 </li>
               </ul>
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="border-t-2 border-gray-200 dark:border-gray-800 pt-8 mt-12">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-gray-600 dark:text-gray-400 font-medium">
+          {/* Bottom section */}
+          <div className="border-t border-white/10 dark:border-black/10 pt-8 mt-12">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="text-gray-400 dark:text-gray-600 font-medium">
                 © 2024 BizTras Technologies. All rights reserved.
               </div>
-              <div className="flex gap-6">
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                  Privacy Policy
-                </a>
-                <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
-                  Terms of Service
-                </a>
+              
+              <div className="flex flex-wrap gap-8">
+                {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="text-gray-400 dark:text-gray-600 hover:text-white dark:hover:text-black transition-colors duration-200 text-sm font-medium"
+                  >
+                    {link}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Final branding */}
+            <div className="text-center mt-8 pt-6 border-t border-white/5 dark:border-black/5">
+              <div className="text-gray-500 dark:text-gray-500 text-sm">
+                Built with ❤️ for the cybersecurity community
               </div>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Custom Styles */}
+      {/* Custom animation styles */}
       <style jsx>{`
-        @keyframes fadeInScale {
+        @keyframes fadeIn {
           0% {
             opacity: 0;
-            transform: scale(0.8);
+            transform: scale(0.95);
           }
           100% {
             opacity: 1;
             transform: scale(1);
+          }
+        }
+        
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-fade-in-up {
+          animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
       `}</style>
