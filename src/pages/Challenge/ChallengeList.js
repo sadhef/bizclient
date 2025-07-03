@@ -53,50 +53,50 @@ const ChallengeList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
+      <div className="min-h-screen bg-white dark:bg-black">
         <LoadingSpinner message="Loading challenges..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary p-6">
+    <div className="min-h-screen bg-white dark:bg-black p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-light-primary dark:text-dark-primary mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-black dark:text-white mb-2">
             Challenge Levels
           </h1>
-          <p className="text-light-secondary dark:text-dark-secondary">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Complete each level in order to progress through the CTF challenge
           </p>
         </div>
 
         {/* Challenge Status */}
         {challengeStatus && (
-          <div className="card mb-8">
+          <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800 mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-2">
+                <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
                   Challenge Status
                 </h2>
                 <div className="flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-2">
-                    <FiTarget className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                    <span className="text-light-secondary dark:text-dark-secondary">
+                    <FiTarget className="w-4 h-4 text-black dark:text-white" />
+                    <span className="text-gray-600 dark:text-gray-400">
                       Current Level: {challengeStatus.currentLevel}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FiCheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <span className="text-light-secondary dark:text-dark-secondary">
+                    <span className="text-gray-600 dark:text-gray-400">
                       Completed: {challengeStatus.completedLevels?.length || 0} levels
                     </span>
                   </div>
                   {challengeStatus.timeRemaining > 0 && (
                     <div className="flex items-center gap-2">
                       <FiClock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-light-secondary dark:text-dark-secondary">
+                      <span className="text-gray-600 dark:text-gray-400">
                         Time remaining: {Math.floor(challengeStatus.timeRemaining / 60)}m {challengeStatus.timeRemaining % 60}s
                       </span>
                     </div>
@@ -107,7 +107,7 @@ const ChallengeList = () => {
               {!challengeStatus.hasStarted ? (
                 <button
                   onClick={startChallenge}
-                  className="btn-primary flex items-center gap-2"
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                 >
                   <FiPlay className="w-4 h-4" />
                   Start Challenge
@@ -115,7 +115,7 @@ const ChallengeList = () => {
               ) : challengeStatus.isActive ? (
                 <button
                   onClick={() => history.push('/challenge')}
-                  className="btn-primary flex items-center gap-2"
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                 >
                   <FiTarget className="w-4 h-4" />
                   Continue Challenge
@@ -134,14 +134,14 @@ const ChallengeList = () => {
           {levels.map((level) => (
             <div
               key={level.level}
-              className={`card transition-all duration-200 ${
+              className={`bg-white dark:bg-gray-950 rounded-xl p-6 border transition-all duration-200 ${
                 level.isCompleted
                   ? 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10'
                   : level.isCurrent
-                  ? 'border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10'
+                  ? 'border-black dark:border-white bg-gray-50/50 dark:bg-gray-900/10'
                   : level.isAccessible
-                  ? 'hover:border-gray-300 dark:hover:border-gray-600'
-                  : 'opacity-75'
+                  ? 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                  : 'border-gray-200 dark:border-gray-800 opacity-75'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ const ChallengeList = () => {
                     level.isCompleted
                       ? 'bg-green-100 dark:bg-green-900/30'
                       : level.isCurrent
-                      ? 'bg-violet-100 dark:bg-violet-900/30'
+                      ? 'bg-black dark:bg-white'
                       : level.isAccessible
                       ? 'bg-blue-100 dark:bg-blue-900/30'
                       : 'bg-gray-100 dark:bg-gray-700'
@@ -161,7 +161,7 @@ const ChallengeList = () => {
                     ) : level.isAccessible ? (
                       <FiTarget className={`w-6 h-6 ${
                         level.isCurrent 
-                          ? 'text-violet-600 dark:text-violet-400' 
+                          ? 'text-white dark:text-black' 
                           : 'text-blue-600 dark:text-blue-400'
                       }`} />
                     ) : (
@@ -172,7 +172,7 @@ const ChallengeList = () => {
                   {/* Level Info */}
                   <div>
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                      <h3 className="text-lg font-semibold text-black dark:text-white">
                         Level {level.level}
                       </h3>
                       {level.isCompleted && (
@@ -181,16 +181,16 @@ const ChallengeList = () => {
                         </span>
                       )}
                       {level.isCurrent && !level.isCompleted && (
-                        <span className="px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium rounded">
+                        <span className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded">
                           Current
                         </span>
                       )}
                     </div>
-                    <h4 className="font-medium text-light-primary dark:text-dark-primary mb-2">
+                    <h4 className="text-sm font-medium text-black dark:text-white mb-2">
                       {level.title}
                     </h4>
                     {level.isAccessible && (
-                      <p className="text-light-secondary dark:text-dark-secondary text-sm">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
                         {level.description}
                       </p>
                     )}
@@ -206,7 +206,7 @@ const ChallengeList = () => {
                   ) : level.isCurrent && challengeStatus?.isActive ? (
                     <button
                       onClick={() => history.push('/challenge')}
-                      className="btn-primary flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                     >
                       <FiPlay className="w-4 h-4" />
                       Continue
@@ -214,7 +214,7 @@ const ChallengeList = () => {
                   ) : level.isAccessible && challengeStatus?.hasStarted ? (
                     <button
                       onClick={() => history.push('/challenge')}
-                      className="btn-secondary flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <FiEye className="w-4 h-4" />
                       View
@@ -232,32 +232,32 @@ const ChallengeList = () => {
         </div>
 
         {/* Instructions */}
-        <div className="card mt-8">
-          <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+        <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800 mt-8">
+          <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             How to Play
           </h3>
-          <div className="space-y-3 text-sm text-light-secondary dark:text-dark-secondary">
+          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-violet-600 dark:text-violet-400 font-bold text-xs">1</span>
+              <div className="w-6 h-6 bg-black dark:bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white dark:text-black font-bold text-xs">1</span>
               </div>
               <p>Start the challenge to begin your timer and unlock the first level</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-violet-600 dark:text-violet-400 font-bold text-xs">2</span>
+              <div className="w-6 h-6 bg-black dark:bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white dark:text-black font-bold text-xs">2</span>
               </div>
               <p>Complete each level by finding and submitting the correct flag</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-violet-600 dark:text-violet-400 font-bold text-xs">3</span>
+              <div className="w-6 h-6 bg-black dark:bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white dark:text-black font-bold text-xs">3</span>
               </div>
               <p>Each completed level unlocks the next one in sequence</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-violet-100 dark:bg-violet-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-violet-600 dark:text-violet-400 font-bold text-xs">4</span>
+              <div className="w-6 h-6 bg-black dark:bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white dark:text-black font-bold text-xs">4</span>
               </div>
               <p>Complete all levels before time runs out to win the challenge</p>
             </div>

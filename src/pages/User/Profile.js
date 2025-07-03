@@ -38,7 +38,6 @@ const Profile = () => {
     try {
       setLoading(true);
       
-      // Load user's submissions
       try {
         const submissionsResponse = await challengeAPI.getSubmissions();
         setSubmissions(submissionsResponse.data.submissions);
@@ -46,7 +45,6 @@ const Profile = () => {
         console.error('Error loading submissions:', error);
       }
       
-      // Load challenge status
       try {
         const statusResponse = await challengeAPI.getStatus();
         setChallengeStatus(statusResponse.data);
@@ -115,21 +113,21 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
+      <div className="min-h-screen bg-white dark:bg-black">
         <LoadingSpinner message="Loading profile..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-white dark:bg-black p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-light-primary dark:text-dark-primary mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-black dark:text-white mb-2">
             My Profile
           </h1>
-          <p className="text-light-secondary dark:text-dark-secondary">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             View your account information and challenge progress
           </p>
         </div>
@@ -138,25 +136,25 @@ const Profile = () => {
           {/* Profile Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info */}
-            <div className="card">
+            <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-light-primary dark:text-dark-primary">
+                <h2 className="text-lg font-semibold text-black dark:text-white">
                   Account Information
                 </h2>
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xl font-bold">
+                  <div className="w-16 h-16 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-full flex items-center justify-center">
+                    <span className="text-white dark:text-black text-xl font-bold">
                       {user?.username?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                    <h3 className="text-lg font-semibold text-black dark:text-white">
                       {user?.username}
                     </h3>
-                    <p className="text-light-secondary dark:text-dark-secondary">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {user?.email}
                     </p>
                   </div>
@@ -164,30 +162,30 @@ const Profile = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3">
-                    <FiUser className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    <FiUser className="w-5 h-5 text-black dark:text-white" />
                     <div>
-                      <p className="text-sm text-light-secondary dark:text-dark-secondary">Username</p>
-                      <p className="font-medium text-light-primary dark:text-dark-primary">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Username</p>
+                      <p className="text-sm font-medium text-black dark:text-white">
                         {user?.username}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <FiMail className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    <FiMail className="w-5 h-5 text-black dark:text-white" />
                     <div>
-                      <p className="text-sm text-light-secondary dark:text-dark-secondary">Email</p>
-                      <p className="font-medium text-light-primary dark:text-dark-primary">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Email</p>
+                      <p className="text-sm font-medium text-black dark:text-white">
                         {user?.email}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <FiCalendar className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    <FiCalendar className="w-5 h-5 text-black dark:text-white" />
                     <div>
-                      <p className="text-sm text-light-secondary dark:text-dark-secondary">Member Since</p>
-                      <p className="font-medium text-light-primary dark:text-dark-primary">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Member Since</p>
+                      <p className="text-sm font-medium text-black dark:text-white">
                         {formatDate(user?.createdAt)}
                       </p>
                     </div>
@@ -198,8 +196,8 @@ const Profile = () => {
                       user?.isApproved ? 'bg-green-500' : 'bg-yellow-500'
                     }`} />
                     <div>
-                      <p className="text-sm text-light-secondary dark:text-dark-secondary">Status</p>
-                      <p className="font-medium text-light-primary dark:text-dark-primary">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Status</p>
+                      <p className="text-sm font-medium text-black dark:text-white">
                         {user?.isAdmin ? 'Administrator' : user?.isApproved ? 'Approved' : 'Pending Approval'}
                       </p>
                     </div>
@@ -209,15 +207,15 @@ const Profile = () => {
             </div>
 
             {/* Password Change */}
-            <div className="card">
+            <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-light-primary dark:text-dark-primary">
+                <h2 className="text-lg font-semibold text-black dark:text-white">
                   Security Settings
                 </h2>
                 {!showPasswordForm && (
                   <button
                     onClick={() => setShowPasswordForm(true)}
-                    className="btn-secondary flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <FiEdit3 className="w-4 h-4" />
                     Change Password
@@ -228,7 +226,7 @@ const Profile = () => {
               {showPasswordForm ? (
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Current Password
                     </label>
                     <div className="relative">
@@ -239,14 +237,14 @@ const Profile = () => {
                         type="password"
                         value={passwordForm.currentPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                        className="input pl-10"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       New Password
                     </label>
                     <div className="relative">
@@ -257,7 +255,7 @@ const Profile = () => {
                         type="password"
                         value={passwordForm.newPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                        className="input pl-10"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                         required
                         minLength={6}
                       />
@@ -265,7 +263,7 @@ const Profile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -276,7 +274,7 @@ const Profile = () => {
                         type="password"
                         value={passwordForm.confirmPassword}
                         onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                        className="input pl-10"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                         required
                         minLength={6}
                       />
@@ -287,11 +285,11 @@ const Profile = () => {
                     <button
                       type="submit"
                       disabled={passwordLoading}
-                      className="btn-primary flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                     >
                       {passwordLoading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
                           Saving...
                         </>
                       ) : (
@@ -311,7 +309,7 @@ const Profile = () => {
                           confirmPassword: ''
                         });
                       }}
-                      className="btn-secondary flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <FiX className="w-4 h-4" />
                       Cancel
@@ -319,16 +317,16 @@ const Profile = () => {
                   </div>
                 </form>
               ) : (
-                <div className="flex items-center gap-3 text-light-secondary dark:text-dark-secondary">
+                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                   <FiLock className="w-5 h-5" />
-                  <span>Password is hidden for security</span>
+                  <span className="text-sm">Password is hidden for security</span>
                 </div>
               )}
             </div>
 
             {/* Submission History */}
-            <div className="card">
-              <h2 className="text-xl font-semibold text-light-primary dark:text-dark-primary mb-6">
+            <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+              <h2 className="text-lg font-semibold text-black dark:text-white mb-6">
                 Submission History
               </h2>
               
@@ -352,27 +350,27 @@ const Profile = () => {
                           }`} />
                         </div>
                         <div>
-                          <p className="font-medium text-light-primary dark:text-dark-primary">
+                          <p className="text-sm font-medium text-black dark:text-white">
                             Level {submission.level}
                           </p>
-                          <p className={`text-sm ${
+                          <p className={`text-xs ${
                             submission.isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
                           }`}>
                             {submission.isCorrect ? 'Correct' : 'Incorrect'}
                           </p>
                         </div>
                       </div>
-                      <span className="text-sm text-light-secondary dark:text-dark-secondary">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
                         {formatDate(submission.timestamp)}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-light-secondary dark:text-dark-secondary">
+                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
                   <FiFlag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No submissions yet</p>
-                  <p className="text-sm">Start a challenge to see your submission history</p>
+                  <p className="text-sm">No submissions yet</p>
+                  <p className="text-xs">Start a challenge to see your submission history</p>
                 </div>
               )}
             </div>
@@ -381,17 +379,17 @@ const Profile = () => {
           {/* Sidebar - Stats */}
           <div className="space-y-6">
             {/* Challenge Stats */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+            <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
                 Challenge Statistics
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FiTarget className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                    <span className="text-sm text-light-secondary dark:text-dark-secondary">Current Level</span>
+                    <FiTarget className="w-4 h-4 text-black dark:text-white" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Current Level</span>
                   </div>
-                  <span className="font-semibold text-light-primary dark:text-dark-primary">
+                  <span className="text-sm font-semibold text-black dark:text-white">
                     {challengeStatus?.currentLevel || 1}
                   </span>
                 </div>
@@ -399,9 +397,9 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FiAward className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm text-light-secondary dark:text-dark-secondary">Completed Levels</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Completed Levels</span>
                   </div>
-                  <span className="font-semibold text-light-primary dark:text-dark-primary">
+                  <span className="text-sm font-semibold text-black dark:text-white">
                     {challengeStatus?.completedLevels?.length || 0}
                   </span>
                 </div>
@@ -409,9 +407,9 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FiFlag className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm text-light-secondary dark:text-dark-secondary">Total Attempts</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Total Attempts</span>
                   </div>
-                  <span className="font-semibold text-light-primary dark:text-dark-primary">
+                  <span className="text-sm font-semibold text-black dark:text-white">
                     {challengeStatus?.totalAttempts || 0}
                   </span>
                 </div>
@@ -419,106 +417,51 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FiClock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                    <span className="text-sm text-light-secondary dark:text-dark-secondary">Success Rate</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Success Rate</span>
                   </div>
-                  <span className="font-semibold text-light-primary dark:text-dark-primary">
+                  <span className="text-sm font-semibold text-black dark:text-white">
                     {getSuccessRate()}%
-                  </span></div>
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Achievement Badge */}
             {challengeStatus?.isCompleted && (
-              <div className="card bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-800">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6">
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full mb-3">
                     <FiAward className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-semibold text-light-primary dark:text-dark-primary mb-2">
+                  <h3 className="text-sm font-semibold text-black dark:text-white mb-2">
                     CTF Champion!
                   </h3>
-                  <p className="text-sm text-light-secondary dark:text-dark-secondary">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     You've completed all challenge levels
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Progress Overview */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
-                Progress Overview
-              </h3>
-              
-              {challengeStatus?.hasStarted ? (
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
-                      <span>Challenge Progress</span>
-                      <span>
-                        {challengeStatus?.completedLevels?.length || 0} completed
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-violet-600 h-2 rounded-full transition-all duration-300"
-                        style={{ 
-                          width: `${challengeStatus?.isCompleted ? 100 : ((challengeStatus?.completedLevels?.length || 0) * 50)}%` 
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-2">
-                      <span>Status</span>
-                      <span className={`font-medium ${
-                        challengeStatus?.isCompleted ? 'text-green-600 dark:text-green-400' :
-                        challengeStatus?.isActive ? 'text-blue-600 dark:text-blue-400' :
-                        'text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {challengeStatus?.isCompleted ? 'Completed' :
-                         challengeStatus?.isActive ? 'In Progress' :
-                         'Ended'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {challengeStatus?.challengeStartTime && (
-                    <div>
-                      <div className="flex justify-between text-sm text-light-secondary dark:text-dark-secondary mb-1">
-                        <span>Started</span>
-                        <span>{formatDate(challengeStatus.challengeStartTime)}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-light-secondary dark:text-dark-secondary">
-                  <p>Challenge not started yet</p>
-                </div>
-              )}
-            </div>
-
             {/* Account Status */}
-            <div className="card">
-              <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+            <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
                 Account Status
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-light-secondary dark:text-dark-secondary">Account Type</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Account Type</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     user?.isAdmin 
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      ? 'bg-black dark:bg-white text-white dark:text-black'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                   }`}>
                     {user?.isAdmin ? 'Administrator' : 'User'}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-light-secondary dark:text-dark-secondary">Status</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     user?.isApproved || user?.isAdmin
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
@@ -529,7 +472,7 @@ const Profile = () => {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-light-secondary dark:text-dark-secondary">Challenge Access</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Challenge Access</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     user?.isApproved || user?.isAdmin
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'

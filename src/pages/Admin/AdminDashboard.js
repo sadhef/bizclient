@@ -349,14 +349,14 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary p-6">
+    <div className="min-h-screen bg-white dark:bg-black p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-light-primary dark:text-dark-primary mb-2">
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
             Admin Dashboard
           </h1>
-          <p className="text-light-secondary dark:text-dark-secondary">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Manage your BizTras CTF platform
           </p>
         </div>
@@ -372,7 +372,7 @@ const AdminDashboard = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
-                      ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                      ? 'border-black dark:border-white text-black dark:text-white'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                   }`}
                 >
@@ -394,11 +394,11 @@ const AdminDashboard = () => {
               <div className="space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="card">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-light-secondary dark:text-dark-secondary">Total Users</p>
-                        <p className="text-2xl font-bold text-light-primary dark:text-dark-primary">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                        <p className="text-2xl font-bold text-black dark:text-white">
                           {stats.userStats.total}
                         </p>
                       </div>
@@ -406,10 +406,10 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="card">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-light-secondary dark:text-dark-secondary">Approved Users</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Approved Users</p>
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                           {stats.userStats.approved}
                         </p>
@@ -418,10 +418,10 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="card">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-light-secondary dark:text-dark-secondary">Active Users</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
                         <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                           {stats.userStats.active}
                         </p>
@@ -430,10 +430,10 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="card">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-light-secondary dark:text-dark-secondary">Total Challenges</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Challenges</p>
                         <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                           {stats.challengeStats.total}
                         </p>
@@ -445,17 +445,17 @@ const AdminDashboard = () => {
 
                 {/* Level Stats */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="card">
-                    <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                    <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
                       Level Completion Stats
                     </h3>
                     <div className="space-y-3">
                       {stats.levelStats.map((level) => (
                         <div key={level._id} className="flex justify-between items-center">
-                          <span className="text-light-secondary dark:text-dark-secondary">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             Level {level._id}
                           </span>
-                          <span className="font-medium text-light-primary dark:text-dark-primary">
+                          <span className="text-sm font-medium text-black dark:text-white">
                             {level.count} users
                           </span>
                         </div>
@@ -463,17 +463,17 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="card">
-                    <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-4">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                    <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
                       Current Level Distribution
                     </h3>
                     <div className="space-y-3">
                       {stats.currentLevelStats.map((level) => (
                         <div key={level._id} className="flex justify-between items-center">
-                          <span className="text-light-secondary dark:text-dark-secondary">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             Level {level._id}
                           </span>
-                          <span className="font-medium text-light-primary dark:text-dark-primary">
+                          <span className="text-sm font-medium text-black dark:text-white">
                             {level.count} users
                           </span>
                         </div>
@@ -486,14 +486,14 @@ const AdminDashboard = () => {
 
             {/* Users Tab */}
             {activeTab === 'users' && (
-              <div className="card">
+              <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     User Management
                   </h3>
                   <button
                     onClick={loadUsers}
-                    className="btn-secondary flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <FiRefreshCw className="w-4 h-4" />
                     Refresh
@@ -504,19 +504,19 @@ const AdminDashboard = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="text-left py-3 px-4 font-medium text-light-secondary dark:text-dark-secondary">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
                           User
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-light-secondary dark:text-dark-secondary">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
                           Status
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-light-secondary dark:text-dark-secondary">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
                           Level
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-light-secondary dark:text-dark-secondary">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
                           Attempts
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-light-secondary dark:text-dark-secondary">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">
                           Actions
                         </th>
                       </tr>
@@ -526,10 +526,10 @@ const AdminDashboard = () => {
                         <tr key={user._id} className="border-b border-gray-100 dark:border-gray-800">
                           <td className="py-3 px-4">
                             <div>
-                              <p className="font-medium text-light-primary dark:text-dark-primary">
+                              <p className="text-sm font-medium text-black dark:text-white">
                                 {user.username}
                               </p>
-                              <p className="text-sm text-light-secondary dark:text-dark-secondary">
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
                                 {user.email}
                               </p>
                             </div>
@@ -543,10 +543,10 @@ const AdminDashboard = () => {
                               {user.isApproved ? 'Approved' : 'Pending'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-light-primary dark:text-dark-primary">
+                          <td className="py-3 px-4 text-sm text-black dark:text-white">
                             {user.currentLevel}
                           </td>
-                          <td className="py-3 px-4 text-light-primary dark:text-dark-primary">
+                          <td className="py-3 px-4 text-sm text-black dark:text-white">
                             {user.totalAttempts}
                           </td>
                           <td className="py-3 px-4">
@@ -596,12 +596,12 @@ const AdminDashboard = () => {
             {activeTab === 'challenges' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     Challenge Management
                   </h3>
                   <button
                     onClick={() => openChallengeModal()}
-                    className="btn-primary flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiPlus className="w-4 h-4" />
                     Add Challenge
@@ -610,18 +610,18 @@ const AdminDashboard = () => {
 
                 <div className="grid gap-4">
                   {challenges.map((challenge) => (
-                    <div key={challenge._id} className="card">
+                    <div key={challenge._id} className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <span className="px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium rounded">
+                            <span className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded">
                               Level {challenge.level}
                             </span>
                           </div>
-                          <h4 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-2">
+                          <h4 className="text-lg font-semibold text-black dark:text-white mb-2">
                             {challenge.title}
                           </h4>
-                          <p className="text-light-secondary dark:text-dark-secondary text-sm mb-2">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
                             {challenge.description}
                           </p>
                         </div>
@@ -650,59 +650,59 @@ const AdminDashboard = () => {
 
             {/* Configuration Tab */}
             {activeTab === 'config' && config && (
-              <div className="card max-w-2xl">
-                <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary mb-6">
+              <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800 max-w-2xl">
+                <h3 className="text-lg font-semibold text-black dark:text-white mb-6">
                   Challenge Configuration
                 </h3>
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Challenge Title
                     </label>
                     <input
                       type="text"
                       value={config.challengeTitle}
                       onChange={(e) => setConfig({...config, challengeTitle: e.target.value})}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Challenge Description
                     </label>
                     <textarea
                       value={config.challengeDescription}
                       onChange={(e) => setConfig({...config, challengeDescription: e.target.value})}
                       rows={3}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                         Time Limit (minutes)
                       </label>
                       <input
                         type="number"
                         value={config.totalTimeLimit}
                         onChange={(e) => setConfig({...config, totalTimeLimit: parseInt(e.target.value)})}
-                        className="input"
+                        className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                         min="1"
                         max="1440"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                         Max Levels
                       </label>
                       <input
                         type="number"
                         value={config.maxLevels}
                         onChange={(e) => setConfig({...config, maxLevels: parseInt(e.target.value)})}
-                        className="input"
+                        className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                         min="1"
                         max="10"
                       />
@@ -715,9 +715,9 @@ const AdminDashboard = () => {
                         type="checkbox"
                         checked={config.challengeActive}
                         onChange={(e) => setConfig({...config, challengeActive: e.target.checked})}
-                        className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                        className="rounded border-gray-300 text-black focus:ring-black dark:focus:ring-white"
                       />
-                      <span className="text-sm font-medium text-light-primary dark:text-dark-primary">
+                      <span className="text-sm font-medium text-black dark:text-white">
                         Challenge Active
                       </span>
                     </label>
@@ -727,9 +727,9 @@ const AdminDashboard = () => {
                         type="checkbox"
                         checked={config.registrationOpen}
                         onChange={(e) => setConfig({...config, registrationOpen: e.target.checked})}
-                        className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                        className="rounded border-gray-300 text-black focus:ring-black dark:focus:ring-white"
                       />
-                      <span className="text-sm font-medium text-light-primary dark:text-dark-primary">
+                      <span className="text-sm font-medium text-black dark:text-white">
                         Registration Open
                       </span>
                     </label>
@@ -739,9 +739,9 @@ const AdminDashboard = () => {
                         type="checkbox"
                         checked={config.allowHints}
                         onChange={(e) => setConfig({...config, allowHints: e.target.checked})}
-                        className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                        className="rounded border-gray-300 text-black focus:ring-black dark:focus:ring-white"
                       />
-                      <span className="text-sm font-medium text-light-primary dark:text-dark-primary">
+                      <span className="text-sm font-medium text-black dark:text-white">
                         Allow Hints
                       </span>
                     </label>
@@ -749,7 +749,7 @@ const AdminDashboard = () => {
 
                   <button
                     onClick={handleSaveConfig}
-                    className="btn-primary flex items-center gap-2"
+                    className="flex items-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiSave className="w-4 h-4" />
                     Save Configuration
@@ -762,17 +762,17 @@ const AdminDashboard = () => {
             {activeTab === 'monitoring' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     Live User Monitoring
                   </h3>
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-sm text-light-secondary dark:text-dark-secondary">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       Auto-refreshing every 5 seconds
                     </div>
                     <button
                       onClick={loadMonitoringData}
-                      className="btn-secondary flex items-center gap-2"
+                      className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <FiRefreshCw className="w-4 h-4" />
                       Refresh Now
@@ -788,11 +788,11 @@ const AdminDashboard = () => {
                       : user.timeRemaining;
 
                     return (
-                      <div key={user.id} className="card">
+                      <div key={user.id} className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <h4 className="font-semibold text-light-primary dark:text-dark-primary">
+                              <h4 className="text-sm font-semibold text-black dark:text-white">
                                 {user.username}
                               </h4>
                               <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
@@ -805,32 +805,32 @@ const AdminDashboard = () => {
                                 )}
                                 {user.isActive ? 'Active' : 'Inactive'}
                               </span>
-                              <span className="text-xs text-light-secondary dark:text-dark-secondary">
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
                                 {user.email}
                               </span>
                             </div>
                             
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                               <div>
-                                <p className="text-light-secondary dark:text-dark-secondary">Current Level</p>
-                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                <p className="text-gray-600 dark:text-gray-400">Current Level</p>
+                                <p className="font-medium text-black dark:text-white">
                                   {user.currentLevel}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-light-secondary dark:text-dark-secondary">Completed</p>
-                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                <p className="text-gray-600 dark:text-gray-400">Completed</p>
+                                <p className="font-medium text-black dark:text-white">
                                   {user.completedLevels.length} levels
                                 </p>
                               </div>
                               <div>
-                                <p className="text-light-secondary dark:text-dark-secondary">Attempts</p>
-                                <p className="font-medium text-light-primary dark:text-dark-primary">
+                                <p className="text-gray-600 dark:text-gray-400">Attempts</p>
+                                <p className="font-medium text-black dark:text-white">
                                   {user.totalAttempts}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-light-secondary dark:text-dark-secondary">Time Remaining</p>
+                                <p className="text-gray-600 dark:text-gray-400">Time Remaining</p>
                                 <div className="flex items-center gap-1">
                                   <p className={`font-medium ${
                                     user.isActive ? getTimeColor(displayTimeRemaining) : 'text-gray-500 dark:text-gray-400'
@@ -843,8 +843,8 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-light-secondary dark:text-dark-secondary">Last Activity</p>
-                                <p className="font-medium text-light-primary dark:text-dark-primary text-xs">
+                                <p className="text-gray-600 dark:text-gray-400">Last Activity</p>
+                                <p className="font-medium text-black dark:text-white text-xs">
                                   {user.lastActivity ? new Date(user.lastActivity).toLocaleTimeString() : 'N/A'}
                                 </p>
                               </div>
@@ -853,7 +853,7 @@ const AdminDashboard = () => {
                             {/* Time Progress Bar for Active Users */}
                             {user.isActive && displayTimeRemaining > 0 && (
                               <div className="mt-3">
-                                <div className="flex justify-between text-xs text-light-secondary dark:text-dark-secondary mb-1">
+                                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                   <span>Time Progress</span>
                                   <span>{Math.round((displayTimeRemaining / 3600) * 100)}%</span>
                                 </div>
@@ -872,39 +872,14 @@ const AdminDashboard = () => {
                               </div>
                             )}
 
-                            {user.submissions && user.submissions.length > 0 && (
-                              <div className="mt-4">
-                                <p className="text-sm text-light-secondary dark:text-dark-secondary mb-2">
-                                  Recent Submissions:
-                                </p>
-                                <div className="flex gap-2 flex-wrap">
-                                  {user.submissions.slice(-5).map((submission, index) => (
-                                    <span
-                                      key={index}
-                                      className={`px-2 py-1 text-xs rounded flex items-center gap-1 ${submission.isCorrect
-                                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                      }`}
-                                    >
-                                      L{submission.level}: {submission.isCorrect ? '✓' : '✗'}
-                                      <span className="text-xs opacity-60">
-                                        {new Date(submission.timestamp).toLocaleTimeString()}
-                                      </span>
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Challenge Status */}
                             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                               <div className="flex items-center justify-between text-xs">
                                 <div className="flex items-center gap-4">
-                                  <span className="text-light-secondary dark:text-dark-secondary">
+                                  <span className="text-gray-600 dark:text-gray-400">
                                     Started: {user.challengeStartTime ? new Date(user.challengeStartTime).toLocaleTimeString() : 'N/A'}
                                   </span>
                                   {user.challengeEndTime && (
-                                    <span className="text-light-secondary dark:text-dark-secondary">
+                                    <span className="text-gray-600 dark:text-gray-400">
                                       Ends: {new Date(user.challengeEndTime).toLocaleTimeString()}
                                     </span>
                                   )}
@@ -927,10 +902,10 @@ const AdminDashboard = () => {
                   })}
                   
                   {monitoring.length === 0 && (
-                    <div className="text-center py-8 text-light-secondary dark:text-dark-secondary">
+                    <div className="text-center py-8 text-gray-600 dark:text-gray-400">
                       <FiMonitor className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No active users to monitor</p>
-                      <p className="text-sm">Users will appear here when they start challenges</p>
+                      <p className="text-sm">No active users to monitor</p>
+                      <p className="text-xs">Users will appear here when they start challenges</p>
                     </div>
                   )}
                 </div>
@@ -945,7 +920,7 @@ const AdminDashboard = () => {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-light-primary dark:text-dark-primary">
+                  <h3 className="text-lg font-semibold text-black dark:text-white">
                     {editingChallenge ? 'Edit Challenge' : 'Create New Challenge'}
                   </h3>
                   <button
@@ -959,14 +934,14 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                   {/* Level */}
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Level
                     </label>
                     <input
                       type="number"
                       value={challengeForm.level}
                       onChange={(e) => setChallengeForm({...challengeForm, level: parseInt(e.target.value)})}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       min="1"
                       placeholder="1"
                     />
@@ -974,56 +949,56 @@ const AdminDashboard = () => {
 
                   {/* Title */}
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Title
                     </label>
                     <input
                       type="text"
                       value={challengeForm.title}
                       onChange={(e) => setChallengeForm({...challengeForm, title: e.target.value})}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       placeholder="Challenge title"
                     />
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Description
                     </label>
                     <textarea
                       value={challengeForm.description}
                       onChange={(e) => setChallengeForm({...challengeForm, description: e.target.value})}
                       rows={4}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       placeholder="Challenge description"
                     />
                   </div>
 
                   {/* Hint */}
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Hint (Optional)
                     </label>
                     <textarea
                       value={challengeForm.hint}
                       onChange={(e) => setChallengeForm({...challengeForm, hint: e.target.value})}
                       rows={2}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       placeholder="Hint for users"
                     />
                   </div>
 
                   {/* Flag */}
                   <div>
-                    <label className="block text-sm font-medium text-light-secondary dark:text-dark-secondary mb-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Flag
                     </label>
                     <input
                       type="text"
                       value={challengeForm.flag}
                       onChange={(e) => setChallengeForm({...challengeForm, flag: e.target.value})}
-                      className="input"
+                      className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
                       placeholder="BizTras{flag_content}"
                     />
                   </div>
@@ -1032,14 +1007,14 @@ const AdminDashboard = () => {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={handleSaveChallenge}
-                    className="btn-primary flex items-center gap-2"
+                    className="flex items-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiSave className="w-4 h-4" />
                     {editingChallenge ? 'Update Challenge' : 'Create Challenge'}
                   </button>
                   <button
                     onClick={() => setShowChallengeModal(false)}
-                    className="btn-secondary"
+                    className="px-6 py-3 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Cancel
                   </button>
