@@ -1,28 +1,13 @@
-// Updated src/services/api.js
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-// Determine the correct API base URL
-const getApiBaseUrl = () => {
-  // For production (Vercel)
-  if (process.env.REACT_APP_API_BASE_URL) {
-    return process.env.REACT_APP_API_BASE_URL;
-  }
-  
-  // For development - check both environment variables
-  if (process.env.REACT_APP_API_BASE_URL) {
-    return process.env.REACT_APP_API_BASE_URL;
-  }
-};
-
-// Create axios instance with proper configuration
+// Create axios instance
 const api = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
-  },
-  withCredentials: true // Important for CORS with credentials
+  }
 });
 
 // Request interceptor
@@ -42,13 +27,9 @@ api.interceptors.request.use(
       };
     }
     
-    // Log request for debugging
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-    
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -59,18 +40,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Enhanced error logging
-    if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
-      console.error('Network Error Details:', {
-        message: error.message,
-        config: error.config,
-        baseURL: error.config?.baseURL,
-        url: error.config?.url
-      });
-      toast.error('Network error. Please check your connection and server status.');
-      return Promise.reject(error);
-    }
-
     // Handle common errors
     if (error.response) {
       const { status, data } = error.response;
@@ -92,6 +61,7 @@ api.interceptors.response.use(
           } else if (data.code === 'CHALLENGE_INACTIVE') {
             toast.warning('Challenge is not currently active.');
           } else if (data.code === 'CHALLENGE_ALREADY_ENDED') {
+            // NEW: Handle challenge already ended
             toast.error(data.error);
           }
           break;
@@ -123,10 +93,8 @@ api.interceptors.response.use(
           }
       }
     } else if (error.request) {
-      console.error('Request made but no response received:', error.request);
       toast.error('Network error. Please check your connection.');
     } else {
-      console.error('Error setting up request:', error.message);
       toast.error('An unexpected error occurred.');
     }
     
@@ -171,15 +139,18 @@ export const adminAPI = {
   resetUser: (userId) => 
     api.put(`/admin/users/${userId}/reset`),
     
+  // NEW: Get user reset history
   getUserResetHistory: (userId) =>
     api.get(`/admin/users/${userId}/reset-history`),
     
+  // NEW: Force end user challenge
   forceEndChallenge: (userId, reason) =>
     api.put(`/admin/users/${userId}/force-end`, { reason }),
     
   bulkApproveUsers: (userIds) =>
     api.put('/admin/users/bulk-approve', { userIds }),
     
+  // NEW: Bulk reset users
   bulkResetUsers: (userIds) =>
     api.put('/admin/users/bulk-reset', { userIds }),
     
@@ -224,14 +195,78 @@ export const challengeAPI = {
   submitFlag: (flag) => 
     api.post('/challenge/submit', { flag }),
     
+  getStatus: () => 
+    api.get('/challenge/status'),
+    
+  // NEW: Check if user can start challenge
+  getCanStart: () =>
+    api.get('/challenge/can-start'),
+    
   getHint: () => 
     api.get('/challenge/hint'),
     
-  endChallenge: () => 
-    api.post('/challenge/end'),
+  getSubmissions: (level) => 
+    api.get('/challenge/submissions', { params: { level } }),
     
-  getResults: () => 
-    api.get('/challenge/results')
+  resetChallenge: () =>
+    api.post('/challenge/reset'),
+    
+  getLeaderboard: (limit = 10) =>
+    api.get('/challenge/leaderboard', { params: { limit } }),
+    
+  getChallengeInfo: () =>
+    api.get('/challenge/info'),
+    
+  getLevels: () =>
+    api.get('/challenge/levels'),
+    
+  validateFlag: (flag, level) =>
+    api.post('/challenge/validate', { flag, level })
+};
+
+export const utilAPI = {
+  healthCheck: () => 
+    api.get('/health')
+};
+
+// Helper functions
+export const handleApiError = (error) => {
+  if (error.response?.data?.error) {
+    return error.response.data.error;
+  } else if (error.request) {
+    return 'Network error. Please check your connection.';
+  } else {
+    return 'An unexpected error occurred.';
+  }
+};
+
+export const isNetworkError = (error) => {
+  return !error.response && error.request;
+};
+
+export const getErrorCode = (error) => {
+  return error.response?.data?.code || null;
+};
+
+// NEW: Check if error indicates challenge already ended
+export const isChallengeEndedError = (error) => {
+  return error.response?.data?.code === 'CHALLENGE_ALREADY_ENDED';
+};
+
+// NEW: Check if error indicates user cannot restart
+export const isRestartPreventedError = (error) => {
+  const code = error.response?.data?.code;
+  return code === 'CHALLENGE_ALREADY_ENDED' || 
+         code === 'CHALLENGE_COMPLETED' || 
+         code === 'CHALLENGE_EXPIRED';
+};
+
+// NEW: Get challenge end reason from error
+export const getChallengeEndReason = (error) => {
+  if (error.response?.data?.reason) {
+    return error.response.data.reason;
+  }
+  return null;
 };
 
 export default api;
