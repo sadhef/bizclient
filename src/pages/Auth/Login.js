@@ -72,7 +72,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900 flex items-center justify-center p-4 pt-20 pb-8">
       <div className="max-w-md w-full">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -82,10 +82,22 @@ const Login = () => {
 
         {/* Logo and Title */}
         <div className="text-center mb-8 relative z-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-3xl mb-6 shadow-professional-lg">
-            <span className="text-white dark:text-black font-black text-3xl">BT</span>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white dark:bg-gray-900 rounded-3xl mb-6 shadow-professional-lg p-2 border border-gray-200 dark:border-gray-700">
+            <img 
+              src="/biztras.png" 
+              alt="BizTras Logo" 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                // Fallback to text if image fails to load
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="w-full h-full bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black font-black text-2xl hidden">
+              BT
+            </div>
           </div>
-          <h1 className="text-4xl font-black text-black dark:text-white mb-3 leading-none">
+          <h1 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-3 leading-none">
             Welcome Back
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">

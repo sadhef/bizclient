@@ -37,7 +37,7 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close menus when clicking outside
+  // Close menus when clicking outside or route changes
   useEffect(() => {
     const handleClickOutside = () => {
       setIsMenuOpen(false);
@@ -48,6 +48,12 @@ const Navbar = () => {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [isMenuOpen, isProfileMenuOpen]);
+
+  // Close menus on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -77,25 +83,39 @@ const Navbar = () => {
     </Link>
   );
 
+  // Logo Component for reusability
+  const Logo = ({ className = "w-10 h-10" }) => (
+    <div className={`${className} bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-300 group-hover:scale-105 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700`}>
+      <img 
+        src="/biztras.png" 
+        alt="BizTras Logo" 
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          // Fallback to text if image fails to load
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'flex';
+        }}
+      />
+      <div className="w-full h-full bg-black dark:bg-white rounded flex items-center justify-center text-white dark:text-black font-black text-sm hidden">
+        BT
+      </div>
+    </div>
+  );
+
   // Homepage navbar when not authenticated
   if (isHomepage && !isAuthenticated()) {
     return (
-      <nav className={`nav-professional transition-all duration-300 ${scrolled ? 'bg-white/95 dark:bg-black/95 shadow-professional' : 'bg-white/70 dark:bg-black/70'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300 ${scrolled ? 'shadow-lg' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-4 group">
-              <div className="relative">
-                <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                  <span className="text-white dark:text-black font-black text-lg">BT</span>
-                </div>
-                <div className="absolute inset-0 bg-black/20 dark:bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-sm" />
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <Logo />
               <div className="hidden sm:block">
-                <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
+                <div className="text-xl font-black text-black dark:text-white tracking-tight">
                   BIZTRAS CTF
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                   Cybersecurity Excellence
                 </div>
               </div>
@@ -103,18 +123,6 @@ const Navbar = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
-              <div className="flex items-center gap-6">
-                <a href="#features" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Features
-                </a>
-                <a href="#testimonials" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Testimonials
-                </a>
-                <a href="#contact" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Contact
-                </a>
-              </div>
-
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
@@ -168,33 +176,22 @@ const Navbar = () => {
 
           {/* Mobile menu */}
           {isMenuOpen && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-lg">
               <div className="px-4 py-6 space-y-4">
-                <a href="#features" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Features
-                </a>
-                <a href="#testimonials" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Testimonials
-                </a>
-                <a href="#contact" className="block py-3 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white font-medium transition-colors">
-                  Contact
-                </a>
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-3">
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="btn-professional-ghost w-full"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="btn-professional-primary w-full"
-                  >
-                    Get Started
-                  </Link>
-                </div>
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="btn-professional-ghost w-full"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="btn-professional-primary w-full"
+                >
+                  Get Started
+                </Link>
               </div>
             </div>
           )}
@@ -206,19 +203,17 @@ const Navbar = () => {
   // Auth pages navbar
   if ((location.pathname === '/login' || location.pathname === '/register') && !isAuthenticated()) {
     return (
-      <nav className="nav-professional">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-4 group">
-              <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                <span className="text-white dark:text-black font-black text-lg">BT</span>
-              </div>
+            <Link to="/" className="flex items-center gap-3 group">
+              <Logo />
               <div className="hidden sm:block">
-                <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
+                <div className="text-xl font-black text-black dark:text-white tracking-tight">
                   BIZTRAS CTF
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                   Cybersecurity Excellence
                 </div>
               </div>
@@ -259,7 +254,7 @@ const Navbar = () => {
 
           {/* Mobile menu for auth pages */}
           {isMenuOpen && (
-            <div className="sm:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+            <div className="sm:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-lg">
               <div className="px-4 py-6 space-y-4">
                 {location.pathname === '/login' ? (
                   <Link
@@ -295,25 +290,20 @@ const Navbar = () => {
 
   // Authenticated user navbar
   return (
-    <nav className={`nav-professional transition-all duration-300 ${scrolled ? 'shadow-professional-lg' : ''}`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300 ${scrolled ? 'shadow-lg' : ''}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link 
             to={isAuthenticated() ? (user?.isAdmin ? '/admin' : '/dashboard') : '/'} 
-            className="flex items-center gap-4 group"
+            className="flex items-center gap-3 group"
           >
-            <div className="relative">
-              <div className="w-12 h-12 bg-black dark:bg-white flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                <span className="text-white dark:text-black font-black text-lg">BT</span>
-              </div>
-              <div className="absolute inset-0 bg-black/20 dark:bg-white/20 scale-0 group-hover:scale-110 transition-transform duration-300 rounded-sm" />
-            </div>
+            <Logo />
             <div className="hidden sm:block">
-              <div className="text-2xl font-black text-black dark:text-white tracking-tighter">
+              <div className="text-xl font-black text-black dark:text-white tracking-tight">
                 BIZTRAS CTF
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider -mt-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                 {isAdmin() ? 'Admin Portal' : 'Challenge Platform'}
               </div>
             </div>
@@ -329,9 +319,9 @@ const Navbar = () => {
                     Dashboard
                   </NavLink>
                   <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
-                  <div className="flex items-center gap-1 px-3 py-2 bg-black/5 dark:bg-white/5 rounded-lg">
+                  <div className="flex items-center gap-1 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <FiShield className="w-4 h-4 text-red-500" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Admin Mode</span>
+                    <span className="text-sm font-medium text-red-700 dark:text-red-400">Admin Mode</span>
                   </div>
                 </div>
               ) : (
@@ -515,7 +505,7 @@ const Navbar = () => {
 
         {/* Mobile navigation menu */}
         {isAuthenticated() && isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-professional-lg">
+          <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-lg">
             <div className="px-4 py-6">
               {/* User info on mobile */}
               <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-200 dark:border-gray-800">

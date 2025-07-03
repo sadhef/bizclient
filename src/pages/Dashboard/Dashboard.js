@@ -182,16 +182,16 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className={`w-12 h-12 rounded-2xl ${bgColor === "bg-white dark:bg-gray-950" ? "bg-gray-100 dark:bg-gray-800" : "bg-white/20 dark:bg-black/20"} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-              <Icon className={`w-6 h-6 ${color}`} />
+            <div className={`w-10 h-10 rounded-xl ${bgColor === "bg-white dark:bg-gray-950" ? "bg-gray-100 dark:bg-gray-800" : "bg-white/20 dark:bg-black/20"} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+              <Icon className={`w-5 h-5 ${color}`} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</p>
-              <p className={`text-2xl font-black ${color} leading-none`}>{value}</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</p>
+              <p className={`text-xl font-black ${color} leading-none`}>{value}</p>
             </div>
           </div>
           {description && (
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">{description}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{description}</p>
           )}
         </div>
       </div>
@@ -207,28 +207,28 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-white dark:bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header Section */}
-        <div className="mb-12">
+        <div className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-2xl flex items-center justify-center">
-                  <span className="text-white dark:text-black text-2xl font-black">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-xl flex items-center justify-center">
+                  <span className="text-white dark:text-black text-xl font-black">
                     {user?.username?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-black text-black dark:text-white leading-none">
+                  <h1 className="text-3xl md:text-4xl font-black text-black dark:text-white leading-none">
                     Welcome back,
                   </h1>
-                  <p className="text-2xl md:text-3xl font-light text-gray-600 dark:text-gray-400">
+                  <p className="text-xl md:text-2xl font-light text-gray-600 dark:text-gray-400">
                     {user?.username}
                   </p>
                 </div>
               </div>
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl">
+              <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl">
                 {isAdmin() 
                   ? 'Monitor and manage your CTF platform from the admin dashboard.' 
                   : isApproved()
@@ -245,7 +245,7 @@ const Dashboard = () => {
                   onClick={() => history.push('/admin')}
                   className="btn-professional-primary group"
                 >
-                  <FiShield className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <FiShield className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   Admin Portal
                 </button>
               ) : challengeStatus?.isActive && timerActive ? (
@@ -254,7 +254,7 @@ const Dashboard = () => {
                   className="btn-professional-primary group relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <FiZap className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform" />
+                  <FiZap className="w-4 h-4 relative z-10 group-hover:scale-110 transition-transform" />
                   <span className="relative z-10">Continue Challenge</span>
                 </button>
               ) : null}
@@ -263,7 +263,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             icon={FiUser}
             label="Account Status"
@@ -304,20 +304,20 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Primary Content */}
-          <div className="xl:col-span-2 space-y-8">
+          <div className="xl:col-span-2 space-y-6">
             {/* Challenge Status Card */}
             <div className="card-enhanced">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-2xl flex items-center justify-center">
-                  <FiAward className="w-7 h-7 text-white dark:text-black" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-xl flex items-center justify-center">
+                  <FiAward className="w-6 h-6 text-white dark:text-black" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-black dark:text-white">
+                  <h2 className="text-xl font-black text-black dark:text-white">
                     Challenge Hub
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Your cybersecurity challenge dashboard
                   </p>
                 </div>
@@ -325,25 +325,25 @@ const Dashboard = () => {
 
               {!isApproved() && !isAdmin() ? (
                 /* Pending Approval State */
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-3xl mb-6">
-                    <FiAlertCircle className="w-10 h-10 text-yellow-600 dark:text-yellow-400" />
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-2xl mb-4">
+                    <FiAlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-3">
                     Account Pending Approval
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
                     Your account is currently under review by our administrators. 
                     You'll receive access to challenges once your account is approved.
                   </p>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6">
-                    <div className="flex items-start gap-4">
-                      <FiInfo className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-1" />
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <FiInfo className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2">
+                        <h4 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2 text-sm">
                           What happens next?
                         </h4>
-                        <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-2">
+                        <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
                           <li>• Administrators will review your account within 24-48 hours</li>
                           <li>• You'll receive email notification once approved</li>
                           <li>• Full challenge access will be enabled immediately</li>
@@ -354,37 +354,37 @@ const Dashboard = () => {
                 </div>
               ) : !challengeInfo?.challengeActive ? (
                 /* Challenge Inactive State */
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl mb-6">
-                    <FiPause className="w-10 h-10 text-gray-600 dark:text-gray-400" />
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-4">
+                    <FiPause className="w-8 h-8 text-gray-600 dark:text-gray-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-3">
                     Challenge Platform Inactive
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                     The challenge platform is currently offline. Check back later for updates.
                   </p>
                 </div>
               ) : challengeStatus?.isCompleted || challengeStatus?.isExpired ? (
                 /* Challenge Completed/Expired State */
-                <div className="text-center py-12">
-                  <div className={`inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 ${
+                <div className="text-center py-8">
+                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 ${
                     challengeStatus.isCompleted 
                       ? 'bg-green-100 dark:bg-green-900/30' 
                       : 'bg-red-100 dark:bg-red-900/30'
                   }`}>
                     {challengeStatus.isCompleted ? (
-                      <FiCheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+                      <FiCheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
                     ) : (
-                      <FiXCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+                      <FiXCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                     )}
                   </div>
                   
-                  <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-3">
                     {challengeStatus.isCompleted ? 'Challenge Completed!' : 'Challenge Expired'}
                   </h3>
                   
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                     {challengeStatus.isCompleted 
                       ? 'Congratulations! You have successfully completed all challenge levels.'
                       : 'Your challenge time has expired. Contact an admin to reset your progress.'
@@ -392,26 +392,26 @@ const Dashboard = () => {
                   </p>
 
                   {/* Results Summary */}
-                  <div className="grid grid-cols-2 gap-6 max-w-sm mx-auto mb-8">
+                  <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-6">
                     <div className="text-center">
-                      <div className="text-3xl font-black text-black dark:text-white mb-2">
+                      <div className="text-2xl font-black text-black dark:text-white mb-1">
                         {challengeStatus?.completedLevels?.length || 0}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         Levels Completed
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-3xl font-black text-black dark:text-white mb-2">
+                      <div className="text-2xl font-black text-black dark:text-white mb-1">
                         {challengeStatus?.totalAttempts || 0}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         Total Attempts
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
                       onClick={() => history.push('/thank-you')}
                       className="btn-professional-primary"
@@ -421,7 +421,7 @@ const Dashboard = () => {
                     </button>
                     {!challengeStatus.isCompleted && (
                       <div className="text-center">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Need to restart? Contact an administrator
                         </p>
                       </div>
@@ -431,16 +431,16 @@ const Dashboard = () => {
               ) : challengeStatus?.hasStarted ? (
                 /* Challenge In Progress State */
                 <div>
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-xl font-bold text-black dark:text-white mb-2">
+                      <h3 className="text-lg font-bold text-black dark:text-white mb-1">
                         Challenge in Progress
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Level {challengeStatus.currentLevel} of {challengeInfo?.totalLevels}
                       </p>
                     </div>
-                    <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold ${
                       timerActive
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
@@ -451,19 +451,19 @@ const Dashboard = () => {
 
                   {/* Live Timer Display */}
                   {timerActive && timeRemaining > 0 && (
-                    <div className="bg-gradient-to-r from-black/5 via-transparent to-black/5 dark:from-white/5 dark:via-transparent dark:to-white/5 rounded-2xl p-6 mb-8">
+                    <div className="bg-gradient-to-r from-black/5 via-transparent to-black/5 dark:from-white/5 dark:via-transparent dark:to-white/5 rounded-xl p-4 mb-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Time Remaining</p>
-                          <div className={`text-4xl font-black ${timerColor} flex items-center gap-3`}>
-                            <FiClock className="w-8 h-8" />
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Time Remaining</p>
+                          <div className={`text-2xl font-black ${timerColor} flex items-center gap-2`}>
+                            <FiClock className="w-6 h-6" />
                             <span>{formatTime(timeRemaining)}</span>
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="w-24 h-24 relative">
-                            <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                          <div className="w-16 h-16 relative">
+                            <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
                               <path
                                 className="text-gray-200 dark:text-gray-700"
                                 stroke="currentColor"
@@ -488,18 +488,18 @@ const Dashboard = () => {
                   )}
 
                   {/* Progress Section */}
-                  <div className="mb-8">
-                    <div className="flex justify-between text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                  <div className="mb-6">
+                    <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                       <span>Challenge Progress</span>
                       <span>{getProgressPercentage()}% Complete</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-gradient-to-r from-black to-gray-700 dark:from-white dark:to-gray-300 h-3 rounded-full transition-all duration-500 ease-out"
+                        className="bg-gradient-to-r from-black to-gray-700 dark:from-white dark:to-gray-300 h-2 rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${getProgressPercentage()}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                       <span>{challengeStatus.completedLevels?.length || 0} completed</span>
                       <span>{challengeInfo?.totalLevels || 0} total levels</span>
                     </div>
@@ -512,7 +512,7 @@ const Dashboard = () => {
                     disabled={!timerActive}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <FiTarget className="w-5 h-5 relative z-10" />
+                    <FiTarget className="w-4 h-4 relative z-10" />
                     <span className="relative z-10">
                       {timerActive ? 'Continue Challenge' : 'Challenge Expired'}
                     </span>
@@ -520,24 +520,24 @@ const Dashboard = () => {
                 </div>
               ) : canStartInfo && !canStartInfo.canStart ? (
                 /* Cannot Start State */
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl mb-6">
-                    <FiXCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl mb-4">
+                    <FiXCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-3">
                     Cannot Start Challenge
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                     {canStartInfo.reason}
                   </p>
-                  <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                    <div className="flex items-start gap-4">
-                      <FiRefreshCw className="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" />
+                  <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <FiRefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                       <div className="text-left">
-                        <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-1 text-sm">
                           Need a Reset?
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
                           Contact an administrator to reset your challenge progress and try again.
                         </p>
                       </div>
@@ -546,33 +546,33 @@ const Dashboard = () => {
                 </div>
               ) : (
                 /* Ready to Start State */
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-3xl mb-6 group-hover:scale-105 transition-transform duration-300">
-                    <FiPlay className="w-10 h-10 text-white dark:text-black" />
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-black to-gray-700 dark:from-white dark:to-gray-300 rounded-2xl mb-4 group-hover:scale-105 transition-transform duration-300">
+                    <FiPlay className="w-8 h-8 text-white dark:text-black" />
                   </div>
-                  <h3 className="text-2xl font-bold text-black dark:text-white mb-4">
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-3">
                     Ready to Begin
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
                     Start your cybersecurity challenge journey with {challengeInfo?.totalLevels} progressively challenging levels.
                   </p>
                   
                   {/* Challenge preview */}
-                  <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+                  <div className="grid grid-cols-3 gap-3 max-w-md mx-auto mb-6">
                     <div className="text-center">
-                      <div className="text-2xl font-black text-black dark:text-white mb-1">
+                      <div className="text-xl font-black text-black dark:text-white mb-1">
                         {challengeInfo?.totalLevels || 'N/A'}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">Levels</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-black text-black dark:text-white mb-1">
+                      <div className="text-xl font-black text-black dark:text-white mb-1">
                         {challengeInfo?.timeLimit || 'N/A'}m
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">Time Limit</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-black text-black dark:text-white mb-1">
+                      <div className="text-xl font-black text-black dark:text-white mb-1">
                         ∞
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">Attempts</div>
@@ -592,7 +592,7 @@ const Dashboard = () => {
                       </>
                     ) : (
                       <>
-                        <FiZap className="w-5 h-5 relative z-10 group-hover:scale-110 transition-transform" />
+                        <FiZap className="w-4 h-4 relative z-10 group-hover:scale-110 transition-transform" />
                         <span className="relative z-10">Start Challenge</span>
                       </>
                     )}
@@ -604,33 +604,33 @@ const Dashboard = () => {
             {/* Quick Stats */}
             {(isApproved() || isAdmin()) && challengeStatus && (
               <div className="card-enhanced">
-                <h3 className="text-xl font-bold text-black dark:text-white mb-6">
+                <h3 className="text-lg font-bold text-black dark:text-white mb-4">
                   Quick Statistics
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-black text-blue-500 dark:text-blue-400 mb-2">
+                    <div className="text-2xl font-black text-blue-500 dark:text-blue-400 mb-1">
                       {challengeStatus.currentLevel}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Current Level</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Current Level</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-black text-green-500 dark:text-green-400 mb-2">
+                    <div className="text-2xl font-black text-green-500 dark:text-green-400 mb-1">
                       {challengeStatus.completedLevels?.length || 0}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Completed</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Completed</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-black text-purple-500 dark:text-purple-400 mb-2">
+                    <div className="text-2xl font-black text-purple-500 dark:text-purple-400 mb-1">
                       {challengeStatus.totalAttempts || 0}
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Attempts</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Attempts</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-black text-orange-500 dark:text-orange-400 mb-2">
+                    <div className="text-2xl font-black text-orange-500 dark:text-orange-400 mb-1">
                       {getProgressPercentage()}%
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Progress</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">Progress</div>
                   </div>
                 </div>
               </div>
@@ -638,42 +638,42 @@ const Dashboard = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Challenge Info */}
             <div className="card-enhanced">
-              <div className="flex items-center gap-3 mb-6">
-                <FiInfo className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-                <h3 className="text-lg font-bold text-black dark:text-white">
+              <div className="flex items-center gap-2 mb-4">
+                <FiInfo className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                <h3 className="text-base font-bold text-black dark:text-white">
                   Platform Info
                 </h3>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Challenge Title</div>
-                  <div className="font-semibold text-black dark:text-white">
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Challenge Title</div>
+                  <div className="font-semibold text-black dark:text-white text-sm">
                     {challengeInfo?.challengeTitle || 'BizTras CTF Challenge'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Levels</div>
-                  <div className="font-semibold text-black dark:text-white">
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Levels</div>
+                  <div className="font-semibold text-black dark:text-white text-sm">
                     {challengeInfo?.totalLevels || 'N/A'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Time Limit</div>
-                  <div className="font-semibold text-black dark:text-white">
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Time Limit</div>
+                  <div className="font-semibold text-black dark:text-white text-sm">
                     {challengeInfo?.timeLimit ? `${challengeInfo.timeLimit} minutes` : 'N/A'}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Platform Status</div>
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Platform Status</div>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                     challengeInfo?.challengeActive 
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                   }`}>
-                    <div className={`w-2 h-2 rounded-full ${
+                    <div className={`w-1.5 h-1.5 rounded-full ${
                       challengeInfo?.challengeActive ? 'bg-green-500' : 'bg-red-500'
                     }`} />
                     {challengeInfo?.challengeActive ? 'Active' : 'Inactive'}
@@ -686,23 +686,23 @@ const Dashboard = () => {
             {challengeStatus?.hasStarted && timerActive && timeRemaining > 0 && (
               <div className="card-enhanced bg-gradient-to-br from-black to-gray-800 dark:from-white dark:to-gray-200 text-white dark:text-black">
                 <div className="text-center">
-                  <h3 className="text-lg font-bold mb-4 flex items-center justify-center gap-2">
-                    <FiClock className="w-5 h-5" />
+                  <h3 className="text-base font-bold mb-3 flex items-center justify-center gap-2">
+                    <FiClock className="w-4 h-4" />
                     Live Challenge Timer
                   </h3>
-                  <div className="text-4xl font-black mb-4">
+                  <div className="text-3xl font-black mb-3">
                     {formatTime(timeRemaining)}
                   </div>
-                  <div className="w-full bg-white/20 dark:bg-black/20 rounded-full h-2 mb-4">
+                  <div className="w-full bg-white/20 dark:bg-black/20 rounded-full h-1.5 mb-3">
                     <div 
-                      className="bg-white dark:bg-black h-2 rounded-full transition-all duration-1000"
+                      className="bg-white dark:bg-black h-1.5 rounded-full transition-all duration-1000"
                       style={{ 
                         width: `${Math.max(0, Math.min(100, (timeRemaining / 3600) * 100))}%` 
                       }}
                     />
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-sm opacity-80">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <div className="flex items-center justify-center gap-1 text-xs opacity-80">
+                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                     <span>Live Updates</span>
                   </div>
                 </div>
@@ -711,22 +711,22 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
             <div className="card-enhanced">
-              <h3 className="text-lg font-bold text-black dark:text-white mb-6">
+              <h3 className="text-base font-bold text-black dark:text-white mb-4">
                 Quick Actions
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {isAdmin() ? (
                   <>
                     <button
                       onClick={() => history.push('/admin')}
-                      className="btn-professional-secondary w-full justify-start"
+                      className="btn-professional-secondary w-full justify-start text-sm"
                     >
                       <FiShield className="w-4 h-4" />
                       Admin Dashboard
                     </button>
                     <button
                       onClick={() => history.push('/admin?tab=users')}
-                      className="btn-professional-ghost w-full justify-start"
+                      className="btn-professional-ghost w-full justify-start text-sm"
                     >
                       <FiUser className="w-4 h-4" />
                       Manage Users
@@ -736,7 +736,7 @@ const Dashboard = () => {
                   <>
                     <button
                       onClick={() => history.push('/challenges')}
-                      className="btn-professional-secondary w-full justify-start"
+                      className="btn-professional-secondary w-full justify-start text-sm"
                     >
                       <FiTarget className="w-4 h-4" />
                       View Challenges
@@ -744,7 +744,7 @@ const Dashboard = () => {
                     {challengeStatus?.hasStarted && challengeStatus?.isActive && (
                       <button
                         onClick={() => history.push('/challenge')}
-                        className="btn-professional-primary w-full justify-start"
+                        className="btn-professional-primary w-full justify-start text-sm"
                       >
                         <FiPlay className="w-4 h-4" />
                         Current Challenge
@@ -752,7 +752,7 @@ const Dashboard = () => {
                     )}
                     <button
                       onClick={() => history.push('/profile')}
-                      className="btn-professional-ghost w-full justify-start"
+                      className="btn-professional-ghost w-full justify-start text-sm"
                     >
                       <FiUser className="w-4 h-4" />
                       My Profile
@@ -766,13 +766,13 @@ const Dashboard = () => {
             {challengeStatus?.isCompleted && (
               <div className="card-enhanced bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-800">
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl mb-4">
-                    <FiAward className="w-8 h-8 text-white" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl mb-3">
+                    <FiAward className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="font-bold text-black dark:text-white mb-2">
+                  <h3 className="font-bold text-black dark:text-white mb-1 text-sm">
                     CTF Champion!
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     You've conquered all challenge levels
                   </p>
                 </div>

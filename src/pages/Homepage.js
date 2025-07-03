@@ -6,19 +6,14 @@ import {
   FiArrowRight,
   FiLock,
   FiAward,
-  FiGithub,
-  FiLinkedin,
-  FiTwitter,
-  FiMail,
-  FiGlobe,
-  FiStar,
   FiZap,
   FiCheckCircle,
-  FiClock,
   FiUsers,
   FiTarget,
   FiCode,
-  FiActivity
+  FiActivity,
+  FiShield,
+  FiStar
 } from 'react-icons/fi';
 
 const Homepage = () => {
@@ -32,13 +27,13 @@ const Homepage = () => {
   const stats = [
     { 
       number: '10,000+', 
-      label: 'Active Security Professionals',
+      label: 'Security Professionals',
       icon: FiUsers,
-      description: 'Join thousands of cybersecurity experts'
+      description: 'Join our expert community'
     },
     { 
       number: '500+', 
-      label: 'Security Challenges',
+      label: 'CTF Challenges',
       icon: FiTarget,
       description: 'Comprehensive challenge library'
     },
@@ -56,29 +51,38 @@ const Homepage = () => {
     }
   ];
 
+  const features = [
+    {
+      icon: FiShield,
+      title: 'Professional Security Training',
+      description: 'Industry-standard cybersecurity challenges designed by experts'
+    },
+    {
+      icon: FiTarget,
+      title: 'Progressive Difficulty',
+      description: 'Carefully crafted levels that build your skills step by step'
+    },
+    {
+      icon: FiUsers,
+      title: 'Expert Community',
+      description: 'Learn from and compete with top security professionals'
+    },
+    {
+      icon: FiAward,
+      title: 'Professional Recognition',
+      description: 'Earn certificates and build your cybersecurity portfolio'
+    }
+  ];
+
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section className="relative min-h-screen flex items-center justify-center pt-20">
         {/* Animated background pattern */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-black dark:to-gray-900" />
-          <div className="absolute inset-0 opacity-30">
-            <div className="grid grid-cols-12 h-full">
-              {Array.from({ length: 144 }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className="border border-gray-200/20 dark:border-gray-800/20 transition-all duration-1000"
-                  style={{
-                    animationDelay: `${i * 0.05}s`,
-                    animation: 'fadeIn 2s ease-in-out infinite alternate'
-                  }}
-                />
-              ))}
-            </div>
-          </div>
           
           {/* Floating elements */}
           <div className="absolute top-20 left-10 w-32 h-32 bg-black/5 dark:bg-white/5 rounded-full blur-xl animate-float" />
@@ -88,57 +92,56 @@ const Homepage = () => {
 
         {/* Hero content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="animate-fade-in-up">
+          <div className="animate-fade-in">
             {/* Hero badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full mb-8">
               <FiStar className="w-4 h-4 text-black dark:text-white" />
-              <span className="text-sm font-medium">Trusted by 10,000+ Security Professionals</span>
+              <span className="text-sm font-medium text-black dark:text-white">
+                Trusted by 10,000+ Security Professionals
+              </span>
             </div>
 
             {/* Main headline */}
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-8 leading-none tracking-tighter">
-              <span className="block bg-gradient-to-r from-black via-gray-800 to-black dark:from-white dark:via-gray-200 dark:to-white bg-clip-text text-transparent">
-                MASTER
-              </span>
-              <span className="block text-black dark:text-white">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-none tracking-tighter text-black dark:text-white">
+              MASTER
+              <br />
+              <span className="bg-gradient-to-r from-gray-600 to-black dark:from-gray-400 dark:to-white bg-clip-text text-transparent">
                 CYBERSECURITY
               </span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl md:text-2xl lg:text-3xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed font-light">
+            <p className="text-lg md:text-xl lg:text-2xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed">
               Challenge yourself with real-world security scenarios. 
-              <span className="text-black dark:text-white font-medium"> Learn. Practice. Excel.</span>
+              <span className="text-black dark:text-white font-semibold"> Learn. Practice. Excel.</span>
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
               {isAuthenticated() ? (
                 <Link
                   to={user?.isAdmin ? '/admin' : '/dashboard'}
-                  className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
+                  className="btn-professional-primary group"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <FiPlay className="w-6 h-6 relative z-10" />
-                  <span className="relative z-10">Enter Platform</span>
-                  <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
+                  <FiPlay className="w-5 h-5" />
+                  <span>Enter Platform</span>
+                  <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               ) : (
                 <>
                   <Link
                     to="/register"
-                    className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
+                    className="btn-professional-primary group"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                    <FiZap className="w-6 h-6 relative z-10" />
-                    <span className="relative z-10">Start Challenge</span>
-                    <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
+                    <FiZap className="w-5 h-5" />
+                    <span>Start Challenge</span>
+                    <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/login"
-                    className="group inline-flex items-center gap-3 px-12 py-6 border-2 border-black dark:border-white text-black dark:text-white text-lg font-bold uppercase tracking-wider transition-all duration-300 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-none"
+                    className="btn-professional-secondary group"
                   >
-                    <FiLock className="w-6 h-6" />
+                    <FiLock className="w-5 h-5" />
                     <span>Sign In</span>
                   </Link>
                 </>
@@ -146,22 +149,22 @@ const Homepage = () => {
             </div>
 
             {/* Hero stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
                   <div 
                     key={index} 
-                    className="group text-center"
+                    className="text-center group"
                     style={{animationDelay: `${index * 0.2}s`}}
                   >
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-black/5 dark:bg-white/5 rounded-2xl mb-4 group-hover:scale-110 transition-all duration-300">
-                      <Icon className="w-8 h-8 text-black dark:text-white" />
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-black/5 dark:bg-white/5 rounded-xl mb-3 group-hover:scale-110 transition-all duration-300">
+                      <Icon className="w-6 h-6 text-black dark:text-white" />
                     </div>
-                    <div className="text-3xl md:text-4xl font-black text-black dark:text-white mb-2 group-hover:scale-105 transition-transform duration-300">
+                    <div className="text-2xl md:text-3xl font-black text-black dark:text-white mb-2">
                       {stat.number}
                     </div>
-                    <div className="text-sm md:text-base text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wider mb-2">
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {stat.label}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-500">
@@ -173,29 +176,50 @@ const Homepage = () => {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-0.5 h-16 bg-black dark:bg-white" />
-            <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">Scroll</div>
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-black text-black dark:text-white mb-4">
+              Why Choose BizTras CTF?
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+              Professional-grade cybersecurity training platform designed for serious learners
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div key={index} className="card-enhanced text-center group">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-black dark:bg-white rounded-xl mb-6 group-hover:scale-110 transition-all duration-300">
+                    <Icon className="w-8 h-8 text-white dark:text-black" />
+                  </div>
+                  <h3 className="text-lg font-bold text-black dark:text-white mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-black relative overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute top-20 left-20 w-64 h-64 bg-black/5 dark:bg-white/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-black/5 dark:bg-white/5 rounded-full blur-3xl" />
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-white dark:bg-black">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 rounded-full mb-8">
-            <FiZap className="w-4 h-4" />
-            <span className="text-sm font-medium uppercase tracking-wider">Ready to Excel?</span>
+            <FiZap className="w-4 h-4 text-black dark:text-white" />
+            <span className="text-sm font-medium text-black dark:text-white">Ready to Excel?</span>
           </div>
 
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-black dark:text-white mb-8 leading-none">
+          <h2 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-6 leading-none">
             START YOUR
             <br />
             <span className="bg-gradient-to-r from-gray-600 to-black dark:from-gray-400 dark:to-white bg-clip-text text-transparent">
@@ -203,21 +227,20 @@ const Homepage = () => {
             </span>
           </h2>
 
-          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed max-w-3xl mx-auto">
             Join the elite community of cybersecurity professionals. 
             <span className="text-black dark:text-white font-semibold"> Master real-world challenges. Advance your career.</span>
           </p>
 
           {!isAuthenticated() && (
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
               <Link
                 to="/register"
-                className="group relative inline-flex items-center gap-3 px-12 py-6 bg-black dark:bg-white text-white dark:text-black text-xl font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 hover:shadow-2xl rounded-none overflow-hidden"
+                className="btn-professional-primary group"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 dark:via-black/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                <FiAward className="w-6 h-6 relative z-10" />
-                <span className="relative z-10">Get Started Free</span>
-                <FiArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
+                <FiAward className="w-5 h-5" />
+                <span>Get Started Free</span>
+                <FiArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -236,70 +259,34 @@ const Homepage = () => {
               </div>
             </div>
           )}
-
-          {/* Trust indicators */}
-          <div className="mt-16 pt-16 border-t border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 uppercase tracking-wider font-medium">
-              Trusted by professionals at
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-12 opacity-60">
-              {['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'Tesla'].map((company, index) => (
-                <div key={index} className="text-lg font-bold text-gray-400 dark:text-gray-600">
-                  {company}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Simple Footer */}
-      <footer className="bg-black dark:bg-white text-white dark:text-black border-t-4 border-white dark:border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Footer */}
+      <footer className="bg-black dark:bg-white text-white dark:text-black py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {/* Brand section */}
-            <div className="md:col-span-1">
+            <div>
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-white dark:bg-black flex items-center justify-center rounded-none">
-                  <span className="text-black dark:text-white font-black text-2xl">BT</span>
+                <div className="w-12 h-12 bg-white dark:bg-black flex items-center justify-center rounded-xl">
+                  <span className="text-black dark:text-white font-black text-xl">BT</span>
                 </div>
                 <div>
-                  <div className="text-2xl font-black tracking-tighter">BIZTRAS CTF</div>
-                  <div className="text-sm text-gray-400 dark:text-gray-600 uppercase tracking-wider">Cybersecurity Excellence</div>
+                  <div className="text-xl font-black">BIZTRAS CTF</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-600">Cybersecurity Excellence</div>
                 </div>
               </div>
               
-              <p className="text-gray-300 dark:text-gray-700 text-base leading-relaxed mb-6 max-w-md">
-                The world's premier cybersecurity challenge platform. Master real-world security scenarios and advance your career in cybersecurity.
+              <p className="text-gray-300 dark:text-gray-700 text-sm leading-relaxed mb-6">
+                The world's premier cybersecurity challenge platform. Master real-world security scenarios and advance your career.
               </p>
-              
-              {/* Social links */}
-              <div className="flex gap-4">
-                {[
-                  { icon: FiGithub, href: '#', label: 'GitHub' },
-                  { icon: FiLinkedin, href: '#', label: 'LinkedIn' },
-                  { icon: FiTwitter, href: '#', label: 'Twitter' },
-                  { icon: FiMail, href: '#', label: 'Email' }
-                ].map((social, index) => {
-                  const Icon = social.icon;
-                  return (
-                    <a
-                      key={index}
-                      href={social.href}
-                      aria-label={social.label}
-                      className="w-12 h-12 bg-white/10 dark:bg-black/10 flex items-center justify-center hover:bg-white/20 dark:hover:bg-black/20 transition-colors duration-200 group"
-                    >
-                      <Icon className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-                    </a>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-lg font-bold mb-6 uppercase tracking-wider">Platform</h3>
-              <ul className="space-y-4">
+              <h3 className="text-lg font-bold mb-6">Platform</h3>
+              <ul className="space-y-3">
                 {[
                   { label: 'Sign Up', href: '/register' },
                   { label: 'Sign In', href: '/login' },
@@ -310,14 +297,14 @@ const Homepage = () => {
                     {link.href.startsWith('/') ? (
                       <Link 
                         to={link.href} 
-                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors duration-200 font-medium"
+                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors text-sm"
                       >
                         {link.label}
                       </Link>
                     ) : (
                       <a 
                         href={link.href} 
-                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors duration-200 font-medium"
+                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors text-sm"
                       >
                         {link.label}
                       </a>
@@ -327,60 +314,30 @@ const Homepage = () => {
               </ul>
             </div>
 
-            {/* Contact & Support */}
+            {/* Support */}
             <div>
-              <h3 className="text-lg font-bold mb-6 uppercase tracking-wider">Support</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <FiMail className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
-                  <div>
-                    <div className="text-sm text-gray-400 dark:text-gray-600">Email</div>
-                    <div className="font-medium">support@biztrastech.com</div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <FiGlobe className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
-                  <div>
-                    <div className="text-sm text-gray-400 dark:text-gray-600">Website</div>
-                    <div className="font-medium">www.biztrastech.com</div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <FiClock className="w-5 h-5 text-gray-400 dark:text-gray-600 mt-0.5" />
-                  <div>
-                    <div className="text-sm text-gray-400 dark:text-gray-600">Support Hours</div>
-                    <div className="font-medium">24/7 Available</div>
-                  </div>
-                </li>
-              </ul>
+              <h3 className="text-lg font-bold mb-6">Support</h3>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <div className="text-gray-400 dark:text-gray-600">Email</div>
+                  <div className="font-medium">support@biztrastech.com</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 dark:text-gray-600">Website</div>
+                  <div className="font-medium">www.biztrastech.com</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 dark:text-gray-600">Support Hours</div>
+                  <div className="font-medium">24/7 Available</div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Bottom section */}
-          <div className="border-t border-white/10 dark:border-black/10 pt-8 mt-12">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-gray-400 dark:text-gray-600 font-medium">
-                © 2024 BizTras Technologies. All rights reserved.
-              </div>
-              
-              <div className="flex flex-wrap gap-8">
-                {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="text-gray-400 dark:text-gray-600 hover:text-white dark:hover:text-black transition-colors duration-200 text-sm font-medium"
-                  >
-                    {link}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Final branding */}
-            <div className="text-center mt-8 pt-6 border-t border-white/5 dark:border-black/5">
-              <div className="text-gray-500 dark:text-gray-500 text-sm">
-                Built with ❤️ for the cybersecurity community
-              </div>
+          <div className="border-t border-white/10 dark:border-black/10 pt-8 mt-12 text-center">
+            <div className="text-gray-400 dark:text-gray-600 text-sm">
+              © 2024 BizTras Technologies. All rights reserved.
             </div>
           </div>
         </div>
@@ -388,17 +345,6 @@ const Homepage = () => {
 
       {/* Custom animation styles */}
       <style jsx>{`
-        @keyframes fadeIn {
-          0% {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
         @keyframes float {
           0%, 100% {
             transform: translateY(0px);
@@ -412,11 +358,11 @@ const Homepage = () => {
           animation: float 6s ease-in-out infinite;
         }
 
-        .animate-fade-in-up {
-          animation: fadeInUp 1s ease-out;
+        .animate-fade-in {
+          animation: fadeIn 1s ease-out;
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeIn {
           from {
             opacity: 0;
             transform: translateY(30px);
