@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,6 +12,7 @@ import Navbar from './components/Layout/Navbar';
 import LoadingSpinner from './components/UI/LoadingSpinner';
 
 // Pages
+import Homepage from './pages/Homepage';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -38,7 +39,7 @@ const ProtectedRoute = ({ children, adminOnly = false, approvedOnly = false, exc
     return <Redirect to="/dashboard" />;
   }
 
-  // NEW: Exclude admin from certain routes
+  // Exclude admin from certain routes
   if (excludeAdmin && user.isAdmin) {
     return <Redirect to="/admin" />;
   }
@@ -65,6 +66,20 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+// Layout wrapper for authenticated pages that need padding from navbar
+const AuthenticatedLayout = ({ children }) => {
+  return (
+    <main className="pt-16">
+      {children}
+    </main>
+  );
+};
+
+// Layout wrapper for pages that handle their own spacing (like homepage)
+const PublicLayout = ({ children }) => {
+  return children;
+};
+
 // Main App Content
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -75,76 +90,95 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-light-primary dark:bg-dark-primary transition-colors duration-200">
+      {/* Navbar is always visible */}
       <Navbar />
       
-      <main className="pt-16">
-        <Switch>
-          {/* Public Routes */}
-          <Route path="/login">
-            <PublicRoute>
+      <Switch>
+        {/* Public Homepage Route */}
+        <Route exact path="/">
+          {user ? (
+            user.isAdmin ? <Redirect to="/admin" /> : <Redirect to="/dashboard" />
+          ) : (
+            <PublicLayout>
+              <Homepage />
+            </PublicLayout>
+          )}
+        </Route>
+
+        {/* Public Auth Routes */}
+        <Route path="/login">
+          <PublicRoute>
+            <PublicLayout>
               <Login />
-            </PublicRoute>
-          </Route>
-          
-          <Route path="/register">
-            <PublicRoute>
+            </PublicLayout>
+          </PublicRoute>
+        </Route>
+        
+        <Route path="/register">
+          <PublicRoute>
+            <PublicLayout>
               <Register />
-            </PublicRoute>
-          </Route>
+            </PublicLayout>
+          </PublicRoute>
+        </Route>
 
-          {/* Admin Only Routes */}
-          <Route path="/admin">
-            <ProtectedRoute adminOnly>
+        {/* Admin Only Routes */}
+        <Route path="/admin">
+          <ProtectedRoute adminOnly>
+            <AuthenticatedLayout>
               <AdminDashboard />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          {/* User Only Routes (Exclude Admin) */}
-          <Route path="/dashboard">
-            <ProtectedRoute excludeAdmin>
+        {/* User Only Routes (Exclude Admin) */}
+        <Route path="/dashboard">
+          <ProtectedRoute excludeAdmin>
+            <AuthenticatedLayout>
               <Dashboard />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          <Route path="/challenges">
-            <ProtectedRoute approvedOnly excludeAdmin>
+        <Route path="/challenges">
+          <ProtectedRoute approvedOnly excludeAdmin>
+            <AuthenticatedLayout>
               <ChallengeList />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          <Route path="/challenge">
-            <ProtectedRoute approvedOnly excludeAdmin>
+        <Route path="/challenge">
+          <ProtectedRoute approvedOnly excludeAdmin>
+            <AuthenticatedLayout>
               <ChallengePage />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          <Route path="/profile">
-            <ProtectedRoute excludeAdmin>
+        <Route path="/profile">
+          <ProtectedRoute excludeAdmin>
+            <AuthenticatedLayout>
               <Profile />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          <Route path="/thank-you">
-            <ProtectedRoute excludeAdmin>
+        <Route path="/thank-you">
+          <ProtectedRoute excludeAdmin>
+            <AuthenticatedLayout>
               <ThankYouPage />
-            </ProtectedRoute>
-          </Route>
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        </Route>
 
-          {/* Default Routes */}
-          <Route exact path="/">
-            {user ? (
-              user.isAdmin ? <Redirect to="/admin" /> : <Redirect to="/dashboard" />
-            ) : (
-              <Redirect to="/login" />
-            )}
-          </Route>
-
-          {/* 404 Route */}
-          <Route path="*">
+        {/* 404 Route */}
+        <Route path="*">
+          <AuthenticatedLayout>
             <NotFound />
-          </Route>
-        </Switch>
-      </main>
+          </AuthenticatedLayout>
+        </Route>
+      </Switch>
 
       <ToastContainer
         position="top-right"
