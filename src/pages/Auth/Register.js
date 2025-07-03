@@ -274,13 +274,6 @@ const Register = () => {
             </p>
           </div>
         </div>
-
-        {/* Registration Notice */}
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Note:</strong> After registration, regular user accounts need admin approval to access challenges. Admin accounts have immediate access to the Admin Dashboard.
-          </p>
-        </div>
       </div>
     </div>
   );

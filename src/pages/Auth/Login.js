@@ -185,32 +185,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Demo Credentials */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-              Demo Credentials
-            </h3>
-            <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-              <p><strong>Admin:</strong> admin@biztras.com / admin123456</p>
-              <p><strong>User:</strong> user@example.com / password123</p>
-            </div>
-            <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
-              <p><strong>Note:</strong> Admins are redirected to Admin Dashboard only</p>
-            </div>
-          </div>
-        )}
-
-        {/* Role Information */}
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-            Access Information
-          </h3>
-          <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-            <p><strong>Admin Users:</strong> Direct access to Admin Dashboard for platform management</p>
-            <p><strong>Regular Users:</strong> Access to Dashboard and Challenges (after approval)</p>
-          </div>
-        </div>
       </div>
     </div>
   );
