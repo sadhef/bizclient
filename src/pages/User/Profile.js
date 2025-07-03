@@ -252,15 +252,7 @@ const Profile = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-black/50 rounded-lg border border-gray-300 dark:border-gray-600">
-                        <Calendar className="w-5 h-5 text-black dark:text-white" />
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Member Since</p>
-                          <p className="font-medium text-black dark:text-white">
-                            {formatDate(user?.createdAt)}
-                          </p>
-                        </div>
-                      </div>
+                      
 
                       <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-black/50 rounded-lg border border-gray-300 dark:border-gray-600">
                         <div className={cn(
@@ -536,26 +528,6 @@ const Profile = () => {
               </Card>
             </FloatingElement>
 
-            {/* Achievement Badge */}
-            {challengeStatus?.isCompleted && (
-              <FloatingElement delay={0.6}>
-                <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-300 dark:border-yellow-700 shadow-xl">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full mb-3">
-                        <Award className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="font-semibold text-black dark:text-white mb-2">
-                        CTF Champion!
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        You've completed all challenge levels
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </FloatingElement>
-            )}
 
             {/* Progress Overview */}
             <FloatingElement delay={0.7}>
@@ -667,45 +639,6 @@ const Profile = () => {
               </Card>
             </FloatingElement>
 
-            {/* Performance Summary */}
-            <FloatingElement delay={0.9}>
-              <Card className="bg-gradient-to-br from-black/5 to-gray-600/5 dark:from-white/5 dark:to-gray-400/5 backdrop-blur-xl border-gray-300 dark:border-gray-700 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-lg text-black dark:text-white flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                    Performance Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="p-3 bg-white/50 dark:bg-black/50 rounded-lg border border-gray-300 dark:border-gray-600">
-                      <p className="text-2xl font-bold text-black dark:text-white">
-                        <NumberTicker value={challengeStatus?.completedLevels?.length || 0} />
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Levels Solved</p>
-                    </div>
-                    <div className="p-3 bg-white/50 dark:bg-black/50 rounded-lg border border-gray-300 dark:border-gray-600">
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        <NumberTicker value={getSuccessRate()} />%
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Success Rate</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 text-center">
-                    <Badge 
-                      variant={challengeStatus?.isCompleted ? "success" : "secondary"}
-                      className="text-xs"
-                    >
-                      <PulsingDot 
-                        color={challengeStatus?.isCompleted ? 'bg-green-500' : 'bg-gray-500'} 
-                        className="mr-2" 
-                      />
-                      {challengeStatus?.isCompleted ? 'Challenge Complete' : 'In Progress'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </FloatingElement>
           </div>
         </div>
       </div>

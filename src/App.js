@@ -12,6 +12,7 @@ import Navbar from './components/Layout/Navbar';
 import LoadingSpinner from './components/UX/LoadingSpinner';
 
 // Pages
+import Homepage from './pages/Homepage';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -79,6 +80,13 @@ const AppContent = () => {
       
       <main className="pt-16">
         <Switch>
+          {/* Homepage Route */}
+          <Route exact path="/">
+            <PublicRoute>
+              <Homepage />
+            </PublicRoute>
+          </Route>
+
           {/* Public Routes */}
           <Route path="/login">
             <PublicRoute>
@@ -128,15 +136,6 @@ const AppContent = () => {
             <ProtectedRoute excludeAdmin>
               <ThankYouPage />
             </ProtectedRoute>
-          </Route>
-
-          {/* Default Routes */}
-          <Route exact path="/">
-            {user ? (
-              user.isAdmin ? <Redirect to="/admin" /> : <Redirect to="/dashboard" />
-            ) : (
-              <Redirect to="/login" />
-            )}
           </Route>
 
           {/* 404 Route */}
