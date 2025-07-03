@@ -92,7 +92,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-violet-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Effects */}
       <ParticleBackground particleCount={30} />
       <AnimatedGridPattern className="opacity-10" />
@@ -100,7 +100,7 @@ const Login = () => {
       {/* Floating Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-20 left-20 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl"
+          className="absolute top-20 left-20 w-72 h-72 bg-black/5 dark:bg-white/5 rounded-full blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -112,7 +112,7 @@ const Login = () => {
           }}
         />
         <motion.div
-          className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          className="absolute bottom-20 right-20 w-96 h-96 bg-gray-800/5 dark:bg-gray-200/5 rounded-full blur-3xl"
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.2, 0.4, 0.2],
@@ -129,30 +129,30 @@ const Login = () => {
         {/* Header Section */}
         <FloatingElement delay={0} className="text-center mb-8">
           <motion.div 
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl mb-6 shadow-2xl shadow-violet-500/25"
+            className="inline-flex items-center justify-center w-20 h-20 bg-black dark:bg-white rounded-2xl mb-6 shadow-2xl shadow-black/25 dark:shadow-white/25"
             whileHover={{ 
               scale: 1.05,
-              boxShadow: "0 20px 40px rgba(139, 92, 246, 0.4)"
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)"
             }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Shield className="w-10 h-10 text-white" />
+            <Shield className="w-10 h-10 text-white dark:text-black" />
           </motion.div>
           
           <h1 className="text-4xl font-bold mb-3">
-            <span className="bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
+            <span className="text-black dark:text-white">
               Welcome Back
             </span>
           </h1>
           
-          <div className="text-slate-400 text-lg mb-4">
+          <div className="text-gray-600 dark:text-gray-400 text-lg mb-4">
             <TypewriterEffect 
               words={['Sign', 'in', 'to', 'BizTras', 'CTF', 'Platform']}
               delay={100}
             />
           </div>
           
-          <Badge variant="outline" className="border-violet-500/30 text-violet-300 bg-violet-500/10">
+          <Badge variant="outline" className="border-black/30 dark:border-white/30 text-black dark:text-white bg-black/5 dark:bg-white/5">
             <Sparkles className="w-3 h-3 mr-1" />
             Secure Authentication
           </Badge>
@@ -160,10 +160,10 @@ const Login = () => {
 
         {/* Login Card */}
         <FloatingElement delay={0.2}>
-          <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
+          <Card className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-gray-300 dark:border-gray-700 shadow-2xl">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl text-white">Sign In</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-2xl text-black dark:text-white">Sign In</CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">
                 Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
@@ -172,12 +172,12 @@ const Login = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-200 font-medium">
+                  <Label htmlFor="email" className="text-gray-800 dark:text-gray-200 font-medium">
                     Email Address
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-violet-400 transition-colors" />
+                      <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="email"
@@ -186,7 +186,7 @@ const Login = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-violet-500 focus:ring-violet-500/20",
+                        "pl-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.email && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Enter your email"
@@ -197,7 +197,7 @@ const Login = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.email}
                     </motion.p>
@@ -206,12 +206,12 @@ const Login = () => {
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-200 font-medium">
+                  <Label htmlFor="password" className="text-gray-800 dark:text-gray-200 font-medium">
                     Password
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-violet-400 transition-colors" />
+                      <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="password"
@@ -220,7 +220,7 @@ const Login = () => {
                       value={formData.password}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-violet-500 focus:ring-violet-500/20",
+                        "pl-10 pr-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.password && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Enter your password"
@@ -229,7 +229,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                       disabled={loading}
                     >
                       {showPassword ? (
@@ -243,7 +243,7 @@ const Login = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.password}
                     </motion.p>
@@ -283,11 +283,11 @@ const Login = () => {
 
               {/* Register Link */}
               <div className="mt-6 text-center">
-                <p className="text-slate-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   Don't have an account?{' '}
                   <Link
                     to="/register"
-                    className="font-medium text-violet-400 hover:text-violet-300 transition-colors duration-200 hover:underline"
+                    className="font-medium text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 hover:underline"
                   >
                     Sign up here
                   </Link>
@@ -297,52 +297,9 @@ const Login = () => {
           </Card>
         </FloatingElement>
 
-        {/* Demo Credentials */}
-        {process.env.NODE_ENV === 'development' && (
-          <FloatingElement delay={0.4}>
-            <Card className="mt-6 bg-amber-500/10 backdrop-blur-xl border-amber-500/20">
-              <CardContent className="pt-6">
-                <h3 className="text-sm font-medium text-amber-200 mb-3 flex items-center">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Demo Credentials
-                </h3>
-                <div className="space-y-2 text-xs text-amber-100/80">
-                  <div className="flex justify-between items-center p-2 bg-amber-500/10 rounded">
-                    <span className="font-medium">Admin:</span>
-                    <span>admin@biztras.com / admin123456</span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 bg-amber-500/10 rounded">
-                    <span className="font-medium">User:</span>
-                    <span>user@example.com / password123</span>
-                  </div>
-                </div>
-                <div className="mt-3 text-xs text-amber-200/60">
-                  <strong>Note:</strong> Admins are redirected to Admin Dashboard only
-                </div>
-              </CardContent>
-            </Card>
-          </FloatingElement>
-        )}
+        
 
-        {/* Access Information */}
-        <FloatingElement delay={0.6}>
-          <Card className="mt-4 bg-blue-500/10 backdrop-blur-xl border-blue-500/20">
-            <CardContent className="pt-6">
-              <h3 className="text-sm font-medium text-blue-200 mb-3 flex items-center">
-                <Shield className="w-4 h-4 mr-2" />
-                Access Information
-              </h3>
-              <div className="space-y-2 text-xs text-blue-100/80">
-                <div className="p-2 bg-blue-500/10 rounded">
-                  <strong className="text-blue-200">Admin Users:</strong> Direct access to Admin Dashboard for platform management
-                </div>
-                <div className="p-2 bg-blue-500/10 rounded">
-                  <strong className="text-blue-200">Regular Users:</strong> Access to Dashboard and Challenges (after approval)
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </FloatingElement>
+        
       </div>
     </div>
   );

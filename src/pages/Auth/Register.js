@@ -70,10 +70,10 @@ const Register = () => {
 
   const getPasswordStrengthLabel = () => {
     const strength = getPasswordStrength();
-    if (strength <= 25) return { label: 'Weak', color: 'text-red-400' };
-    if (strength <= 50) return { label: 'Fair', color: 'text-amber-400' };
-    if (strength <= 75) return { label: 'Good', color: 'text-blue-400' };
-    return { label: 'Strong', color: 'text-emerald-400' };
+    if (strength <= 25) return { label: 'Weak', color: 'text-red-500' };
+    if (strength <= 50) return { label: 'Fair', color: 'text-yellow-500' };
+    if (strength <= 75) return { label: 'Good', color: 'text-blue-500' };
+    return { label: 'Strong', color: 'text-green-500' };
   };
 
   const validateForm = () => {
@@ -137,7 +137,7 @@ const Register = () => {
   const passwordStrength = getPasswordStrengthLabel();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-violet-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 dark:from-black dark:via-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Effects */}
       <ParticleBackground particleCount={30} />
       <AnimatedGridPattern className="opacity-10" />
@@ -145,7 +145,7 @@ const Register = () => {
       {/* Floating Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-20 right-20 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl"
+          className="absolute top-20 right-20 w-72 h-72 bg-gray-800/5 dark:bg-gray-200/5 rounded-full blur-3xl"
           animate={{
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -157,7 +157,7 @@ const Register = () => {
           }}
         />
         <motion.div
-          className="absolute bottom-20 left-20 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"
+          className="absolute bottom-20 left-20 w-96 h-96 bg-black/5 dark:bg-white/5 rounded-full blur-3xl"
           animate={{
             scale: [1.3, 1, 1.3],
             opacity: [0.2, 0.4, 0.2],
@@ -174,30 +174,30 @@ const Register = () => {
         {/* Header Section */}
         <FloatingElement delay={0} className="text-center mb-8">
           <motion.div 
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl mb-6 shadow-2xl shadow-purple-500/25"
+            className="inline-flex items-center justify-center w-20 h-20 bg-black dark:bg-white rounded-2xl mb-6 shadow-2xl shadow-black/25 dark:shadow-white/25"
             whileHover={{ 
               scale: 1.05,
-              boxShadow: "0 20px 40px rgba(147, 51, 234, 0.4)"
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)"
             }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <UserPlus className="w-10 h-10 text-white" />
+            <UserPlus className="w-10 h-10 text-white dark:text-black" />
           </motion.div>
           
           <h1 className="text-4xl font-bold mb-3">
-            <span className="bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            <span className="text-black dark:text-white">
               Join BizTras CTF
             </span>
           </h1>
           
-          <div className="text-slate-400 text-lg mb-4">
+          <div className="text-gray-600 dark:text-gray-400 text-lg mb-4">
             <TypewriterEffect 
               words={['Create', 'your', 'account', 'to', 'start', 'the', 'challenge']}
               delay={80}
             />
           </div>
           
-          <Badge variant="outline" className="border-purple-500/30 text-purple-300 bg-purple-500/10">
+          <Badge variant="outline" className="border-black/30 dark:border-white/30 text-black dark:text-white bg-black/5 dark:bg-white/5">
             <Sparkles className="w-3 h-3 mr-1" />
             Secure Registration
           </Badge>
@@ -205,10 +205,10 @@ const Register = () => {
 
         {/* Registration Card */}
         <FloatingElement delay={0.2}>
-          <Card className="bg-white/5 backdrop-blur-xl border-white/10 shadow-2xl">
+          <Card className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border-gray-300 dark:border-gray-700 shadow-2xl">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl text-white">Create Account</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-2xl text-black dark:text-white">Create Account</CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">
                 Fill in your details to get started
               </CardDescription>
             </CardHeader>
@@ -217,12 +217,12 @@ const Register = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Username Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-slate-200 font-medium">
+                  <Label htmlFor="username" className="text-gray-800 dark:text-gray-200 font-medium">
                     Username
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-slate-400 group-focus-within:text-purple-400 transition-colors" />
+                      <User className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="username"
@@ -231,7 +231,7 @@ const Register = () => {
                       value={formData.username}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20",
+                        "pl-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.username && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Choose a username"
@@ -239,7 +239,7 @@ const Register = () => {
                     />
                     {formData.username && !errors.username && (
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <CheckCircle className="h-5 w-5 text-emerald-400" />
+                        <CheckCircle className="h-5 w-5 text-green-500" />
                       </div>
                     )}
                   </div>
@@ -247,7 +247,7 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.username}
                     </motion.p>
@@ -256,12 +256,12 @@ const Register = () => {
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-200 font-medium">
+                  <Label htmlFor="email" className="text-gray-800 dark:text-gray-200 font-medium">
                     Email Address
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-purple-400 transition-colors" />
+                      <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="email"
@@ -270,7 +270,7 @@ const Register = () => {
                       value={formData.email}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20",
+                        "pl-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.email && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Enter your email"
@@ -278,7 +278,7 @@ const Register = () => {
                     />
                     {formData.email && !errors.email && /\S+@\S+\.\S+/.test(formData.email) && (
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <CheckCircle className="h-5 w-5 text-emerald-400" />
+                        <CheckCircle className="h-5 w-5 text-green-500" />
                       </div>
                     )}
                   </div>
@@ -286,7 +286,7 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.email}
                     </motion.p>
@@ -295,12 +295,12 @@ const Register = () => {
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-200 font-medium">
+                  <Label htmlFor="password" className="text-gray-800 dark:text-gray-200 font-medium">
                     Password
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-purple-400 transition-colors" />
+                      <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="password"
@@ -309,7 +309,7 @@ const Register = () => {
                       value={formData.password}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20",
+                        "pl-10 pr-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.password && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Create a password"
@@ -318,7 +318,7 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                       disabled={loading}
                     >
                       {showPassword ? (
@@ -330,14 +330,13 @@ const Register = () => {
                   </div>
                   
                   {/* Password Strength Indicator */}
-                  {formData.password && (
-                    <motion.div
+                  {formData.password && (<motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2"
                     >
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-slate-400">Password Strength</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Password Strength</span>
                         <span className={cn("text-xs font-medium", passwordStrength.color)}>
                           {passwordStrength.label}
                         </span>
@@ -350,7 +349,7 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.password}
                     </motion.p>
@@ -359,12 +358,12 @@ const Register = () => {
 
                 {/* Confirm Password Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-slate-200 font-medium">
+                  <Label htmlFor="confirmPassword" className="text-gray-800 dark:text-gray-200 font-medium">
                     Confirm Password
                   </Label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-purple-400 transition-colors" />
+                      <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
                     </div>
                     <Input
                       id="confirmPassword"
@@ -373,7 +372,7 @@ const Register = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       className={cn(
-                        "pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20",
+                        "pl-10 pr-10 bg-white/50 dark:bg-black/50 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-black dark:focus:border-white focus:ring-black/20 dark:focus:ring-white/20",
                         errors.confirmPassword && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
                       )}
                       placeholder="Confirm your password"
@@ -382,7 +381,7 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                       disabled={loading}
                     >
                       {showConfirmPassword ? (
@@ -393,7 +392,7 @@ const Register = () => {
                     </button>
                     {formData.confirmPassword && formData.password === formData.confirmPassword && (
                       <div className="absolute inset-y-0 right-10 pr-3 flex items-center">
-                        <CheckCircle className="h-5 w-5 text-emerald-400" />
+                        <CheckCircle className="h-5 w-5 text-green-500" />
                       </div>
                     )}
                   </div>
@@ -401,7 +400,7 @@ const Register = () => {
                     <motion.p
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-400"
+                      className="text-sm text-red-500"
                     >
                       {errors.confirmPassword}
                     </motion.p>
@@ -414,7 +413,7 @@ const Register = () => {
                     type="submit"
                     disabled={loading}
                     variant="primary"
-                    className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+                    className="w-full h-12 text-lg font-semibold"
                   >
                     {loading ? (
                       <motion.div
@@ -441,79 +440,15 @@ const Register = () => {
 
               {/* Login Link */}
               <div className="mt-6 text-center">
-                <p className="text-slate-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   Already have an account?{' '}
                   <Link
                     to="/login"
-                    className="font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 hover:underline"
+                    className="font-medium text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 hover:underline"
                   >
                     Sign in here
                   </Link>
                 </p>
-              </div>
-            </CardContent>
-          </Card>
-        </FloatingElement>
-
-        {/* Registration Notice */}
-        <FloatingElement delay={0.4}>
-          <Card className="mt-6 bg-blue-500/10 backdrop-blur-xl border-blue-500/20">
-            <CardContent className="pt-6">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-blue-200 mb-2">
-                    Registration Information
-                  </h3>
-                  <div className="text-sm text-blue-100/80">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                        <span>Regular user accounts need admin approval to access challenges</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                        <span>Admin accounts have immediate access to the Admin Dashboard</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                        <span>You'll receive notifications once your account is approved</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </FloatingElement>
-
-        {/* Security Features */}
-        <FloatingElement delay={0.6}>
-          <Card className="mt-4 bg-emerald-500/10 backdrop-blur-xl border-emerald-500/20">
-            <CardContent className="pt-6">
-              <h3 className="text-sm font-medium text-emerald-200 mb-3 flex items-center">
-                <Shield className="w-4 h-4 mr-2" />
-                Security Features
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-xs text-emerald-100/80">
-                <div className="flex items-center space-x-2 p-2 bg-emerald-500/10 rounded">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span>Encrypted Storage</span>
-                </div>
-                <div className="flex items-center space-x-2 p-2 bg-emerald-500/10 rounded">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span>Secure Authentication</span>
-                </div>
-                <div className="flex items-center space-x-2 p-2 bg-emerald-500/10 rounded">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span>Data Protection</span>
-                </div>
-                <div className="flex items-center space-x-2 p-2 bg-emerald-500/10 rounded">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span>Privacy Compliant</span>
-                </div>
               </div>
             </CardContent>
           </Card>

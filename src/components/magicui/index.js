@@ -22,7 +22,7 @@ export const AnimatedCounter = ({ value, className }) => {
 export const Shimmer = ({ className, children }) => {
   return (
     <div className={cn("relative overflow-hidden", className)}>
-      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-black/20 dark:via-white/20 to-transparent" />
       {children}
     </div>
   );
@@ -55,7 +55,7 @@ export const FloatingElement = ({ children, className, delay = 0 }) => {
 };
 
 // Pulsing Dot
-export const PulsingDot = ({ className, color = "bg-emerald-500" }) => {
+export const PulsingDot = ({ className, color = "bg-black dark:bg-white" }) => {
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
       <div className={cn("absolute h-2 w-2 rounded-full animate-ping", color)} />
@@ -69,12 +69,12 @@ export const GradientBorderCard = ({ children, className, ...props }) => {
   return (
     <div 
       className={cn(
-        "relative rounded-xl bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 p-[1px]",
+        "relative rounded-xl bg-gradient-to-r from-black via-gray-700 to-black dark:from-white dark:via-gray-300 dark:to-white p-[1px]",
         className
       )}
       {...props}
     >
-      <div className="rounded-xl bg-background h-full w-full p-6">
+      <div className="rounded-xl bg-white dark:bg-black h-full w-full p-6">
         {children}
       </div>
     </div>
@@ -84,10 +84,10 @@ export const GradientBorderCard = ({ children, className, ...props }) => {
 // Glowing Button
 export const GlowingButton = ({ children, className, variant = "primary", ...props }) => {
   const variants = {
-    primary: "bg-gradient-to-r from-violet-500 to-purple-600 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40",
-    success: "bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40",
-    danger: "bg-gradient-to-r from-red-500 to-pink-600 shadow-lg shadow-red-500/25 hover:shadow-red-500/40",
-    warning: "bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40",
+    primary: "bg-black dark:bg-white text-white dark:text-black shadow-lg shadow-black/25 dark:shadow-white/25 hover:shadow-black/40 dark:hover:shadow-white/40",
+    success: "bg-green-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40",
+    danger: "bg-red-600 text-white shadow-lg shadow-red-500/25 hover:shadow-red-500/40",
+    warning: "bg-yellow-600 text-white shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40",
   };
 
   return (
@@ -95,13 +95,13 @@ export const GlowingButton = ({ children, className, variant = "primary", ...pro
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative overflow-hidden rounded-lg px-6 py-3 text-white font-medium transition-all duration-300",
+        "relative overflow-hidden rounded-lg px-6 py-3 font-medium transition-all duration-300",
         variants[variant],
         className
       )}
       {...props}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] hover:animate-[shimmer_1s_ease-in-out]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 dark:via-black/10 to-transparent translate-x-[-100%] hover:animate-[shimmer_1s_ease-in-out]" />
       {children}
     </motion.button>
   );
@@ -133,13 +133,13 @@ export const AnimatedProgressRing = ({
           stroke="currentColor"
           strokeWidth={strokeWidth}
           fill="transparent"
-          className="text-muted-foreground/20"
+          className="text-gray-300 dark:text-gray-700"
         />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="url(#gradient)"
+          stroke="url(#gradient-bw)"
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={strokeDasharray}
@@ -149,14 +149,14 @@ export const AnimatedProgressRing = ({
           strokeLinecap="round"
         />
         <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8b5cf6" />
-            <stop offset="100%" stopColor="#a855f7" />
+          <linearGradient id="gradient-bw" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#000000" className="dark:stop-color-white" />
+            <stop offset="100%" stopColor="#666666" className="dark:stop-color-gray-300" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-2xl font-bold">{Math.round(progress)}%</span>
+        <span className="text-2xl font-bold text-black dark:text-white">{Math.round(progress)}%</span>
       </div>
     </div>
   );
@@ -218,7 +218,7 @@ export const ParticleBackground = ({ particleCount = 50, className }) => {
       {particles.map((particle) => (
         <motion.div
           key={particle.id}
-          className="absolute rounded-full bg-violet-500/20"
+          className="absolute rounded-full bg-black/10 dark:bg-white/10"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
@@ -227,7 +227,7 @@ export const ParticleBackground = ({ particleCount = 50, className }) => {
           }}
           animate={{
             y: [0, -100, 0],
-            opacity: [0, 1, 0],
+            opacity: [0, 0.3, 0],
           }}
           transition={{
             duration: particle.duration,
@@ -243,11 +243,11 @@ export const ParticleBackground = ({ particleCount = 50, className }) => {
 // Animated Grid Pattern
 export const AnimatedGridPattern = ({ className }) => {
   return (
-    <div className={cn("absolute inset-0 overflow-hidden opacity-20", className)}>
+    <div className={cn("absolute inset-0 overflow-hidden opacity-5", className)}>
       <svg className="absolute inset-0 h-full w-full">
         <defs>
           <pattern
-            id="grid"
+            id="grid-bw"
             width="40"
             height="40"
             patternUnits="userSpaceOnUse"
@@ -257,10 +257,11 @@ export const AnimatedGridPattern = ({ className }) => {
               fill="none"
               stroke="currentColor"
               strokeWidth="1"
+              className="text-black dark:text-white"
             />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill="url(#grid-bw)" />
       </svg>
     </div>
   );
@@ -346,7 +347,7 @@ export const LoadingDots = ({ className, size = "md" }) => {
       {[0, 1, 2].map((index) => (
         <motion.div
           key={index}
-          className={cn("rounded-full bg-current", sizes[size])}
+          className={cn("rounded-full bg-black dark:bg-white", sizes[size])}
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.5, 1, 0.5],
@@ -366,7 +367,7 @@ export const LoadingDots = ({ className, size = "md" }) => {
 export const SpotlightEffect = ({ children, className }) => {
   return (
     <div className={cn("relative group", className)}>
-      <div className="absolute inset-0 bg-gradient-radial from-violet-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
+      <div className="absolute inset-0 bg-gradient-radial from-black/20 dark:from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl" />
       {children}
     </div>
   );
@@ -386,7 +387,7 @@ export const MorphingButton = ({
       layout
       onClick={onToggle}
       className={cn(
-        "relative overflow-hidden rounded-lg px-6 py-3 font-medium transition-all duration-300",
+        "relative overflow-hidden rounded-lg px-6 py-3 font-medium transition-all duration-300 bg-black dark:bg-white text-white dark:text-black",
         className
       )}
       whileHover={{ scale: 1.02 }}
@@ -436,7 +437,7 @@ export const RippleEffect = ({ children, className, ...props }) => {
       {ripples.map((ripple) => (
         <motion.span
           key={ripple.id}
-          className="absolute bg-white/30 rounded-full pointer-events-none"
+          className="absolute bg-black/20 dark:bg-white/20 rounded-full pointer-events-none"
           style={{
             left: ripple.x,
             top: ripple.y,
@@ -453,12 +454,12 @@ export const RippleEffect = ({ children, className, ...props }) => {
 };
 
 // Pulse Animation
-export const PulseAnimation = ({ children, className, pulseColor = "violet" }) => {
+export const PulseAnimation = ({ children, className, pulseColor = "black" }) => {
   const colors = {
-    violet: "shadow-violet-500/50",
-    emerald: "shadow-emerald-500/50",
+    black: "shadow-black/50 dark:shadow-white/50",
+    green: "shadow-green-500/50",
     red: "shadow-red-500/50",
-    amber: "shadow-amber-500/50",
+    yellow: "shadow-yellow-500/50",
   };
 
   return (
@@ -466,7 +467,7 @@ export const PulseAnimation = ({ children, className, pulseColor = "violet" }) =
       className={cn("", className)}
       animate={{
         boxShadow: [
-          `0 0 0 0 var(--${pulseColor}-500)`,
+          `0 0 0 0 ${pulseColor === 'black' ? 'rgba(0,0,0,0.7)' : `var(--${pulseColor}-500)`}`,
           `0 0 0 10px transparent`,
           `0 0 0 0 transparent`,
         ],

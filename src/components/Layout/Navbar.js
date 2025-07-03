@@ -17,7 +17,8 @@ import {
   Award,
   Shield,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Clock  // Added Clock import
 } from 'lucide-react';
 import {
   Button,
@@ -64,20 +65,20 @@ const Navbar = () => {
         className={cn(
           "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative overflow-hidden",
           isActiveLink
-            ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-300 border border-violet-500/30'
-            : 'text-slate-300 hover:text-white hover:bg-white/5'
+            ? 'bg-black/10 dark:bg-white/10 text-black dark:text-white border border-black/20 dark:border-white/20'
+            : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
         )}
       >
         {Icon && (
           <Icon className={cn(
             "w-4 h-4 transition-colors",
-            isActiveLink ? 'text-violet-400' : 'text-slate-400 group-hover:text-white'
+            isActiveLink ? 'text-black dark:text-white' : 'text-gray-500 dark:text-gray-500 group-hover:text-black dark:group-hover:text-white'
           )} />
         )}
         {children}
         {isActiveLink && (
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-lg"
+            className="absolute inset-0 bg-black/5 dark:bg-white/5 rounded-lg"
             layoutId="activeTab"
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           />
@@ -94,7 +95,7 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 shadow-2xl"
+      className="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 shadow-2xl"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -102,25 +103,25 @@ const Navbar = () => {
           <FloatingElement className="flex items-center">
             <Link to="/" className="flex items-center gap-3 group">
               <motion.div 
-                className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/25"
+                className="w-10 h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ 
                   scale: 1.05,
-                  boxShadow: "0 10px 30px rgba(139, 92, 246, 0.4)"
+                  boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)"
                 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <Shield className="w-6 h-6 text-white" />
+                <Shield className="w-6 h-6 text-white dark:text-black" />
               </motion.div>
               <motion.div
                 whileHover={{ x: 2 }}
                 className="hidden sm:block"
               >
-                <span className="text-xl font-bold bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
+                <span className="text-xl font-bold text-black dark:text-white">
                   BizTras CTF
                 </span>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <PulsingDot color="bg-emerald-500" className="scale-75" />
-                  <span className="text-xs text-emerald-400 font-medium">Online</span>
+                  <PulsingDot color="bg-green-500" className="scale-75" />
+                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">Online</span>
                 </div>
               </motion.div>
             </Link>
@@ -175,7 +176,7 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="h-9 w-9 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
+                className="h-9 w-9 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 text-black dark:text-white"
               >
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -200,43 +201,43 @@ const Navbar = () => {
                 >
                   <Button 
                     variant="ghost" 
-                    className="flex items-center gap-2 p-2 h-auto bg-white/5 hover:bg-white/10 border border-white/10"
+                    className="flex items-center gap-2 p-2 h-auto bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"
                   >
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-sm font-semibold">
+                      <AvatarFallback className="bg-black dark:bg-white text-white dark:text-black text-sm font-semibold">
                         {user?.username?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:block text-left">
-                      <p className="text-sm font-medium text-white leading-none">
+                      <p className="text-sm font-medium text-black dark:text-white leading-none">
                         {user?.username}
                       </p>
-                      <p className="text-xs text-slate-400 leading-none mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-none mt-1">
                         {user?.isAdmin ? 'Administrator' : user?.isApproved ? 'Approved User' : 'Pending'}
                       </p>
                     </div>
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                    <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   </Button>
                 </motion.div>
               </DropdownMenuTrigger>
               
               <DropdownMenuContent 
                 align="end" 
-                className="w-64 bg-slate-800/95 backdrop-blur-xl border-white/10 shadow-2xl"
+                className="w-64 bg-white dark:bg-black backdrop-blur-xl border-gray-200 dark:border-gray-800 shadow-2xl"
               >
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-2">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white font-semibold">
+                        <AvatarFallback className="bg-black dark:bg-white text-white dark:text-black font-semibold">
                           {user?.username?.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-black dark:text-white">
                           {user?.username}
                         </p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {user?.email}
                         </p>
                       </div>
@@ -244,19 +245,19 @@ const Navbar = () => {
                     
                     <div className="flex gap-2">
                       {user?.isAdmin && (
-                        <Badge className="text-xs bg-purple-500/20 text-purple-300 border-purple-500/30">
+                        <Badge className="text-xs bg-black/10 dark:bg-white/10 text-black dark:text-white border-black/30 dark:border-white/30">
                           <Shield className="w-3 h-3 mr-1" />
                           Admin
                         </Badge>
                       )}
                       {!user?.isApproved && !user?.isAdmin && (
-                        <Badge className="text-xs bg-amber-500/20 text-amber-300 border-amber-500/30">
+                        <Badge className="text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30">
                           <Clock className="w-3 h-3 mr-1" />
                           Pending
                         </Badge>
                       )}
                       {user?.isApproved && !user?.isAdmin && (
-                        <Badge className="text-xs bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                        <Badge className="text-xs bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30">
                           <Sparkles className="w-3 h-3 mr-1" />
                           Approved
                         </Badge>
@@ -265,23 +266,23 @@ const Navbar = () => {
                   </div>
                 </DropdownMenuLabel>
                 
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
                 
                 {!isAdmin() && (
                   <DropdownMenuItem 
                     onClick={() => history.push('/profile')}
-                    className="text-slate-300 hover:text-white hover:bg-white/5 cursor-pointer"
+                    className="text-black dark:text-white hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
                 )}
                 
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-800" />
                 
                 <DropdownMenuItem 
                   onClick={handleLogout}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -299,7 +300,7 @@ const Navbar = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="h-9 w-9 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white"
+                className="h-9 w-9 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 text-black dark:text-white"
               >
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -395,7 +396,7 @@ const Navbar = () => {
                       )}
                       {!user?.isApproved && !user?.isAdmin && (
                         <Badge className="text-xs bg-amber-500/20 text-amber-300 border-amber-500/30">
-                          <Sparkles className="w-3 h-3 mr-1" />
+                          <Clock className="w-3 h-3 mr-1" />
                           Pending
                         </Badge>
                       )}
