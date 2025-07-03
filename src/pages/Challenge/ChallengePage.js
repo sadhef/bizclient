@@ -638,29 +638,29 @@ const ChallengePage = () => {
                     </div>
                     
                     <RippleEffect>
-                      <GlowingButton
-                        type="submit"
-                        disabled={submitting || !flag.trim() || !timerActive}
-                        variant={timerActive ? "success" : "danger"}
-                        className="w-full h-12 text-lg font-semibold"
-                      >
-                        {submitting ? (
-                          <>
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                              className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
-                            />
-                            Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="w-5 h-5 mr-2" />
-                            Submit Answer
-                            </>
-                        )}
-                      </GlowingButton>
-                    </RippleEffect>
+  <GlowingButton
+    type="submit"
+    disabled={submitting || !flag.trim() || !timerActive}
+    variant={timerActive ? "success" : "danger"}
+    className="w-full h-14 text-lg font-semibold flex items-center justify-center gap-3"
+  >
+    {submitting ? (
+      <>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+        />
+        <span>Submitting...</span>
+      </>
+    ) : (
+      <>
+        <Send className="w-5 h-5" />
+        <span>Submit Answer</span>
+      </>
+    )}
+  </GlowingButton>
+</RippleEffect>
                     
                     {/* Submission disabled warning */}
                     {!timerActive && (

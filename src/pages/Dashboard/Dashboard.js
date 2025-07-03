@@ -587,23 +587,23 @@ const Dashboard = () => {
 
                         {/* Action Button */}
                         <GlowingButton
-                          onClick={() => history.push('/challenge')}
-                          disabled={!timerActive}
-                          variant={timerActive ? "success" : "danger"}
-                          className="w-full h-12 text-lg font-semibold"
-                        >
-                          {timerActive ? (
-                            <>
-                              <Play className="w-5 h-5 mr-2" />
-                              Continue Challenge
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-5 h-5 mr-2" />
-                              Challenge Expired
-                            </>
-                          )}
-                        </GlowingButton>
+  onClick={() => history.push('/challenge')}
+  disabled={!timerActive}
+  variant={timerActive ? "success" : "danger"}
+  className="w-full h-14 text-lg font-semibold flex items-center justify-center gap-3"
+>
+  {timerActive ? (
+    <>
+      <Play className="w-5 h-5" />
+      <span>Continue Challenge</span>
+    </>
+  ) : (
+    <>
+      <XCircle className="w-5 h-5" />
+      <span>Challenge Expired</span>
+    </>
+  )}
+</GlowingButton>
                       </motion.div>
                     ) : canStartInfo && !canStartInfo.canStart ? (
                       <motion.div
