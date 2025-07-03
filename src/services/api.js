@@ -16,8 +16,6 @@ const api = axios.create({
   withCredentials: false // Set to false for simplicity in production
 });
 
-console.log('🌐 API Base URL:', getApiBaseUrl());
-console.log('🚀 Environment:', process.env.REACT_APP_ENVIRONMENT || 'development');
 
 api.interceptors.request.use(
   (config) => {
