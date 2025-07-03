@@ -15,7 +15,9 @@ import {
   FiEdit3,
   FiSave,
   FiX,
-  FiClock
+  FiClock,
+  FiMenu,
+  FiChevronDown
 } from 'react-icons/fi';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import { toast } from 'react-toastify';
@@ -38,6 +40,9 @@ const AdminDashboard = () => {
     hint: '',
     flag: ''
   });
+
+  // Mobile navigation state
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Live monitoring timer states
   const [monitoringTimeRemaining, setMonitoringTimeRemaining] = useState({});
@@ -349,28 +354,67 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white dark:bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-black dark:text-white mb-2">
             Admin Dashboard
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             Manage your Re-Challenge CTF platform
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
-          <nav className="flex space-x-8">
+        {/* Mobile Tabs Toggle */}
+        <div className="lg:hidden mb-6">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-black dark:text-white bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg"
+          >
+            <div className="flex items-center gap-2">
+              {tabs.find(tab => tab.id === activeTab)?.icon && React.createElement(tabs.find(tab => tab.id === activeTab).icon, { className: "w-4 h-4" })}
+              <span>{tabs.find(tab => tab.id === activeTab)?.label}</span>
+            </div>
+            <FiChevronDown className={`w-4 h-4 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showMobileMenu && (
+            <div className="mt-2 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setShowMobileMenu(false);
+                    }}
+                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-black dark:bg-white text-white dark:text-black'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    } first:rounded-t-lg last:rounded-b-lg`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Tabs */}
+        <div className="hidden lg:block border-b border-gray-200 dark:border-gray-700 mb-8">
+          <nav className="flex space-x-8 overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-black dark:border-white text-black dark:text-white'
                       : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -393,69 +437,69 @@ const AdminDashboard = () => {
             {activeTab === 'overview' && stats && (
               <div className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-                        <p className="text-2xl font-bold text-black dark:text-white">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                        <p className="text-lg sm:text-2xl font-bold text-black dark:text-white">
                           {stats.userStats.total}
                         </p>
                       </div>
-                      <FiUsers className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                      <FiUsers className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400" />
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Approved Users</p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Approved Users</p>
+                        <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
                           {stats.userStats.approved}
                         </p>
                       </div>
-                      <FiUserCheck className="w-8 h-8 text-green-600 dark:text-green-400" />
+                      <FiUserCheck className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
-                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Users</p>
+                        <p className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
                           {stats.userStats.active}
                         </p>
                       </div>
-                      <FiMonitor className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                      <FiMonitor className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 dark:text-orange-400" />
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Challenges</p>
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Challenges</p>
+                        <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
                           {stats.challengeStats.total}
                         </p>
                       </div>
-                      <FiTarget className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                      <FiTarget className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 dark:text-purple-400" />
                     </div>
                   </div>
                 </div>
 
                 {/* Level Stats */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
-                    <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+                    <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white mb-4">
                       Level Completion Stats
                     </h3>
                     <div className="space-y-3">
                       {stats.levelStats.map((level) => (
                         <div key={level._id} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Level {level._id}
                           </span>
-                          <span className="text-sm font-medium text-black dark:text-white">
+                          <span className="text-xs sm:text-sm font-medium text-black dark:text-white">
                             {level.count} users
                           </span>
                         </div>
@@ -463,17 +507,17 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
-                    <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+                  <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+                    <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white mb-4">
                       Current Level Distribution
                     </h3>
                     <div className="space-y-3">
                       {stats.currentLevelStats.map((level) => (
                         <div key={level._id} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Level {level._id}
                           </span>
-                          <span className="text-sm font-medium text-black dark:text-white">
+                          <span className="text-xs sm:text-sm font-medium text-black dark:text-white">
                             {level.count} users
                           </span>
                         </div>
@@ -486,21 +530,94 @@ const AdminDashboard = () => {
 
             {/* Users Tab */}
             {activeTab === 'users' && (
-              <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-black dark:text-white">
+              <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white">
                     User Management
                   </h3>
                   <button
                     onClick={loadUsers}
-                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <FiRefreshCw className="w-4 h-4" />
                     Refresh
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile User Cards */}
+                <div className="block sm:hidden space-y-4">
+                  {users.map((user) => (
+                    <div key={user._id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-medium text-black dark:text-white text-sm">
+                            {user.username}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {user.email}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.isApproved
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                        }`}>
+                          {user.isApproved ? 'Approved' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="flex gap-4 text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Level: <span className="text-black dark:text-white font-medium">{user.currentLevel}</span>
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Attempts: <span className="text-black dark:text-white font-medium">{user.totalAttempts}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {!user.isApproved ? (
+                          <button
+                            onClick={() => handleApproveUser(user._id)}
+                            className="flex items-center gap-1 px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded"
+                            title="Approve User"
+                          >
+                            <FiUserCheck className="w-3 h-3" />
+                            Approve
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDisapproveUser(user._id)}
+                            className="flex items-center gap-1 px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded"
+                            title="Revoke Approval"
+                          >
+                            <FiUserX className="w-3 h-3" />
+                            Revoke
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleResetUser(user._id)}
+                          className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded"
+                          title="Reset Progress"
+                        >
+                          <FiRefreshCw className="w-3 h-3" />
+                          Reset
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user._id)}
+                          className="flex items-center gap-1 px-3 py-1 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded"
+                          title="Delete User"
+                        >
+                          <FiTrash2 className="w-3 h-3" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
@@ -595,13 +712,13 @@ const AdminDashboard = () => {
             {/* Challenges Tab */}
             {activeTab === 'challenges' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-black dark:text-white">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white">
                     Challenge Management
                   </h3>
                   <button
                     onClick={() => openChallengeModal()}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiPlus className="w-4 h-4" />
                     Add Challenge
@@ -610,35 +727,37 @@ const AdminDashboard = () => {
 
                 <div className="grid gap-4">
                   {challenges.map((challenge) => (
-                    <div key={challenge._id} className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
-                      <div className="flex justify-between items-start">
+                    <div key={challenge._id} className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <span className="px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded">
                               Level {challenge.level}
                             </span>
                           </div>
-                          <h4 className="text-lg font-semibold text-black dark:text-white mb-2">
+                          <h4 className="text-base sm:text-lg font-semibold text-black dark:text-white mb-2">
                             {challenge.title}
                           </h4>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">
                             {challenge.description}
                           </p>
                         </div>
-                        <div className="flex gap-2 ml-4">
+                        <div className="flex gap-2 sm:ml-4">
                           <button
                             onClick={() => openChallengeModal(challenge)}
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                             title="Edit Challenge"
                           >
-                            <FiEdit3 className="w-4 h-4" />
+                            <FiEdit3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="sm:hidden">Edit</span>
                           </button>
                           <button
                             onClick={() => handleDeleteChallenge(challenge._id)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            className="flex items-center gap-1 px-3 py-1 text-xs sm:text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                             title="Delete Challenge"
                           >
-                            <FiTrash2 className="w-4 h-4" />
+                            <FiTrash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="sm:hidden">Delete</span>
                           </button>
                         </div>
                       </div>
@@ -650,8 +769,8 @@ const AdminDashboard = () => {
 
             {/* Configuration Tab */}
             {activeTab === 'config' && config && (
-              <div className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800 max-w-2xl">
-                <h3 className="text-lg font-semibold text-black dark:text-white mb-6">
+              <div className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800 max-w-full sm:max-w-2xl">
+                <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white mb-6">
                   Challenge Configuration
                 </h3>
                 <div className="space-y-6">
@@ -679,7 +798,7 @@ const AdminDashboard = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                         Time Limit (minutes)
@@ -709,7 +828,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -749,7 +868,7 @@ const AdminDashboard = () => {
 
                   <button
                     onClick={handleSaveConfig}
-                    className="flex items-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiSave className="w-4 h-4" />
                     Save Configuration
@@ -758,21 +877,21 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Monitoring Tab - UPDATED WITH LIVE COUNTDOWN */}
+            {/* Monitoring Tab - RESPONSIVE WITH LIVE COUNTDOWN */}
             {activeTab === 'monitoring' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-black dark:text-white">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white">
                     Live User Monitoring
                   </h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       Auto-refreshing every 5 seconds
                     </div>
                     <button
                       onClick={loadMonitoringData}
-                      className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <FiRefreshCw className="w-4 h-4" />
                       Refresh Now
@@ -788,13 +907,13 @@ const AdminDashboard = () => {
                       : user.timeRemaining;
 
                     return (
-                      <div key={user.id} className="bg-white dark:bg-gray-950 rounded-xl p-6 border border-gray-200 dark:border-gray-800">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h4 className="text-sm font-semibold text-black dark:text-white">
-                                {user.username}
-                              </h4>
+                      <div key={user.id} className="bg-white dark:bg-gray-950 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            <h4 className="text-sm font-semibold text-black dark:text-white">
+                              {user.username}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
                                 user.isActive
                                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
@@ -809,91 +928,90 @@ const AdminDashboard = () => {
                                 {user.email}
                               </span>
                             </div>
-                            
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                              <div>
-                                <p className="text-gray-600 dark:text-gray-400">Current Level</p>
-                                <p className="font-medium text-black dark:text-white">
-                                  {user.currentLevel}
+                          </div>
+                          
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Current Level</p>
+                              <p className="font-medium text-black dark:text-white">
+                                {user.currentLevel}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Completed</p>
+                              <p className="font-medium text-black dark:text-white">
+                                {user.completedLevels.length} levels
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Attempts</p>
+                              <p className="font-medium text-black dark:text-white">
+                                {user.totalAttempts}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Time Remaining</p>
+                              <div className="flex items-center gap-1">
+                                <p className={`font-medium text-xs sm:text-sm ${
+                                  user.isActive ? getTimeColor(displayTimeRemaining) : 'text-gray-500 dark:text-gray-400'
+                                }`}>
+                                  {user.isActive ? formatTime(displayTimeRemaining) : 'N/A'}
                                 </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 dark:text-gray-400">Completed</p>
-                                <p className="font-medium text-black dark:text-white">
-                                  {user.completedLevels.length} levels
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 dark:text-gray-400">Attempts</p>
-                                <p className="font-medium text-black dark:text-white">
-                                  {user.totalAttempts}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 dark:text-gray-400">Time Remaining</p>
-                                <div className="flex items-center gap-1">
-                                  <p className={`font-medium ${
-                                    user.isActive ? getTimeColor(displayTimeRemaining) : 'text-gray-500 dark:text-gray-400'
-                                  }`}>
-                                    {user.isActive ? formatTime(displayTimeRemaining) : 'N/A'}
-                                  </p>
-                                  {user.isActive && displayTimeRemaining > 0 && (
-                                    <FiClock className={`w-3 h-3 ${getTimeColor(displayTimeRemaining)}`} />
-                                  )}
-                                </div>
-                              </div>
-                              <div>
-                                <p className="text-gray-600 dark:text-gray-400">Last Activity</p>
-                                <p className="font-medium text-black dark:text-white text-xs">
-                                  {user.lastActivity ? new Date(user.lastActivity).toLocaleTimeString() : 'N/A'}
-                                </p>
+                                {user.isActive && displayTimeRemaining > 0 && (
+                                  <FiClock className={`w-3 h-3 ${getTimeColor(displayTimeRemaining)}`} />
+                                )}
                               </div>
                             </div>
+                            <div className="col-span-2 sm:col-span-1">
+                              <p className="text-gray-600 dark:text-gray-400 text-xs">Last Activity</p>
+                              <p className="font-medium text-black dark:text-white text-xs">
+                                {user.lastActivity ? new Date(user.lastActivity).toLocaleTimeString() : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
 
-                            {/* Time Progress Bar for Active Users */}
-                            {user.isActive && displayTimeRemaining > 0 && (
-                              <div className="mt-3">
-                                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                  <span>Time Progress</span>
-                                  <span>{Math.round((displayTimeRemaining / 3600) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                                  <div 
-                                    className={`h-1.5 rounded-full transition-all duration-1000 ${
-                                      displayTimeRemaining > 300 ? 'bg-green-500' :
-                                      displayTimeRemaining > 60 ? 'bg-yellow-500' :
-                                      'bg-red-500'
-                                    }`}
-                                    style={{ 
-                                      width: `${Math.max(0, Math.min(100, (displayTimeRemaining / 3600) * 100))}%` 
-                                    }}
-                                  />
-                                </div>
+                          {/* Time Progress Bar for Active Users */}
+                          {user.isActive && displayTimeRemaining > 0 && (
+                            <div className="mt-3">
+                              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                <span>Time Progress</span>
+                                <span>{Math.round((displayTimeRemaining / 3600) * 100)}%</span>
                               </div>
-                            )}
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full transition-all duration-1000 ${
+                                    displayTimeRemaining > 300 ? 'bg-green-500' :
+                                    displayTimeRemaining > 60 ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}
+                                  style={{ 
+                                    width: `${Math.max(0, Math.min(100, (displayTimeRemaining / 3600) * 100))}%` 
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
 
-                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                              <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-4">
+                          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Started: {user.challengeStartTime ? new Date(user.challengeStartTime).toLocaleTimeString() : 'N/A'}
+                                </span>
+                                {user.challengeEndTime && (
                                   <span className="text-gray-600 dark:text-gray-400">
-                                    Started: {user.challengeStartTime ? new Date(user.challengeStartTime).toLocaleTimeString() : 'N/A'}
+                                    Ends: {new Date(user.challengeEndTime).toLocaleTimeString()}
                                   </span>
-                                  {user.challengeEndTime && (
-                                    <span className="text-gray-600 dark:text-gray-400">
-                                      Ends: {new Date(user.challengeEndTime).toLocaleTimeString()}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleResetUser(user.id)}
-                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                    title="Reset Progress"
-                                  >
-                                    <FiRefreshCw className="w-3 h-3" />
-                                  </button>
-                                </div>
+                                )}
                               </div>
+                              <button
+                                onClick={() => handleResetUser(user.id)}
+                                className="flex items-center gap-1 px-3 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 self-start sm:self-auto"
+                                title="Reset Progress"
+                              >
+                                <FiRefreshCw className="w-3 h-3" />
+                                Reset
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -914,18 +1032,18 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Challenge Modal */}
+        {/* Challenge Modal - RESPONSIVE */}
         {showChallengeModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-black dark:text-white">
+                  <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white">
                     {editingChallenge ? 'Edit Challenge' : 'Create New Challenge'}
                   </h3>
                   <button
                     onClick={() => setShowChallengeModal(false)}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-1"
                   >
                     <FiX className="w-5 h-5" />
                   </button>
@@ -1004,10 +1122,10 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-6">
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <button
                     onClick={handleSaveChallenge}
-                    className="flex items-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-center gap-2 px-6 py-3 text-sm bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
                   >
                     <FiSave className="w-4 h-4" />
                     {editingChallenge ? 'Update Challenge' : 'Create Challenge'}
