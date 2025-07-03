@@ -27,7 +27,7 @@ const ChallengeList = () => {
     try {
       setLoading(true);
       
-      // Load available levels
+      // Load available levels using the correct API call
       const levelsResponse = await challengeAPI.getLevels();
       setLevels(levelsResponse.data.levels);
       

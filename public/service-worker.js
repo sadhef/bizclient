@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biztras-v1';
+const CACHE_NAME = 'Re-Challenge-v1';
 const urlsToCache = [
   '/',
   '/index.html',

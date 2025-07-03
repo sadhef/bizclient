@@ -152,7 +152,7 @@ const Register = () => {
             </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-black dark:text-white mb-3 leading-none">
-            Join BizTras CTF
+            Join Re-Challenge CTF
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
             Create your account to start the <span className="font-semibold text-black dark:text-white">ultimate challenge</span>

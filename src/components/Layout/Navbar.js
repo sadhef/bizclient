@@ -66,9 +66,6 @@ const Navbar = () => {
     return location.pathname === path || location.pathname.startsWith(path);
   };
 
-  const isPublicPage = ['/', '/login', '/register'].includes(location.pathname);
-  const isHomepage = location.pathname === '/';
-
   const NavLink = ({ to, children, icon: Icon, onClick, className = "" }) => (
     <Link
       to={to}
@@ -88,10 +85,9 @@ const Navbar = () => {
     <div className={`${className} bg-white dark:bg-gray-900 flex items-center justify-center transition-all duration-300 group-hover:scale-105 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700`}>
       <img 
         src="/biztras.png" 
-        alt="BizTras Logo" 
+        alt="Re-Challenge Logo" 
         className="w-full h-full object-contain"
         onError={(e) => {
-          // Fallback to text if image fails to load
           e.target.style.display = 'none';
           e.target.nextSibling.style.display = 'flex';
         }}
@@ -101,192 +97,6 @@ const Navbar = () => {
       </div>
     </div>
   );
-
-  // Homepage navbar when not authenticated
-  if (isHomepage && !isAuthenticated()) {
-    return (
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 transition-all duration-300 ${scrolled ? 'shadow-lg' : ''}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <Logo />
-              <div className="hidden sm:block">
-                <div className="text-xl font-black text-black dark:text-white tracking-tight">
-                  BIZTRAS CTF
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
-                  Cybersecurity Excellence
-                </div>
-              </div>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all duration-200 group"
-                aria-label="Toggle theme"
-              >
-                {isDark ? (
-                  <FiSun className="w-5 h-5 text-yellow-500 group-hover:scale-110 transition-transform" />
-                ) : (
-                  <FiMoon className="w-5 h-5 text-gray-600 group-hover:scale-110 transition-transform" />
-                )}
-              </button>
-
-              {/* Auth buttons */}
-              <div className="flex items-center gap-4">
-                <Link
-                  to="/login"
-                  className="btn-professional-ghost"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  className="btn-professional-primary group"
-                >
-                  <FiZap className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Get Started
-                </Link>
-              </div>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="lg:hidden flex items-center gap-4">
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
-              >
-                {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
-              >
-                {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile menu */}
-          {isMenuOpen && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-lg">
-              <div className="px-4 py-6 space-y-4">
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="btn-professional-ghost w-full"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="btn-professional-primary w-full"
-                >
-                  Get Started
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
-    );
-  }
-
-  // Auth pages navbar
-  if ((location.pathname === '/login' || location.pathname === '/register') && !isAuthenticated()) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <Logo />
-              <div className="hidden sm:block">
-                <div className="text-xl font-black text-black dark:text-white tracking-tight">
-                  BIZTRAS CTF
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
-                  Cybersecurity Excellence
-                </div>
-              </div>
-            </Link>
-
-            {/* Right side */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={toggleTheme}
-                className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
-              >
-                {isDark ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-              </button>
-
-              <div className="hidden sm:flex items-center gap-4">
-                {location.pathname === '/login' ? (
-                  <Link to="/register" className="btn-professional-secondary">
-                    Create Account
-                  </Link>
-                ) : (
-                  <Link to="/login" className="btn-professional-secondary">
-                    Sign In
-                  </Link>
-                )}
-              </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="sm:hidden w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
-              >
-                {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile menu for auth pages */}
-          {isMenuOpen && (
-            <div className="sm:hidden absolute top-full left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-800/50 shadow-lg">
-              <div className="px-4 py-6 space-y-4">
-                {location.pathname === '/login' ? (
-                  <Link
-                    to="/register"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="btn-professional-secondary w-full"
-                  >
-                    Create Account
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="btn-professional-secondary w-full"
-                  >
-                    Sign In
-                  </Link>
-                )}
-                <Link
-                  to="/"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="btn-professional-ghost w-full"
-                >
-                  Back to Home
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
-    );
-  }
 
   // Authenticated user navbar
   return (
@@ -301,7 +111,7 @@ const Navbar = () => {
             <Logo />
             <div className="hidden sm:block">
               <div className="text-xl font-black text-black dark:text-white tracking-tight">
-                BIZTRAS CTF
+                Re-Challenge CTF
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                 {isAdmin() ? 'Admin Portal' : 'Challenge Platform'}
@@ -372,9 +182,9 @@ const Navbar = () => {
               )}
             </button>
 
-            {/* Profile menu */}
+            {/* Desktop Profile menu - Only show on desktop */}
             {isAuthenticated() && (
-              <div className="relative">
+              <div className="relative hidden lg:block">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -394,7 +204,7 @@ const Navbar = () => {
                       </div>
                     )}
                   </div>
-                  <div className="hidden sm:block text-left">
+                  <div className="text-left">
                     <div className="text-sm font-semibold text-black dark:text-white">
                       {user?.username}
                     </div>
@@ -487,18 +297,6 @@ const Navbar = () => {
               >
                 {isMenuOpen ? <FiX className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
               </button>
-            )}
-
-            {/* Auth buttons for non-authenticated users */}
-            {!isAuthenticated() && !isPublicPage && (
-              <div className="hidden sm:flex items-center gap-4">
-                <Link to="/login" className="btn-professional-ghost">
-                  Sign In
-                </Link>
-                <Link to="/register" className="btn-professional-primary">
-                  Get Started
-                </Link>
-              </div>
             )}
           </div>
         </div>
@@ -616,13 +414,10 @@ const Navbar = () => {
       </div>
 
       {/* Backdrop for mobile menus */}
-      {(isMenuOpen || isProfileMenuOpen) && (
+      {isMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => {
-            setIsMenuOpen(false);
-            setIsProfileMenuOpen(false);
-          }}
+          onClick={() => setIsMenuOpen(false)}
         />
       )}
     </nav>

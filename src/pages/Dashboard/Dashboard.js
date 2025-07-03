@@ -651,7 +651,7 @@ const Dashboard = () => {
                 <div>
                   <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Challenge Title</div>
                   <div className="font-semibold text-black dark:text-white text-sm">
-                    {challengeInfo?.challengeTitle || 'BizTras CTF Challenge'}
+                    {challengeInfo?.challengeTitle || 'Re-Challenge CTF Challenge'}
                   </div>
                 </div>
                 <div>

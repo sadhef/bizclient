@@ -89,11 +89,11 @@ const ThankYouPage = () => {
   };
 
   const shareResults = () => {
-    const text = `I just completed ${userStats?.completedLevels || 0} level(s) in the BizTras CTF Challenge! ${userStats?.isCompleted ? '🏆 Full completion!' : '💪 Making progress!'}`;
+    const text = `I just completed ${userStats?.completedLevels || 0} level(s) in the Re-Challenge CTF Challenge! ${userStats?.isCompleted ? '🏆 Full completion!' : '💪 Making progress!'}`;
     
     if (navigator.share) {
       navigator.share({
-        title: 'BizTras CTF Challenge Results',
+        title: 'Re-Challenge CTF Challenge Results',
         text: text,
         url: window.location.origin
       });
@@ -132,7 +132,7 @@ const ThankYouPage = () => {
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
             {userStats?.isCompleted 
-              ? 'You have successfully completed the BizTras CTF Challenge!'
+              ? 'You have successfully completed the Re-Challenge CTF Challenge!'
               : 'Your challenge session has ended.'}
           </p>
           <p className="text-lg text-black dark:text-white font-semibold">
@@ -255,7 +255,7 @@ const ThankYouPage = () => {
             Thank You for Participating!
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
-            We hope you enjoyed the BizTras CTF Challenge! Whether you completed all levels or just started your journey, 
+            We hope you enjoyed the Re-Challenge CTF Challenge! Whether you completed all levels or just started your journey, 
             you've taken an important step in improving your cybersecurity skills. Keep learning, keep practicing, 
             and remember that every expert was once a beginner.
           </p>

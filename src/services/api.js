@@ -2,7 +2,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const getApiBaseUrl = () => {
-  // Use environment variable or fallback to development
   return process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 };
 
@@ -155,7 +154,7 @@ export const challengeAPI = {
   getChallengeInfo: () =>
     api.get('/challenge/info'),
   getLevels: () =>
-    api.get('/challenge/levels')
+    api.get('/challenge/levels') // ADDED: This was the missing API call
 };
 
 // Health Check

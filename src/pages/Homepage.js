@@ -10,8 +10,6 @@ import {
   FiCheckCircle,
   FiUsers,
   FiTarget,
-  FiCode,
-  FiActivity,
   FiShield,
   FiStar
 } from 'react-icons/fi';
@@ -23,33 +21,6 @@ const Homepage = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const stats = [
-    { 
-      number: '10,000+', 
-      label: 'Security Professionals',
-      icon: FiUsers,
-      description: 'Join our expert community'
-    },
-    { 
-      number: '500+', 
-      label: 'CTF Challenges',
-      icon: FiTarget,
-      description: 'Comprehensive challenge library'
-    },
-    { 
-      number: '50+', 
-      label: 'Skill Categories',
-      icon: FiCode,
-      description: 'From web security to cryptography'
-    },
-    { 
-      number: '99.9%', 
-      label: 'Platform Uptime',
-      icon: FiActivity,
-      description: 'Reliable 24/7 availability'
-    }
-  ];
 
   const features = [
     {
@@ -97,22 +68,22 @@ const Homepage = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/5 backdrop-blur-sm border border-black/10 dark:border-white/10 rounded-full mb-8">
               <FiStar className="w-4 h-4 text-black dark:text-white" />
               <span className="text-sm font-medium text-black dark:text-white">
-                Trusted by 10,000+ Security Professionals
+                Think. Solve. Triumph
               </span>
             </div>
 
             {/* Main headline */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-none tracking-tighter text-black dark:text-white">
-              MASTER
+              READY
               <br />
               <span className="bg-gradient-to-r from-gray-600 to-black dark:from-gray-400 dark:to-white bg-clip-text text-transparent">
-                CYBERSECURITY
+                FOR A CHALLENGE !
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-lg md:text-xl lg:text-2xl text-gray-600 dark:text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed">
-              Challenge yourself with real-world security scenarios. 
+              Challenge yourself with real-world scenarios. 
               <span className="text-black dark:text-white font-semibold"> Learn. Practice. Excel.</span>
             </p>
 
@@ -147,33 +118,6 @@ const Homepage = () => {
                 </>
               )}
             </div>
-
-            {/* Hero stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div 
-                    key={index} 
-                    className="text-center group"
-                    style={{animationDelay: `${index * 0.2}s`}}
-                  >
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-black/5 dark:bg-white/5 rounded-xl mb-3 group-hover:scale-110 transition-all duration-300">
-                      <Icon className="w-6 h-6 text-black dark:text-white" />
-                    </div>
-                    <div className="text-2xl md:text-3xl font-black text-black dark:text-white mb-2">
-                      {stat.number}
-                    </div>
-                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                      {stat.label}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      {stat.description}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </section>
@@ -183,7 +127,7 @@ const Homepage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-black dark:text-white mb-4">
-              Why Choose BizTras CTF?
+              Why Choose Re-Challenge CTF?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Professional-grade cybersecurity training platform designed for serious learners
@@ -228,7 +172,7 @@ const Homepage = () => {
           </h2>
 
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-12 leading-relaxed max-w-3xl mx-auto">
-            Join the elite community of cybersecurity professionals. 
+            Join the Platform and 
             <span className="text-black dark:text-white font-semibold"> Master real-world challenges. Advance your career.</span>
           </p>
 
@@ -262,82 +206,12 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-black dark:bg-white text-white dark:text-black py-16">
+      {/* Simple Footer */}
+      <footer className="bg-black dark:bg-white text-white dark:text-black py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {/* Brand section */}
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-white dark:bg-black flex items-center justify-center rounded-xl">
-                  <span className="text-black dark:text-white font-black text-xl">BT</span>
-                </div>
-                <div>
-                  <div className="text-xl font-black">BIZTRAS CTF</div>
-                  <div className="text-xs text-gray-400 dark:text-gray-600">Cybersecurity Excellence</div>
-                </div>
-              </div>
-              
-              <p className="text-gray-300 dark:text-gray-700 text-sm leading-relaxed mb-6">
-                The world's premier cybersecurity challenge platform. Master real-world security scenarios and advance your career.
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-lg font-bold mb-6">Platform</h3>
-              <ul className="space-y-3">
-                {[
-                  { label: 'Sign Up', href: '/register' },
-                  { label: 'Sign In', href: '/login' },
-                  { label: 'About Us', href: '#' },
-                  { label: 'Contact', href: '#' }
-                ].map((link, index) => (
-                  <li key={index}>
-                    {link.href.startsWith('/') ? (
-                      <Link 
-                        to={link.href} 
-                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors text-sm"
-                      >
-                        {link.label}
-                      </Link>
-                    ) : (
-                      <a 
-                        href={link.href} 
-                        className="text-gray-300 dark:text-gray-700 hover:text-white dark:hover:text-black transition-colors text-sm"
-                      >
-                        {link.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Support */}
-            <div>
-              <h3 className="text-lg font-bold mb-6">Support</h3>
-              <div className="space-y-4 text-sm">
-                <div>
-                  <div className="text-gray-400 dark:text-gray-600">Email</div>
-                  <div className="font-medium">support@biztrastech.com</div>
-                </div>
-                <div>
-                  <div className="text-gray-400 dark:text-gray-600">Website</div>
-                  <div className="font-medium">www.biztrastech.com</div>
-                </div>
-                <div>
-                  <div className="text-gray-400 dark:text-gray-600">Support Hours</div>
-                  <div className="font-medium">24/7 Available</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom section */}
-          <div className="border-t border-white/10 dark:border-black/10 pt-8 mt-12 text-center">
+          <div className="text-center">
             <div className="text-gray-400 dark:text-gray-600 text-sm">
-              © 2024 BizTras Technologies. All rights reserved.
+              © 2024 Re-Challenge Technologies. All rights reserved.
             </div>
           </div>
         </div>

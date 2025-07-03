@@ -357,7 +357,7 @@ const AdminDashboard = () => {
             Admin Dashboard
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Manage your BizTras CTF platform
+            Manage your Re-Challenge CTF platform
           </p>
         </div>
 
@@ -999,7 +999,7 @@ const AdminDashboard = () => {
                       value={challengeForm.flag}
                       onChange={(e) => setChallengeForm({...challengeForm, flag: e.target.value})}
                       className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-black dark:text-white focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent"
-                      placeholder="BizTras{flag_content}"
+                      placeholder="Re-Challenge{flag_content}"
                     />
                   </div>
                 </div>
